@@ -1,0 +1,28 @@
+﻿{
+  "applications": {
+    "PibesDelDestino.HttpApi.Host": {
+      "type": "dotnet-project",
+      "launchUrl": "https://localhost:44304",
+      "path": "../../../src/PibesDelDestino.HttpApi.Host/PibesDelDestino.HttpApi.Host.csproj",
+      "kubernetesService": ".*-httpapihost$",
+      "healthCheckEndpoint": "/health-status",
+      "healthUiEndpoint": "/health-ui",
+      "execution": {
+        "order": 4
+      }
+    },
+    "PibesDelDestino.Angular": {
+      "type": "cli",
+      "workingDirectory": "../../../angular",
+      "startCommand": "./start.ps1",
+      "launchUrl": "http://localhost:4200",
+      "kubernetesService": ".*-angular$",
+      "execution": {
+        "order": 2
+      }    
+    }
+  },
+  "containers": {
+    "serviceName": "PibesDelDestino-Containers",
+  }
+}

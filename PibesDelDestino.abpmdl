@@ -1,0 +1,97 @@
+{
+  "template": "app",
+  "imports": {
+    "Volo.Abp.LeptonXLiteTheme": {
+      "version": "4.3.2",
+      "isInstalled": true
+    },
+    "Volo.Abp.Account": {
+      "version": "9.3.2",
+      "isInstalled": true
+    },
+    "Volo.Abp.OpenIddict": {
+      "version": "9.3.2",
+      "isInstalled": true
+    },
+    "Volo.Abp.Identity": {
+      "version": "9.3.2",
+      "isInstalled": true
+    },
+    "Volo.Abp.SettingManagement": {
+      "version": "9.3.2",
+      "isInstalled": true
+    },
+    "Volo.Abp.PermissionManagement": {
+      "version": "9.3.2",
+      "isInstalled": true
+    },
+    "Volo.Abp.FeatureManagement": {
+      "version": "9.3.2",
+      "isInstalled": true
+    }
+  },
+  "folders": {
+    "items": {
+      "src": {},
+      "test": {}
+    }
+  },
+  "packages": {
+    "PibesDelDestino.Application": {
+      "path": "src/PibesDelDestino.Application/PibesDelDestino.Application.abppkg",
+      "folder": "src"
+    },
+    "PibesDelDestino.Application.Tests": {
+      "path": "test/PibesDelDestino.Application.Tests/PibesDelDestino.Application.Tests.abppkg",
+      "folder": "test"
+    },
+    "PibesDelDestino.Domain.Shared": {
+      "path": "src/PibesDelDestino.Domain.Shared/PibesDelDestino.Domain.Shared.abppkg",
+      "folder": "src"
+    },
+    "PibesDelDestino.Application.Contracts": {
+      "path": "src/PibesDelDestino.Application.Contracts/PibesDelDestino.Application.Contracts.abppkg",
+      "folder": "src"
+    },
+    "PibesDelDestino.HttpApi": {
+      "path": "src/PibesDelDestino.HttpApi/PibesDelDestino.HttpApi.abppkg",
+      "folder": "src"
+    },
+    "PibesDelDestino.HttpApi.Client": {
+      "path": "src/PibesDelDestino.HttpApi.Client/PibesDelDestino.HttpApi.Client.abppkg",
+      "folder": "src"
+    },
+    "PibesDelDestino.EntityFrameworkCore.Tests": {
+      "path": "test/PibesDelDestino.EntityFrameworkCore.Tests/PibesDelDestino.EntityFrameworkCore.Tests.abppkg",
+      "folder": "test"
+    },
+    "PibesDelDestino.EntityFrameworkCore": {
+      "path": "src/PibesDelDestino.EntityFrameworkCore/PibesDelDestino.EntityFrameworkCore.abppkg",
+      "folder": "src"
+    },
+    "PibesDelDestino.TestBase": {
+      "path": "test/PibesDelDestino.TestBase/PibesDelDestino.TestBase.abppkg",
+      "folder": "test"
+    },
+    "PibesDelDestino.Domain.Tests": {
+      "path": "test/PibesDelDestino.Domain.Tests/PibesDelDestino.Domain.Tests.abppkg",
+      "folder": "test"
+    },
+    "PibesDelDestino.HttpApi.Client.ConsoleTestApp": {
+      "path": "test/PibesDelDestino.HttpApi.Client.ConsoleTestApp/PibesDelDestino.HttpApi.Client.ConsoleTestApp.abppkg",
+      "folder": "test"
+    },
+    "PibesDelDestino.DbMigrator": {
+      "path": "src/PibesDelDestino.DbMigrator/PibesDelDestino.DbMigrator.abppkg",
+      "folder": "src"
+    },
+    "PibesDelDestino.HttpApi.Host": {
+      "path": "src/PibesDelDestino.HttpApi.Host/PibesDelDestino.HttpApi.Host.abppkg",
+      "folder": "src"
+    },
+    "PibesDelDestino.Domain": {
+      "path": "src/PibesDelDestino.Domain/PibesDelDestino.Domain.abppkg",
+      "folder": "src"
+    }
+  }
+}
