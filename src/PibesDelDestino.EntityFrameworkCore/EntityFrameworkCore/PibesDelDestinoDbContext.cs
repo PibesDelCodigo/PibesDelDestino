@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PibesDelDestino.Destinations;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.BlobStoring.Database.EntityFrameworkCore;
@@ -9,9 +10,9 @@ using Volo.Abp.EntityFrameworkCore.Modeling;
 using Volo.Abp.FeatureManagement.EntityFrameworkCore;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
+using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
-using Volo.Abp.OpenIddict.EntityFrameworkCore;
 
 namespace PibesDelDestino.EntityFrameworkCore;
 
@@ -23,7 +24,7 @@ public class PibesDelDestinoDbContext :
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
-
+    public DbSet<Destination> Destinations { get; set; }
     #region Entities from the modules
 
     /* Notice: We only implemented IIdentityProDbContext 
@@ -69,7 +70,7 @@ public class PibesDelDestinoDbContext :
         builder.ConfigureIdentity();
         builder.ConfigureOpenIddict();
         builder.ConfigureBlobStoring();
-        
+
         /* Configure your own tables/entities inside here */
 
         //builder.Entity<YourEntity>(b =>
@@ -78,5 +79,24 @@ public class PibesDelDestinoDbContext :
         //    b.ConfigureByConvention(); //auto configure for the base class props
         //    //...
         //});
+
+        builder.Entity<Destination>(b =>
+        {
+            b.ToTable("Destinations");
+            b.ConfigureByConvention();
+            b.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            b.Property(x => x.Country).IsRequired().HasMaxLength(100);
+            b.Property(x => x.City).IsRequired().HasMaxLength(100);
+            b.Property(x => x.Population).IsRequired();
+            b.Property(x => x.Photo).HasMaxLength(500);
+            b.Property(x => x.UpdateDate).IsRequired();
+
+            b.OwnsOne(d => d.Coordinates, co =>
+            {
+                co.Property(c => c.Latitude).HasColumnName("Latitude").IsRequired().HasColumnType("float");
+                co.Property(c => c.Longitude).HasColumnName("Longitude").IsRequired().HasColumnType("float");
+            });
+        });
+
     }
 }
