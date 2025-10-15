@@ -24,8 +24,8 @@ namespace PibesDelDestino.GeoDb
         public async Task<CityResultDto> SearchCitiesAsync(CityRequestDTO request)
         {
             // 1. Obtenemos la configuración desde appsettings.json
-            var apiUrl = _configuration["GeoDb:ApiUrl"];
-            var apiKey = _configuration["GeoDb:ApiKey"];
+            var apiUrl = "https://wft-geo-db.p.rapidapi.com";
+            var apiKey = "1b87288382msh04081de1250362fp1acf94jsn6c66e7e31d14"; // Tu clave de API
 
             // 2. Creamos un cliente HTTP y preparamos la petición
             var client = _httpClientFactory.CreateClient();
