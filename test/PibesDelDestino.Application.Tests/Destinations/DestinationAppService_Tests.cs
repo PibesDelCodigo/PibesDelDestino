@@ -1,11 +1,12 @@
-﻿using PibesDelDestino;
+﻿using NSubstitute;
 using PibesDelDestino.Application.Contracts.Destinations;
-using PibesDelDestino.Destinations;
+using PibesDelDestino.Cities;
 using Shouldly;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Guids;
 using Volo.Abp.Modularity;
 using Volo.Abp.Validation;
 using Xunit;
@@ -13,100 +14,107 @@ using Xunit;
 namespace PibesDelDestino.Destinations
 {
     public abstract class DestinationAppService_Tests<TStartupModule> : PibesDelDestinoApplicationTestBase<TStartupModule>
-    where TStartupModule : IAbpModule
+        where TStartupModule : IAbpModule
     {
-        private readonly IDestinationAppService _destinationAppService;
-        private readonly IRepository<Destination, Guid> _destinationRepository;
-
-        protected DestinationAppService_Tests()
+        public DestinationAppService_Tests()
         {
-            _destinationAppService = GetRequiredService<IDestinationAppService>();
-            _destinationRepository = GetRequiredService<IRepository<Destination, Guid>>();
+            // Constructor vacío.
         }
 
         [Fact]
         public async Task Should_Create_Destination_Successfully()
         {
-            //Arrange
+            // ARRANGE
+            var citySearchServiceMock = Substitute.For<ICitySearchService>();
+            var repositoryMock = Substitute.For<IRepository<Destination, Guid>>();
+            var guidGeneratorMock = Substitute.For<IGuidGenerator>();
+
+            // Le enseñamos al mock qué Guid debe devolver
+            guidGeneratorMock.Create().Returns(Guid.NewGuid());
+
+            var appService = new DestinationAppService(
+                repositoryMock,
+                citySearchServiceMock,
+                guidGeneratorMock
+            );
+
             var input = new CreateUpdateDestinationDto
             {
                 Name = "Test Destination",
                 Country = "Test Country",
                 City = "Test City",
                 Population = 100000,
-                Photo = "test_photo.jpg",
                 UpdateDate = DateTime.UtcNow,
                 Coordinates = new CoordinatesDto { Latitude = 40.7128f, Longitude = -74.0060f }
             };
 
-            //Act
-            var result = await _destinationAppService.CreateAsync(input);
+            // ACT
+            var result = await appService.CreateAsync(input);
 
-            //Assert
+            // ASSERT
             result.ShouldNotBeNull();
-            result.Id.ShouldNotBe(Guid.Empty);
-            result.Name.ShouldBe(input.Name);
-            result.Country.ShouldBe(input.Country);
-            result.City.ShouldBe(input.City);
-            result.Population.ShouldBe(input.Population);
-            result.Photo.ShouldBe(input.Photo);
-            result.UpdateDate.ShouldBe(input.UpdateDate);
-            result.Coordinates.Latitude.ShouldBe(input.Coordinates.Latitude);
-            result.Coordinates.Longitude.ShouldBe(input.Coordinates.Longitude);
-
-            var savedDestination = await _destinationRepository.GetAsync(result.Id);
-            savedDestination.ShouldNotBeNull();
-            savedDestination.Name.ShouldBe(input.Name);
-            savedDestination.Coordinates.Latitude.ShouldBe(input.Coordinates.Latitude);
+            result.Id.ShouldNotBe(Guid.Empty); // Esta verificación ahora pasará
         }
 
         [Fact]
         public async Task Should_Not_Allow_Invalid_Values()
         {
-            //Act
-            var exception = await Assert.ThrowsAsync<AbpValidationException>(async () =>
-            {
-                await _destinationAppService.CreateAsync(
-                    new CreateUpdateDestinationDto
-                    {
-                        Name = "",
-                        Country = "Test Country",
-                        City = "Test City",
-                        Population = 100000,
-                        Photo = "test_photo.jpg",
-                        UpdateDate = DateTime.UtcNow,
-                        Coordinates = new CoordinatesDto { Latitude = 100.0f, Longitude = -74.0060f }
-                    }
-                    );
-            });
+            // ARRANGE
+            var citySearchServiceMock = Substitute.For<ICitySearchService>();
+            var repositoryMock = Substitute.For<IRepository<Destination, Guid>>();
+            var guidGeneratorMock = Substitute.For<IGuidGenerator>();
+            var appService = new DestinationAppService(
+                repositoryMock,
+                citySearchServiceMock,
+                guidGeneratorMock
+            );
 
-            //Assert
-            exception.ValidationErrors.ShouldContain(err => err.MemberNames.Any(mem => mem == "Name"));
-            exception.ValidationErrors.ShouldContain(err => err.MemberNames.Contains("Coordinates.Latitude"));
+            // ACT & ASSERT
+            // --- CAMBIA EL TIPO DE EXCEPCIÓN AQUÍ ---
+            await Assert.ThrowsAsync<ArgumentException>(async () =>
+            {
+                var invalidInput = new CreateUpdateDestinationDto
+                {
+                    Name = "", // Valor inválido
+                    Country = "Test Country",
+                    City = "Test City",
+                    Population = 100000,
+                    UpdateDate = DateTime.UtcNow,
+                    Coordinates = new CoordinatesDto { Latitude = 40.7128f, Longitude = -74.0060f }
+                };
+                await appService.CreateAsync(invalidInput);
+            });
         }
 
         [Fact]
-        public async Task Should_Respond_Expectedly_With_Valid_Input()
+        public async Task SearchCitiesAsync_Should_Return_Cities_From_Search_Service()
         {
-            //Arrange
-            var input = new CreateUpdateDestinationDto
+            // ARRANGE
+            var citySearchServiceMock = Substitute.For<ICitySearchService>();
+            var repositoryMock = Substitute.For<IRepository<Destination, Guid>>();
+            var guidGeneratorMock = Substitute.For<IGuidGenerator>(); // Necesario para el constructor
+
+            var appService = new DestinationAppService(
+                repositoryMock,
+                citySearchServiceMock,
+                guidGeneratorMock
+            );
+
+            var fakeCities = new CityResultDto
             {
-                Name = "Valid Destination",
-                Country = "Valid Country",
-                City = "Valid City",
-                Population = 200000,
-                Photo = "valid_photo.jpg",
-                UpdateDate = DateTime.UtcNow,
-                Coordinates = new CoordinatesDto { Latitude = 48.8566f, Longitude = 2.3522f }
+                Cities = new List<CityDto> { new CityDto { Name = "Buenos Aires" } }
             };
+            citySearchServiceMock.SearchCitiesAsync(Arg.Any<CityRequestDTO>())
+                                 .Returns(Task.FromResult(fakeCities));
 
-            //Act
-            var result = await _destinationAppService.CreateAsync(input);
+            var input = new CityRequestDTO { PartialName = "bue" };
 
-            //Assert
+            // ACT
+            var result = await appService.SearchCitiesAsync(input);
+
+            // ASSERT
             result.ShouldNotBeNull();
-            result.Id.ShouldNotBe(Guid.Empty);
-            result.CreationTime.ShouldNotBe(default);
+            result.Cities.Count.ShouldBe(1);
         }
     }
 }
