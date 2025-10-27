@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PibesDelDestino.Destinations;
+using PibesDelDestino.Ratings;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.BlobStoring.Database.EntityFrameworkCore;
@@ -47,6 +48,7 @@ public class PibesDelDestinoDbContext :
     public DbSet<IdentityLinkUser> LinkUsers { get; set; }
     public DbSet<IdentityUserDelegation> UserDelegations { get; set; }
     public DbSet<IdentitySession> Sessions { get; set; }
+    public DbSet<Rating> Ratings { get; set; }
 
     #endregion
 
