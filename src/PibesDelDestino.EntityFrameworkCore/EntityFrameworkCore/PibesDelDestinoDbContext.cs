@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using PibesDelDestino.Destinations;
 using PibesDelDestino.Ratings;
+using PibesDelDestino.Users;
+using System;
+using System.Linq.Expressions;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.BlobStoring.Database.EntityFrameworkCore;
@@ -14,6 +17,7 @@ using Volo.Abp.Identity.EntityFrameworkCore;
 using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
+using Volo.Abp.Users;
 
 namespace PibesDelDestino.EntityFrameworkCore;
 
@@ -23,23 +27,10 @@ public class PibesDelDestinoDbContext :
     AbpDbContext<PibesDelDestinoDbContext>,
     IIdentityDbContext
 {
-    /* Add DbSet properties for your Aggregate Roots / Entities here. */
+
 
     public DbSet<Destination> Destinations { get; set; }
     #region Entities from the modules
-
-    /* Notice: We only implemented IIdentityProDbContext 
-     * and replaced them for this DbContext. This allows you to perform JOIN
-     * queries for the entities of these modules over the repositories easily. You
-     * typically don't need that for other modules. But, if you need, you can
-     * implement the DbContext interface of the needed module and use ReplaceDbContext
-     * attribute just like IIdentityProDbContext .
-     *
-     * More info: Replacing a DbContext of a module ensures that the related module
-     * uses this DbContext on runtime. Otherwise, it will use its own DbContext class.
-     */
-
-    // Identity
     public DbSet<IdentityUser> Users { get; set; }
     public DbSet<IdentityRole> Roles { get; set; }
     public DbSet<IdentityClaimType> ClaimTypes { get; set; }
@@ -50,12 +41,15 @@ public class PibesDelDestinoDbContext :
     public DbSet<IdentitySession> Sessions { get; set; }
     public DbSet<Rating> Ratings { get; set; }
 
+    private readonly ICurrentUser _currentUser;
     #endregion
 
-    public PibesDelDestinoDbContext(DbContextOptions<PibesDelDestinoDbContext> options)
-        : base(options)
+    public PibesDelDestinoDbContext(
+            DbContextOptions<PibesDelDestinoDbContext> options,
+            ICurrentUser currentUser)
+            : base(options)
     {
-
+        _currentUser = currentUser;
     }
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -75,13 +69,7 @@ public class PibesDelDestinoDbContext :
 
         /* Configure your own tables/entities inside here */
 
-        //builder.Entity<YourEntity>(b =>
-        //{
-        //    b.ToTable(PibesDelDestinoConsts.DbTablePrefix + "YourEntities", PibesDelDestinoConsts.DbSchema);
-        //    b.ConfigureByConvention(); //auto configure for the base class props
-        //    //...
-        //});
-
+     
         builder.Entity<Destination>(b =>
         {
             b.ToTable("Destinations");
@@ -99,6 +87,25 @@ public class PibesDelDestinoDbContext :
                 co.Property(c => c.Longitude).HasColumnName("Longitude").IsRequired().HasColumnType("float");
             });
         });
+
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            if (typeof(IUserOwned).IsAssignableFrom(entityType.ClrType))
+            {
+                var parameter = Expression.Parameter(entityType.ClrType, "e");
+                var userIdProperty = Expression.Property(parameter, nameof(IUserOwned.UserId));
+
+                // Usamos _currentUser que inyectamos en el constructor
+                // Nota: Usamos Expression.Invoke o un closure para asegurar que evalúe el ID en cada consulta
+                Expression<Func<Guid>> currentUserIdProvider = () => _currentUser.Id ?? Guid.Empty;
+                var currentUserIdValue = Expression.Invoke(Expression.Constant(currentUserIdProvider));
+
+                var body = Expression.Equal(userIdProperty, currentUserIdValue);
+                var lambda = Expression.Lambda(body, parameter);
+
+                entityType.SetQueryFilter(lambda);
+            }
+        }
 
     }
 }
