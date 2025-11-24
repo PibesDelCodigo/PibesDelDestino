@@ -1,1 +1,33 @@
-<p>city-search works!</p>
+<div class="search-container">
+  <h2>Buscar Ciudades</h2>
+
+  <input 
+    type="text" 
+    [formControl]="searchControl" 
+    placeholder="Escribí una ciudad (ej: Buenos, Rio)..."
+    class="search-input"
+  />
+
+  <div *ngIf="isLoading" class="loading-message">
+    ⏳ Buscando...
+  </div>
+
+  <div *ngIf="errorMessage" class="error-message">
+    ❌ {{ errorMessage }}
+  </div>
+
+  <ul *ngIf="cities.length > 0" class="results-list">
+    <li *ngFor="let city of cities" class="result-item">
+      <div class="city-header">
+        <span class="city-name">{{ city.name }}</span>
+        <span class="city-region">{{ city.region }}</span>
+      </div>
+      <div class="city-country">{{ city.country }}</div>
+      <small>Lat: {{ city.latitude }} | Lon: {{ city.longitude }}</small>
+    </li>
+  </ul>
+
+  <div *ngIf="!isLoading && cities.length === 0 && searchControl.value?.length! > 2" class="no-results">
+    No se encontraron ciudades.
+  </div>
+</div>
