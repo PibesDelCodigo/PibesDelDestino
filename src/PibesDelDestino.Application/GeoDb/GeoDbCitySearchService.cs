@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using PibesDelDestino.Cities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -28,8 +29,8 @@ namespace PibesDelDestino.GeoDb
 
             var client = _httpClientFactory.CreateClient();
 
-            // Construimos la URL base
-            var url = $"{apiUrl}/v1/geo/cities?limit=5";
+            // Ponemos la URL base completa y correcta "a fuego" (hardcoded)
+            var url = "https://wft-geo-db.p.rapidapi.com/v1/geo/cities?limit=5";
 
             // Agregamos filtros dinámicamente
             if (!string.IsNullOrWhiteSpace(request.PartialName))
@@ -57,27 +58,44 @@ namespace PibesDelDestino.GeoDb
             { "X-RapidAPI-Host", "wft-geo-db.p.rapidapi.com" },
         },
             };
-
-            // ... (El resto del código de envío y respuesta queda igual) ...
-            using (var response = await client.SendAsync(httpRequest))
+            try
             {
-                // ... lógica de respuesta existente ...
-                response.EnsureSuccessStatusCode();
-                var apiResponse = await response.Content.ReadFromJsonAsync<GeoDbApiResponse>();
-                // ... mapeo y retorno ...
-                if (apiResponse?.Data == null) return new CityResultDto { Cities = new List<CityDto>() };
-
-                var cityDtos = apiResponse.Data.Select(city => new CityDto
+                using (var response = await client.SendAsync(httpRequest))
                 {
-                    Name = city.Name,
-                    Country = city.Country,
-                    Region = city.Region,
-                    Latitude = city.Latitude,
-                    Longitude = city.Longitude,
-                    Population = city.Population,
-                }).ToList();
+                    // 1. Verificamos si falló, pero SUAVEMENTE
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        // Si es 404 (No encontrado) o 400 (Bad Request por poner UK), 
+                        // devolvemos lista vacía en lugar de romper.
+                        return new CityResultDto { Cities = new List<CityDto>() };
+                    }
 
-                return new CityResultDto { Cities = cityDtos };
+                    // 2. Si llegamos acá, es porque todo salió bien (200 OK)
+                    var apiResponse = await response.Content.ReadFromJsonAsync<GeoDbApiResponse>();
+
+                    if (apiResponse?.Data == null)
+                    {
+                        return new CityResultDto { Cities = new List<CityDto>() };
+                    }
+
+                    var cityDtos = apiResponse.Data.Select(city => new CityDto
+                    {
+                        Name = city.Name,
+                        Country = city.Country,
+                        Region = city.Region,
+                        Latitude = city.Latitude,
+                        Longitude = city.Longitude,
+                        Population = city.Population
+                    }).ToList();
+
+                    return new CityResultDto { Cities = cityDtos };
+                }
+            }
+            catch (Exception ex)
+            {
+                // 3. Si explota la conexión (se corta internet), caemos acá.
+                // Devolvemos lista vacía para que el frontend no muestre pantalla roja.
+                return new CityResultDto { Cities = new List<CityDto>() };
             }
         }
     }
