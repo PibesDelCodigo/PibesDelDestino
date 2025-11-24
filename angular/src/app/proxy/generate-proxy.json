@@ -1321,6 +1321,101 @@
               "implementFrom": "PibesDelDestino.Ratings.IRatingAppService"
             }
           }
+        },
+        "PibesDelDestino.Users.AppUserAppService": {
+          "controllerName": "AppUser",
+          "controllerGroupName": "AppUser",
+          "isRemoteService": true,
+          "isIntegrationService": false,
+          "apiVersion": null,
+          "type": "PibesDelDestino.Users.AppUserAppService",
+          "interfaces": [
+            {
+              "type": "PibesDelDestino.Users.IAppUserAppService",
+              "name": "IAppUserAppService",
+              "methods": [
+                {
+                  "name": "GetPublicProfileAsync",
+                  "parametersOnMethod": [
+                    {
+                      "name": "userId",
+                      "typeAsString": "System.Guid, System.Private.CoreLib",
+                      "type": "System.Guid",
+                      "typeSimple": "string",
+                      "isOptional": false,
+                      "defaultValue": null
+                    }
+                  ],
+                  "returnValue": {
+                    "type": "PibesDelDestino.Users.PublicUserDto",
+                    "typeSimple": "PibesDelDestino.Users.PublicUserDto"
+                  }
+                },
+                {
+                  "name": "DeleteSelfAsync",
+                  "parametersOnMethod": [],
+                  "returnValue": {
+                    "type": "System.Void",
+                    "typeSimple": "System.Void"
+                  }
+                }
+              ]
+            }
+          ],
+          "actions": {
+            "GetPublicProfileAsyncByUserId": {
+              "uniqueName": "GetPublicProfileAsyncByUserId",
+              "name": "GetPublicProfileAsync",
+              "httpMethod": "GET",
+              "url": "api/app/app-user/public-profile/{userId}",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "userId",
+                  "typeAsString": "System.Guid, System.Private.CoreLib",
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "userId",
+                  "name": "userId",
+                  "jsonName": null,
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": [],
+                  "bindingSourceId": "Path",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "PibesDelDestino.Users.PublicUserDto",
+                "typeSimple": "PibesDelDestino.Users.PublicUserDto"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Users.IAppUserAppService"
+            },
+            "DeleteSelfAsync": {
+              "uniqueName": "DeleteSelfAsync",
+              "name": "DeleteSelfAsync",
+              "httpMethod": "DELETE",
+              "url": "api/app/app-user/self",
+              "supportedVersions": [],
+              "parametersOnMethod": [],
+              "parameters": [],
+              "returnValue": {
+                "type": "System.Void",
+                "typeSimple": "System.Void"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Users.IAppUserAppService"
+            }
+          }
         }
       }
     },
@@ -3949,6 +4044,51 @@
         },
         {
           "name": "Comment",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        }
+      ]
+    },
+    "PibesDelDestino.Users.PublicUserDto": {
+      "baseType": "Volo.Abp.Application.Dtos.EntityDto<System.Guid>",
+      "isEnum": false,
+      "enumNames": null,
+      "enumValues": null,
+      "genericArguments": null,
+      "properties": [
+        {
+          "name": "UserName",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "Name",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "Surname",
           "jsonName": null,
           "type": "System.String",
           "typeSimple": "string",

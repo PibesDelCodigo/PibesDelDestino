@@ -23,4 +23,17 @@ export const APP_ROUTES: Routes = [
     path: 'setting-management',
     loadChildren: () => import('@abp/ng.setting-management').then(c => c.createRoutes()),
   },
+
+  {
+    
+    path: 'users/:id', 
+    loadComponent: () => import('./users/public-profile/public-profile'). then(c => c.PublicProfile),
+  },
+
+  {
+    path: 'my-account',
+    loadComponent: () => 
+      import('./users/my-account/my-account') 
+      .then(c => c.MyAccount),  
+  },
 ];
