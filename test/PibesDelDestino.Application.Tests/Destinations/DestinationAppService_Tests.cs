@@ -14,7 +14,7 @@ using Xunit;
 namespace PibesDelDestino.Destinations
 {
     public abstract class DestinationAppService_Tests<TStartupModule> : PibesDelDestinoApplicationTestBase<TStartupModule>
-        where TStartupModule : IAbpModule
+    where TStartupModule : IAbpModule
     {
         public DestinationAppService_Tests()
         {
@@ -44,6 +44,7 @@ namespace PibesDelDestino.Destinations
                 Country = "Test Country",
                 City = "Test City",
                 Population = 100000,
+                Photo = "test_photo.jpg",
                 UpdateDate = DateTime.UtcNow,
                 Coordinates = new CoordinatesDto { Latitude = 40.7128f, Longitude = -74.0060f }
             };
@@ -74,16 +75,21 @@ namespace PibesDelDestino.Destinations
             await Assert.ThrowsAsync<ArgumentException>(async () =>
             {
                 var invalidInput = new CreateUpdateDestinationDto
-                {
+                    {
                     Name = "", // Valor inválido
-                    Country = "Test Country",
-                    City = "Test City",
-                    Population = 100000,
-                    UpdateDate = DateTime.UtcNow,
+                        Country = "Test Country",
+                        City = "Test City",
+                        Population = 100000,
+                        Photo = "test_photo.jpg",
+                        UpdateDate = DateTime.UtcNow,
                     Coordinates = new CoordinatesDto { Latitude = 40.7128f, Longitude = -74.0060f }
                 };
                 await appService.CreateAsync(invalidInput);
             });
+
+            //Assert
+            exception.ValidationErrors.ShouldContain(err => err.MemberNames.Any(mem => mem == "Name"));
+            exception.ValidationErrors.ShouldContain(err => err.MemberNames.Contains("Coordinates.Latitude"));
         }
 
         [Fact]

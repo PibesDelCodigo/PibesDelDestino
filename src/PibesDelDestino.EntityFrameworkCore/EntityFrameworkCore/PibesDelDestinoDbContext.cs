@@ -27,10 +27,24 @@ public class PibesDelDestinoDbContext :
     AbpDbContext<PibesDelDestinoDbContext>,
     IIdentityDbContext
 {
+    /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
 
     public DbSet<Destination> Destinations { get; set; }
     #region Entities from the modules
+
+    /* Notice: We only implemented IIdentityProDbContext 
+     * and replaced them for this DbContext. This allows you to perform JOIN
+     * queries for the entities of these modules over the repositories easily. You
+     * typically don't need that for other modules. But, if you need, you can
+     * implement the DbContext interface of the needed module and use ReplaceDbContext
+     * attribute just like IIdentityProDbContext .
+     *
+     * More info: Replacing a DbContext of a module ensures that the related module
+     * uses this DbContext on runtime. Otherwise, it will use its own DbContext class.
+     */
+
+    // Identity
     public DbSet<IdentityUser> Users { get; set; }
     public DbSet<IdentityRole> Roles { get; set; }
     public DbSet<IdentityClaimType> ClaimTypes { get; set; }
@@ -47,7 +61,7 @@ public class PibesDelDestinoDbContext :
     public PibesDelDestinoDbContext(
             DbContextOptions<PibesDelDestinoDbContext> options,
             ICurrentUser currentUser)
-            : base(options)
+        : base(options)
     {
         _currentUser = currentUser;
     }
@@ -69,7 +83,13 @@ public class PibesDelDestinoDbContext :
 
         /* Configure your own tables/entities inside here */
 
-     
+        //builder.Entity<YourEntity>(b =>
+        //{
+        //    b.ToTable(PibesDelDestinoConsts.DbTablePrefix + "YourEntities", PibesDelDestinoConsts.DbSchema);
+        //    b.ConfigureByConvention(); //auto configure for the base class props
+        //    //...
+        //});
+
         builder.Entity<Destination>(b =>
         {
             b.ToTable("Destinations");

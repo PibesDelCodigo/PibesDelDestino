@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.IO;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -15,12 +17,12 @@ public class PibesDelDestinoDbContextFactory : IDesignTimeDbContextFactory<Pibes
     public PibesDelDestinoDbContext CreateDbContext(string[] args)
     {
         var configuration = BuildConfiguration();
-
+        
         PibesDelDestinoEfCoreEntityExtensionMappings.Configure();
 
         var builder = new DbContextOptionsBuilder<PibesDelDestinoDbContext>()
             .UseSqlServer(configuration.GetConnectionString("Default"));
-
+        
         return new PibesDelDestinoDbContext(builder.Options, new NullCurrentUser());
     }
 

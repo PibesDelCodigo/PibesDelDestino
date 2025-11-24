@@ -13,7 +13,7 @@ namespace PibesDelDestino.Destinations
 {
     public class DestinationAppService :
         CrudAppService<Destination, DestinationDto, Guid, PagedAndSortedResultRequestDto, CreateUpdateDestinationDto>,
-        IDestinationAppService
+    IDestinationAppService
     {
         private readonly ICitySearchService _citySearchService;
         private readonly IGuidGenerator _guidGenerator;
