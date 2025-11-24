@@ -2,6 +2,8 @@ using AutoMapper;
 using PibesDelDestino.Application.Contracts.Destinations;
 using PibesDelDestino.Destinations;
 using PibesDelDestino.Ratings;
+using PibesDelDestino.Users;
+using Volo.Abp.Identity;
 
 namespace PibesDelDestino;
 
@@ -18,5 +20,6 @@ public class PibesDelDestinoApplicationAutoMapperProfile : Profile
         CreateMap<Coordinates, CoordinatesDto>();
         CreateMap<CoordinatesDto, Coordinates>();
         CreateMap<Rating, RatingDto>();
+        CreateMap<IdentityUser, PublicUserDto>();
     }
 }

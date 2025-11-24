@@ -14,7 +14,7 @@ using Xunit;
 namespace PibesDelDestino.Destinations
 {
     public abstract class DestinationAppService_Tests<TStartupModule> : PibesDelDestinoApplicationTestBase<TStartupModule>
-    where TStartupModule : IAbpModule
+        where TStartupModule : IAbpModule
     {
         public DestinationAppService_Tests()
         {
@@ -44,7 +44,6 @@ namespace PibesDelDestino.Destinations
                 Country = "Test Country",
                 City = "Test City",
                 Population = 100000,
-                Photo = "test_photo.jpg",
                 UpdateDate = DateTime.UtcNow,
                 Coordinates = new CoordinatesDto { Latitude = 40.7128f, Longitude = -74.0060f }
             };
@@ -54,7 +53,8 @@ namespace PibesDelDestino.Destinations
 
             // ASSERT
             result.ShouldNotBeNull();
-            result.Id.ShouldNotBe(Guid.Empty); // Esta verificación ahora pasará
+            result.Id.ShouldNotBe(Guid.Empty);
+            result.Name.ShouldBe("Test Destination");
         }
 
         [Fact]
@@ -64,6 +64,7 @@ namespace PibesDelDestino.Destinations
             var citySearchServiceMock = Substitute.For<ICitySearchService>();
             var repositoryMock = Substitute.For<IRepository<Destination, Guid>>();
             var guidGeneratorMock = Substitute.For<IGuidGenerator>();
+
             var appService = new DestinationAppService(
                 repositoryMock,
                 citySearchServiceMock,
@@ -71,25 +72,24 @@ namespace PibesDelDestino.Destinations
             );
 
             // ACT & ASSERT
-            // --- CAMBIA EL TIPO DE EXCEPCIÓN AQUÍ ---
-            await Assert.ThrowsAsync<ArgumentException>(async () =>
+            // Capturamos la excepción 'ArgumentException' que lanza tu Entidad
+            var exception = await Assert.ThrowsAsync<ArgumentException>(async () =>
             {
                 var invalidInput = new CreateUpdateDestinationDto
-                    {
-                    Name = "", // Valor inválido
-                        Country = "Test Country",
-                        City = "Test City",
-                        Population = 100000,
-                        Photo = "test_photo.jpg",
-                        UpdateDate = DateTime.UtcNow,
+                {
+                    Name = "", // Valor inválido (vacío)
+                    Country = "Test Country",
+                    City = "Test City",
+                    Population = 100000,
+                    UpdateDate = DateTime.UtcNow,
                     Coordinates = new CoordinatesDto { Latitude = 40.7128f, Longitude = -74.0060f }
                 };
                 await appService.CreateAsync(invalidInput);
             });
 
-            //Assert
-            exception.ValidationErrors.ShouldContain(err => err.MemberNames.Any(mem => mem == "Name"));
-            exception.ValidationErrors.ShouldContain(err => err.MemberNames.Contains("Coordinates.Latitude"));
+            // Verificamos que el mensaje de error mencione el campo "name"
+            // (ABP Check.NotNullOrWhiteSpace suele poner el nombre del parámetro en el mensaje)
+            exception.Message.ShouldContain("name", Case.Insensitive);
         }
 
         [Fact]
@@ -98,7 +98,7 @@ namespace PibesDelDestino.Destinations
             // ARRANGE
             var citySearchServiceMock = Substitute.For<ICitySearchService>();
             var repositoryMock = Substitute.For<IRepository<Destination, Guid>>();
-            var guidGeneratorMock = Substitute.For<IGuidGenerator>(); // Necesario para el constructor
+            var guidGeneratorMock = Substitute.For<IGuidGenerator>();
 
             var appService = new DestinationAppService(
                 repositoryMock,
