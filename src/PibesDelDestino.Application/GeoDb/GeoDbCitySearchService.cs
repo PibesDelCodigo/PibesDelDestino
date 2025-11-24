@@ -23,42 +23,58 @@ namespace PibesDelDestino.GeoDb
 
         public async Task<CityResultDto> SearchCitiesAsync(CityRequestDTO request)
         {
-            // 1. Obtenemos la configuración desde appsettings.json
-            var apiUrl = "https://wft-geo-db.p.rapidapi.com";
-            var apiKey = "1b87288382msh04081de1250362fp1acf94jsn6c66e7e31d14"; // Tu clave de API
+            var apiUrl = _configuration["GeoDb:ApiUrl"]; // O la URL hardcodeada si la dejaste así por ahora
+            var apiKey = _configuration["GeoDb:ApiKey"];
 
-            // 2. Creamos un cliente HTTP y preparamos la petición
             var client = _httpClientFactory.CreateClient();
+
+            // Construimos la URL base
+            var url = $"{apiUrl}/v1/geo/cities?limit=5";
+
+            // Agregamos filtros dinámicamente
+            if (!string.IsNullOrWhiteSpace(request.PartialName))
+            {
+                url += $"&namePrefix={request.PartialName}";
+            }
+
+            if (request.MinPopulation.HasValue)
+            {
+                url += $"&minPopulation={request.MinPopulation.Value}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.CountryId))
+            {
+                url += $"&countryIds={request.CountryId}";
+            }
+
             var httpRequest = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new System.Uri($"{apiUrl}/v1/geo/cities?namePrefix={request.PartialName}&limit=5"),
+                RequestUri = new System.Uri(url),
                 Headers =
-                {
-                    { "X-RapidAPI-Key", apiKey },
-                    { "X-RapidAPI-Host", "wft-geo-db.p.rapidapi.com" },
-                },
+        {
+            { "X-RapidAPI-Key", apiKey },
+            { "X-RapidAPI-Host", "wft-geo-db.p.rapidapi.com" },
+        },
             };
 
-            // 3. Enviamos la petición y procesamos la respuesta
+            // ... (El resto del código de envío y respuesta queda igual) ...
             using (var response = await client.SendAsync(httpRequest))
             {
+                // ... lógica de respuesta existente ...
                 response.EnsureSuccessStatusCode();
                 var apiResponse = await response.Content.ReadFromJsonAsync<GeoDbApiResponse>();
+                // ... mapeo y retorno ...
+                if (apiResponse?.Data == null) return new CityResultDto { Cities = new List<CityDto>() };
 
-                if (apiResponse?.Data == null)
-                {
-                    return new CityResultDto { Cities = new List<CityDto>() };
-                }
-
-                // 4. Mapeamos la respuesta de la API a nuestro DTO de aplicación
                 var cityDtos = apiResponse.Data.Select(city => new CityDto
                 {
                     Name = city.Name,
                     Country = city.Country,
                     Region = city.Region,
                     Latitude = city.Latitude,
-                    Longitude = city.Longitude
+                    Longitude = city.Longitude,
+                    Population = city.Population,
                 }).ToList();
 
                 return new CityResultDto { Cities = cityDtos };

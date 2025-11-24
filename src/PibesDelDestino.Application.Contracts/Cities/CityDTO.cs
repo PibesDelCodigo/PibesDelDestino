@@ -10,9 +10,10 @@ namespace PibesDelDestino.Cities
     {
         public string Name { get; set; }
         public string Country { get; set; }
-        public string Region { get; set; } // Representa el estado o provincia
+        public string Region { get; set; } 
         public float Latitude { get; set; }
         public float Longitude { get; set; }
+        public int Population { get; set; } 
     }
 }
 

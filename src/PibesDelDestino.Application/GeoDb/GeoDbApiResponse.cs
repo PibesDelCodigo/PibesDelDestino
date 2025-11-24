@@ -27,5 +27,9 @@ namespace PibesDelDestino.GeoDb
 
         [JsonPropertyName("longitude")]
         public float Longitude { get; set; }
+
+        [JsonPropertyName("longitude")]
+        public int Population { get; set; }
+
     }
 }
