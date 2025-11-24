@@ -1,0 +1,36 @@
+<div class="container mt-5">
+  
+  <div *ngIf="isLoading" class="text-center">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p>Cargando perfil...</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="user" class="card shadow-sm mx-auto" style="max-width: 500px;">
+    <div class="card-body text-center">
+      <div class="avatar-circle mb-3 mx-auto">
+        {{ user.name?.charAt(0) }}{{ user.surname?.charAt(0) }}
+      </div>
+
+      <h2 class="card-title">{{ user.name }} {{ user.surname }}</h2>
+      
+      <p class="text-muted">&#64;{{ user.userName }}</p>
+      
+      <hr>
+      
+      <div class="stats d-flex justify-content-around">
+        <div>
+          <strong>0</strong>
+          <div class="text-muted small">Reseñas</div>
+        </div>
+        <div>
+          <strong>0</strong>
+          <div class="text-muted small">Favoritos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
