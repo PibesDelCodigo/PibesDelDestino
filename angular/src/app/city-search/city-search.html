@@ -40,11 +40,12 @@
   <div *ngIf="errorMessage" class="error-message">❌ {{ errorMessage }}</div>
 
   <ul *ngIf="cities.length > 0" class="results-list">
-    <li *ngFor="let city of cities" class="result-item">
+<li *ngFor="let city of cities" class="result-item">
       <div class="city-header">
         <span class="city-name">{{ city.name }}</span>
-        <span class="city-region">{{ city.region }}</span>
+        <span class="city-region" *ngIf="city.region">{{ city.region }}</span>
       </div>
+      
       <div class="city-country">{{ city.country }}</div>
       
       <div class="city-stats">
@@ -52,6 +53,10 @@
       </div>
       
       <small>Lat: {{ city.latitude }} | Lon: {{ city.longitude }}</small>
+
+      <button class="btn-save" (click)="saveCity(city)">
+        💾 Guardar en mi App
+      </button>
     </li>
   </ul>
 

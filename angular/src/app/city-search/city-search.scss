@@ -128,3 +128,19 @@
   margin-top: 1rem;
   font-style: italic;
 }
+
+.btn-save {
+  margin-top: 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  width: 100%; // Botón ancho completo
+
+  &:hover {
+    background-color: #218838;
+  }
+}

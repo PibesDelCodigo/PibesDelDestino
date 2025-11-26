@@ -1,0 +1,17 @@
+<div class="popular-container" *ngIf="destinations.length > 0">
+  <h3>🌟 Destinos Populares (Base de Datos)</h3>
+  
+  <div class="grid">
+    <div *ngFor="let dest of destinations" class="card">
+      <div class="card-body">
+        <h4>{{ dest.name }}</h4>
+        <p class="country">{{ dest.country }}</p>
+        <p class="pop">👥 {{ dest.population | number }} hab.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="destinations.length === 0" class="empty-state">
+  <p>Aún no hay destinos populares guardados.</p>
+</div>
