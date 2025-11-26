@@ -3,14 +3,12 @@ using System.Text.Json.Serialization;
 
 namespace PibesDelDestino.GeoDb
 {
-    // Esta clase representa la respuesta completa de la API
     public class GeoDbApiResponse
     {
         [JsonPropertyName("data")]
         public List<GeoDbCity> Data { get; set; }
     }
 
-    // Esta clase representa una ciudad individual en la respuesta de la API
     public class GeoDbCity
     {
         [JsonPropertyName("name")]
@@ -27,5 +25,8 @@ namespace PibesDelDestino.GeoDb
 
         [JsonPropertyName("longitude")]
         public float Longitude { get; set; }
+
+        [JsonPropertyName("population")]
+        public int Population { get; set; }
     }
 }

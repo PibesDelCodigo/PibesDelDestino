@@ -1,5 +1,5 @@
 .search-container {
-  max-width: 600px;
+  max-width: 700px;
   margin: 2rem auto;
   padding: 20px;
   border-radius: 10px;
@@ -11,6 +11,27 @@
     color: #444;
     margin-bottom: 1.5rem;
     text-align: center;
+  }
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; // Dos columnas
+  gap: 15px;
+  margin-bottom: 1rem;
+
+  .full-width {
+    grid-column: 1 / -1; // El nombre ocupa todo el ancho
+  }
+}
+
+.form-group {
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+    font-size: 0.9rem;
   }
 }
 
@@ -69,6 +90,13 @@
     margin-top: 2px;
   }
 
+.city-stats {
+  font-size: 0.9rem;
+  color: #28a745;
+  font-weight: 600;
+  margin: 5px 0;
+}
+
   small {
     display: block;
     margin-top: 5px;
@@ -99,4 +127,20 @@
   color: #777;
   margin-top: 1rem;
   font-style: italic;
+}
+
+.btn-save {
+  margin-top: 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  width: 100%; // Botón ancho completo
+
+  &:hover {
+    background-color: #218838;
+  }
 }

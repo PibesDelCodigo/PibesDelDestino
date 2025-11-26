@@ -1,0 +1,23 @@
+.popular-container {
+  margin-top: 3rem;
+  h3 { text-align: center; margin-bottom: 1.5rem; color: #444; }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.country { color: #666; margin: 5px 0; }
+.pop { color: #28a745; font-size: 0.9rem; font-weight: bold; }
+.empty-state { text-align: center; margin-top: 2rem; color: #999; }

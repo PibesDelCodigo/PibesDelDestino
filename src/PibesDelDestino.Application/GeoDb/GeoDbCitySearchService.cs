@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using PibesDelDestino.Cities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -23,45 +24,78 @@ namespace PibesDelDestino.GeoDb
 
         public async Task<CityResultDto> SearchCitiesAsync(CityRequestDTO request)
         {
-            // 1. Obtenemos la configuración desde appsettings.json
-            var apiUrl = "https://wft-geo-db.p.rapidapi.com";
-            var apiKey = "1b87288382msh04081de1250362fp1acf94jsn6c66e7e31d14"; // Tu clave de API
+            var apiUrl = _configuration["GeoDb:ApiUrl"]; // O la URL hardcodeada si la dejaste así por ahora
+            var apiKey = _configuration["GeoDb:ApiKey"];
 
-            // 2. Creamos un cliente HTTP y preparamos la petición
             var client = _httpClientFactory.CreateClient();
+
+            // Ponemos la URL base completa y correcta "a fuego" (hardcoded)
+            var url = "https://wft-geo-db.p.rapidapi.com/v1/geo/cities?limit=5";
+
+            // Agregamos filtros dinámicamente
+            if (!string.IsNullOrWhiteSpace(request.PartialName))
+            {
+                url += $"&namePrefix={request.PartialName}";
+            }
+
+            if (request.MinPopulation.HasValue)
+            {
+                url += $"&minPopulation={request.MinPopulation.Value}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.CountryId))
+            {
+                url += $"&countryIds={request.CountryId}";
+            }
+
             var httpRequest = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new System.Uri($"{apiUrl}/v1/geo/cities?namePrefix={request.PartialName}&limit=5"),
+                RequestUri = new System.Uri(url),
                 Headers =
-                {
-                    { "X-RapidAPI-Key", apiKey },
-                    { "X-RapidAPI-Host", "wft-geo-db.p.rapidapi.com" },
-                },
+        {
+            { "X-RapidAPI-Key", apiKey },
+            { "X-RapidAPI-Host", "wft-geo-db.p.rapidapi.com" },
+        },
             };
-
-            // 3. Enviamos la petición y procesamos la respuesta
-            using (var response = await client.SendAsync(httpRequest))
+            try
             {
-                response.EnsureSuccessStatusCode();
-                var apiResponse = await response.Content.ReadFromJsonAsync<GeoDbApiResponse>();
-
-                if (apiResponse?.Data == null)
+                using (var response = await client.SendAsync(httpRequest))
                 {
-                    return new CityResultDto { Cities = new List<CityDto>() };
+                    // 1. Verificamos si falló, pero SUAVEMENTE
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        // Si es 404 (No encontrado) o 400 (Bad Request por poner UK), 
+                        // devolvemos lista vacía en lugar de romper.
+                        return new CityResultDto { Cities = new List<CityDto>() };
+                    }
+
+                    // 2. Si llegamos acá, es porque todo salió bien (200 OK)
+                    var apiResponse = await response.Content.ReadFromJsonAsync<GeoDbApiResponse>();
+
+                    if (apiResponse?.Data == null)
+                    {
+                        return new CityResultDto { Cities = new List<CityDto>() };
+                    }
+
+                    var cityDtos = apiResponse.Data.Select(city => new CityDto
+                    {
+                        Name = city.Name,
+                        Country = city.Country,
+                        Region = city.Region,
+                        Latitude = city.Latitude,
+                        Longitude = city.Longitude,
+                        Population = city.Population
+                    }).ToList();
+
+                    return new CityResultDto { Cities = cityDtos };
                 }
-
-                // 4. Mapeamos la respuesta de la API a nuestro DTO de aplicación
-                var cityDtos = apiResponse.Data.Select(city => new CityDto
-                {
-                    Name = city.Name,
-                    Country = city.Country,
-                    Region = city.Region,
-                    Latitude = city.Latitude,
-                    Longitude = city.Longitude
-                }).ToList();
-
-                return new CityResultDto { Cities = cityDtos };
+            }
+            catch (Exception ex)
+            {
+                // 3. Si explota la conexión (se corta internet), caemos acá.
+                // Devolvemos lista vacía para que el frontend no muestre pantalla roja.
+                return new CityResultDto { Cities = new List<CityDto>() };
             }
         }
     }
