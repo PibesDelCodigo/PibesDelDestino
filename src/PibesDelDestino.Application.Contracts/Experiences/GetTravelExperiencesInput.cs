@@ -6,11 +6,7 @@ namespace PibesDelDestino.Experiences
     public class GetTravelExperiencesInput : PagedAndSortedResultRequestDto
     {
         public Guid? DestinationId { get; set; }
-
-        // REQUERIMIENTO 3.6: Buscar por palabras clave
-        public string FilterText { get; set; }
-
-        // REQUERIMIENTO 3.5: Filtrar por tipo (Positiva/Negativa/Neutral)
+        public string? FilterText { get; set; }
         public ExperienceFilterType? Type { get; set; }
     }
 

@@ -2,10 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DestinationService } from '../proxy/destinations';
 import { DestinationDto } from '../proxy/application/contracts/destinations';
+import { ExperienceListComponent } from '../experiences/experience-list/experience-list';
+
 @Component({
   selector: 'app-popular-destinations',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ExperienceListComponent],
   templateUrl: './popular-destinations.html',
   styleUrls: ['./popular-destinations.scss']
 })

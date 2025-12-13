@@ -5,6 +5,11 @@ import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs
 import { CityDto } from '../proxy/cities';
 import { DestinationService } from '../proxy/destinations';
 import { CreateUpdateDestinationDto } from '../proxy/application/contracts/destinations';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExperienceModalComponent } from '../experiences/experience-modal/experience-modal';
+import { AuthService } from '@abp/ng.core';
+
+
 
 @Component({
   selector: 'app-city-search',
@@ -22,7 +27,9 @@ export class CitySearch implements OnInit {
 
   constructor(
     private destinationService: DestinationService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private modalService: NgbModal,
+    private authService: AuthService
   ) {
     this.searchForm = this.fb.group({
       partialName: [''],
@@ -96,4 +103,70 @@ export class CitySearch implements OnInit {
       }
     });
   }
+
+rateCity(city: CityDto) {
+
+  if (!this.authService.isAuthenticated) {
+      this.authService.navigateToLogin(); // Lo mandamos a loguearse
+      return; // Cortamos la ejecución
+    }
+
+    this.isLoading = true;
+
+    // 1. Preparamos el objeto
+    const newDestination: CreateUpdateDestinationDto = {
+      name: city.name,
+      country: city.country,
+      city: city.region || city.name,
+      population: city.population || 0,
+      photo: '',
+      updateDate: new Date().toISOString(),
+      coordinates: {
+        latitude: city.latitude,
+        longitude: city.longitude
+      }
+    };
+
+    // 2. Intentamos CREAR
+    this.destinationService.create(newDestination).subscribe({
+      next: (savedDestination) => {
+        // ESCENARIO A: Era nueva, se creó bien.
+        this.isLoading = false;
+        this.openRatingModal(savedDestination.id, savedDestination.name);
+      },
+      error: (err) => {
+        // ESCENARIO B: Falló (probablemente ya existe). La buscamos.
+        console.warn('No se pudo crear (¿ya existe?). Buscando en BD...', err);
+        
+        // Usamos getList filtrando por nombre para recuperar el ID
+        // NOTA: Asegurate que tu servicio acepte un parametro de filtro, si no, traemos todo
+       // ✅ SOLUCIÓN: Traemos hasta 100 destinos y buscamos nosotros el correcto
+this.destinationService.getList({ maxResultCount: 100 }).subscribe({
+          next: (response) => {
+            this.isLoading = false;
+            // Buscamos la coincidencia exacta por nombre
+            const found = response.items.find(d => d.name === city.name);
+            
+            if (found) {
+              this.openRatingModal(found.id, found.name);
+            } else {
+              alert('❌ Error: No se pudo guardar ni encontrar el destino para calificar.');
+            }
+          },
+          error: (searchErr) => {
+            this.isLoading = false;
+            console.error('Error al buscar:', searchErr);
+          }
+        });
+      }
+    });
+  }
+
+  // Helper para no repetir código
+  private openRatingModal(id: string, name: string) {
+    const modalRef = this.modalService.open(ExperienceModalComponent, { size: 'lg' });
+    modalRef.componentInstance.destinationId = id;
+    modalRef.componentInstance.destinationName = name;
+  }
+
 }

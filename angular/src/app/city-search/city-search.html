@@ -54,9 +54,15 @@
       
       <small>Lat: {{ city.latitude }} | Lon: {{ city.longitude }}</small>
 
-      <button class="btn-save" (click)="saveCity(city)">
-        💾 Guardar en mi App
-      </button>
+<div class="d-flex gap-2 mt-2">
+        <button class="btn btn-success flex-grow-1" (click)="saveCity(city)">
+          💾 Guardar
+        </button>
+
+        <button class="btn btn-warning flex-grow-1" (click)="rateCity(city)">
+          ⭐ Calificar
+        </button>
+      </div>
     </li>
   </ul>
 

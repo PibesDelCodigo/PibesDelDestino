@@ -1,15 +1,18 @@
-﻿using PibesDelDestino.Users; // Necesario para buscar usuarios
+﻿using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Authorization;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 
 namespace PibesDelDestino.Experiences
 {
+    // 🔒 1. LA CLASE ESTÁ PROTEGIDA POR DEFECTO (Nadie entra sin login)
+    [Authorize]
     public class TravelExperienceAppService : CrudAppService<
             TravelExperience,
             TravelExperienceDto,
@@ -27,39 +30,45 @@ namespace PibesDelDestino.Experiences
         {
             _userRepository = userRepository;
         }
+
+        // 🔓 2. EXCEPCIÓN: ABRIMOS LA LECTURA PARA TODOS
+        // Esto permite que usuarios anónimos vean la lista de reseñas
+        [AllowAnonymous]
+        public override async Task<PagedResultDto<TravelExperienceDto>> GetListAsync(GetTravelExperiencesInput input)
+        {
+            return await base.GetListAsync(input);
+        }
+
+        // 3. LOGICA DE FILTROS (Destino, Texto, Estrellas)
         protected override async Task<IQueryable<TravelExperience>> CreateFilteredQueryAsync(GetTravelExperiencesInput input)
         {
             var query = await base.CreateFilteredQueryAsync(input);
 
-            // 1. FILTRO POR DESTINO (3.4)
+            // Filtro por Destino
             if (input.DestinationId.HasValue)
             {
                 query = query.Where(x => x.DestinationId == input.DestinationId);
             }
 
-            // 2. BUSQUEDA POR PALABRAS CLAVE (3.6)
+            // Búsqueda por Texto
             if (!string.IsNullOrWhiteSpace(input.FilterText))
             {
-                // Busca en Título O en Descripción
                 query = query.Where(x => x.Title.Contains(input.FilterText) ||
                                          x.Description.Contains(input.FilterText));
             }
 
-            // 3. FILTRO POR VALORACIÓN (3.5)
+            // Filtro por Valoración
             if (input.Type.HasValue)
             {
                 switch (input.Type.Value)
                 {
                     case ExperienceFilterType.Positive:
-                        // 4 o 5 estrellas
                         query = query.Where(x => x.Rating >= 4);
                         break;
                     case ExperienceFilterType.Neutral:
-                        // 3 estrellas
                         query = query.Where(x => x.Rating == 3);
                         break;
                     case ExperienceFilterType.Negative:
-                        // 1 o 2 estrellas
                         query = query.Where(x => x.Rating <= 2);
                         break;
                 }
@@ -68,19 +77,38 @@ namespace PibesDelDestino.Experiences
             return query;
         }
 
-        // 2. LÓGICA PARA PONER EL NOMBRE DE USUARIO (JOIN MANUAL)
+        // 4. CREACIÓN SEGURA (Asigna el usuario logueado)
+        public override async Task<TravelExperienceDto> CreateAsync(CreateUpdateTravelExperienceDto input)
+        {
+            if (CurrentUser.Id == null)
+            {
+                throw new AbpAuthorizationException("Debes estar logueado para crear una experiencia.");
+            }
+
+            var newExperience = new TravelExperience(
+                GuidGenerator.Create(),
+                CurrentUser.Id.Value, // Asignamos el ID real
+                input.DestinationId,
+                input.Title,
+                input.Description,
+                input.Date,
+                input.Rating
+            );
+
+            await Repository.InsertAsync(newExperience);
+
+            return ObjectMapper.Map<TravelExperience, TravelExperienceDto>(newExperience);
+        }
+
+        // 5. MAPE DE NOMBRES DE USUARIO
         protected override async Task<List<TravelExperienceDto>> MapToGetListOutputDtosAsync(List<TravelExperience> entities)
         {
-            // Mapeamos lo básico (título, fecha, rating...)
             var dtos = await base.MapToGetListOutputDtosAsync(entities);
 
-            // Recolectamos todos los IDs de usuarios de esta página
             var userIds = entities.Select(x => x.UserId).Distinct().ToArray();
 
-            // Buscamos esos usuarios en la base de datos
             var users = await _userRepository.GetListAsync(x => userIds.Contains(x.Id));
 
-            // Asignamos los nombres a los DTOs
             foreach (var dto in dtos)
             {
                 var user = users.FirstOrDefault(u => u.Id == dto.UserId);
