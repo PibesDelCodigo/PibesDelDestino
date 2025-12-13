@@ -1,0 +1,68 @@
+<div class="reviews-container">
+  
+  <h5 class="mb-3">Opiniones de la Comunidad ({{ experiences.length }})</h5>
+
+  <div class="card p-3 mb-3 bg-light border-0">
+    <div class="row g-2">
+      <div class="col-md-7">
+        <input type="text" 
+               class="form-control" 
+               placeholder="Buscar..." 
+               [(ngModel)]="searchText" 
+               (keyup.enter)="loadExperiences()">
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" [(ngModel)]="filterType" (change)="loadExperiences()">
+          <option [ngValue]="null">Todas</option>
+          <option [ngValue]="0">Positivas</option>
+          <option [ngValue]="1">Neutrales</option>
+          <option [ngValue]="2">Negativas</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="button" class="btn btn-primary w-100" (click)="loadExperiences()">
+          Filtrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="text-center p-3">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p>Cargando opiniones...</p>
+  </div>
+
+  <div *ngIf="!isLoading && experiences.length === 0" class="alert alert-info text-center">
+    No se encontraron opiniones con estos filtros.
+  </div>
+
+  <div class="list-group" [hidden]="isLoading || experiences.length === 0">
+    
+    <div *ngFor="let exp of experiences" class="list-group-item position-relative">
+      
+      <button *ngIf="exp.userId === currentUserId" 
+              class="btn btn-outline-danger btn-sm position-absolute top-0 end-0 m-2"
+              (click)="delete(exp)"
+              title="Eliminar mi reseña">
+        <i class="fa fa-trash"></i>
+      </button>
+      <div class="d-flex justify-content-between align-items-center me-4">
+        <div class="text-warning">
+          <span *ngFor="let s of stars">
+            <i [class]="s <= exp.rating ? 'fas fa-star' : 'far fa-star'"></i>
+          </span>
+          <span class="text-dark ms-2 fw-bold">({{ exp.rating }}/5)</span>
+        </div>
+        <small class="text-muted">{{ exp.date | date:'shortDate' }}</small>
+      </div>
+
+      <h6 class="fw-bold mt-2">{{ exp.title }}</h6>
+      <p class="mb-1">{{ exp.description }}</p>
+      
+      <small class="text-primary">
+        <i class="fa fa-user-circle"></i> {{ exp.userName || 'Usuario Anónimo' }}
+      </small>
+    </div>
+
+  </div>
+</div>

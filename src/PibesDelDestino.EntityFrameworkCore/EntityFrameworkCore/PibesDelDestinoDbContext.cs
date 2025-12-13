@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PibesDelDestino.Destinations;
+using PibesDelDestino.Experiences;
 using PibesDelDestino.Ratings;
 using PibesDelDestino.Users;
 using System;
@@ -30,6 +31,7 @@ public class PibesDelDestinoDbContext :
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
 
+    public DbSet<TravelExperience> TravelExperiences { get; set; }
     public DbSet<Destination> Destinations { get; set; }
     #region Entities from the modules
 
@@ -81,14 +83,19 @@ public class PibesDelDestinoDbContext :
         builder.ConfigureOpenIddict();
         builder.ConfigureBlobStoring();
 
-        /* Configure your own tables/entities inside here */
+        builder.Entity<TravelExperience>(b =>
+        {
+            b.ToTable(PibesDelDestinoConsts.DbTablePrefix + "TravelExperiences", PibesDelDestinoConsts.DbSchema);
+            b.ConfigureByConvention();
 
-        //builder.Entity<YourEntity>(b =>
-        //{
-        //    b.ToTable(PibesDelDestinoConsts.DbTablePrefix + "YourEntities", PibesDelDestinoConsts.DbSchema);
-        //    b.ConfigureByConvention(); //auto configure for the base class props
-        //    //...
-        //});
+            b.Property(x => x.Title).IsRequired().HasMaxLength(100);
+            b.Property(x => x.Description).IsRequired().HasMaxLength(4000);
+            b.Property(x => x.Rating).IsRequired(); // Obligatorio
+
+            // Índices para que las búsquedas sean rápidas
+            b.HasIndex(x => x.DestinationId);
+            b.HasIndex(x => x.UserId);
+        });
 
         builder.Entity<Destination>(b =>
         {

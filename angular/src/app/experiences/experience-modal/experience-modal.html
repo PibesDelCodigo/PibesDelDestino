@@ -1,0 +1,41 @@
+<div class="modal-header">
+  <h5 class="modal-title">Calificar a {{ destinationName }}</h5>
+  <button type="button" class="btn-close" (click)="close()"></button>
+</div>
+
+<div class="modal-body">
+  <form [formGroup]="form">
+    
+    <div class="mb-3 text-center">
+      <label class="d-block fw-bold mb-2">Tu Calificación</label>
+      <div class="stars-container">
+        <i *ngFor="let star of stars" 
+           class="fa-star fa-2x cursor-pointer"
+           [ngClass]="star <= form.get('rating').value ? 'fas text-warning' : 'far text-muted'"
+           (click)="setRating(star)">
+        </i>
+      </div>
+      <div class="text-muted mt-1">
+        {{ form.get('rating').value }} / 5
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Título Breve</label>
+      <input type="text" class="form-control" formControlName="title" placeholder="Ej: ¡Increíble gastronomía!">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Tu Experiencia Completa</label>
+      <textarea class="form-control" formControlName="description" rows="5" placeholder="Contanos los detalles..."></textarea>
+    </div>
+
+  </form>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" (click)="close()">Cancelar</button>
+  <button type="button" class="btn btn-primary" (click)="save()" [disabled]="form.invalid || isSaving">
+    <i class="fa fa-paper-plane"></i> Publicar Experiencia
+  </button>
+</div>
