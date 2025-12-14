@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PibesDelDestino.Destinations;
 using PibesDelDestino.Experiences;
+using PibesDelDestino.Favorites;
 using PibesDelDestino.Ratings;
 using PibesDelDestino.Users;
 using System;
@@ -30,7 +31,7 @@ public class PibesDelDestinoDbContext :
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
-
+    public DbSet<FavoriteDestination> FavoriteDestinations { get; set; }
     public DbSet<TravelExperience> TravelExperiences { get; set; }
     public DbSet<Destination> Destinations { get; set; }
     #region Entities from the modules
@@ -96,6 +97,17 @@ public class PibesDelDestinoDbContext :
             b.HasIndex(x => x.DestinationId);
             b.HasIndex(x => x.UserId);
         });
+
+        builder.Entity<FavoriteDestination>(b =>
+        {
+            b.ToTable(PibesDelDestinoConsts.DbTablePrefix + "FavoriteDestinations", PibesDelDestinoConsts.DbSchema);
+            b.ConfigureByConvention();
+
+            // IMPORTANTE: Índice ÚNICO compuesto.
+            // Esto impide que la base de datos acepte dos filas con el mismo Usuario + Destino.
+            b.HasIndex(x => new { x.UserId, x.DestinationId }).IsUnique();
+        });
+
 
         builder.Entity<Destination>(b =>
         {
