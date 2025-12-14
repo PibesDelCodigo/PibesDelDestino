@@ -1,27 +1,38 @@
 <div class="popular-container" *ngIf="destinations.length > 0">
   <h3>🌟 Destinos Populares (Base de Datos)</h3>
   
-<div *ngFor="let dest of destinations" class="card mb-3"> <div class="card-body">
-        <h4>{{ dest.name }}</h4>
-        <p class="country">{{ dest.country }}</p>
-        <p class="pop">👥 {{ dest.population | number }} hab.</p>
+  <div *ngFor="let dest of destinations" class="card mb-3 position-relative">
 
-        <div class="d-grid gap-2">
-          <button class="btn btn-warning btn-sm" (click)="rateDestination(dest)">
-            ⭐ Calificar
-          </button>
-          
-          <button class="btn btn-outline-info btn-sm" (click)="dest['showReviews'] = !dest['showReviews']">
-            📖 {{ dest['showReviews'] ? 'Ocultar' : 'Ver' }} Reseñas
-          </button>
-        </div>
+    <button class="btn btn-link position-absolute top-0 end-0 m-2 p-0 text-decoration-none" 
+            style="z-index: 10;"
+            (click)="toggleFavorite(dest)"
+            title="Agregar/Quitar de favoritos">
+      <i class="fa-heart fa-2x" 
+         [ngClass]="favoriteIds.has(dest.id) ? 'fas text-danger' : 'far text-muted'">
+      </i>
+    </button>
+    <div class="card-body">
+      <h4 class="px-5 text-center">{{ dest.name }}</h4>
+      <p class="country">{{ dest.country }}</p>
+      <p class="pop">👥 {{ dest.population | number }} hab.</p>
 
-        <div class="mt-3 border-top pt-2" *ngIf="dest['showReviews']">
-          <app-experience-list [destinationId]="dest.id"></app-experience-list>
-        </div>
+      <div class="d-grid gap-2">
+        <button class="btn btn-warning btn-sm" (click)="rateDestination(dest)">
+          ⭐ Calificar
+        </button>
         
+        <button class="btn btn-outline-info btn-sm" (click)="dest['showReviews'] = !dest['showReviews']">
+          📖 {{ dest['showReviews'] ? 'Ocultar' : 'Ver' }} Reseñas
+        </button>
       </div>
+
+      <div class="mt-3 border-top pt-2" *ngIf="dest['showReviews']">
+        <app-experience-list [destinationId]="dest.id"></app-experience-list>
+      </div>
+      
     </div>
+  </div>
+</div>
 
 <div *ngIf="destinations.length === 0" class="empty-state">
   <p>Aún no hay destinos populares guardados.</p>

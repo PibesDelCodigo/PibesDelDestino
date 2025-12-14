@@ -1,0 +1,33 @@
+<div class="container mt-4">
+  <h2 class="mb-4 text-danger"><i class="fas fa-heart"></i> Mis Destinos Favoritos</h2>
+
+  <div *ngIf="isLoading" class="text-center">
+    <div class="spinner-border text-danger" role="status"></div>
+  </div>
+
+  <div *ngIf="!isLoading && favorites.length === 0" class="alert alert-light text-center">
+    <h3>💔 Aún no tienes favoritos</h3>
+    <p>Ve a buscar destinos y dales amor.</p>
+  </div>
+
+  <div class="row">
+    <div *ngFor="let dest of favorites" class="col-md-4 mb-4">
+      
+      <div class="card h-100 shadow-sm border-danger position-relative"> 
+        
+        <button class="btn btn-outline-danger btn-sm position-absolute top-0 end-0 m-2" 
+                (click)="remove(dest.id)"
+                title="Quitar de favoritos">
+          <i class="fas fa-trash-alt"></i> </button>
+
+        <div class="card-body">
+          <h5 class="card-title pe-4">{{ dest.name }}</h5> <h6 class="card-subtitle mb-2 text-muted">{{ dest.country }}</h6>
+          <p class="card-text">
+            Una joya de {{ dest.population | number }} habitantes.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

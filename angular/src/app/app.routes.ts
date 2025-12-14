@@ -1,4 +1,4 @@
-import { authGuard, permissionGuard } from '@abp/ng.core';
+import { authGuard, permissionGuard } from '@abp/ng.core'; // Usamos este que ya trajiste
 import { Routes } from '@angular/router';
 
 export const APP_ROUTES: Routes = [
@@ -24,10 +24,20 @@ export const APP_ROUTES: Routes = [
     loadChildren: () => import('@abp/ng.setting-management').then(c => c.createRoutes()),
   },
 
+  // --- TUS FAVORITOS ---
   {
-    
+    path: 'favorites',
+    loadComponent: () => 
+      // CORRECCIÓN: Agregué .component al final del nombre del archivo
+      import('./favorites/my-favorites/my-favorites') 
+      .then(m => m.MyFavoritesComponent),
+    canActivate: [authGuard] // CORRECCIÓN: Usamos authGuard (minúscula) que importaste en la línea 1
+  },
+  // --------------------
+
+  {
     path: 'users/:id', 
-    loadComponent: () => import('./users/public-profile/public-profile'). then(c => c.PublicProfile),
+    loadComponent: () => import('./users/public-profile/public-profile').then(c => c.PublicProfile),
   },
 
   {
