@@ -15,22 +15,30 @@ function configureRoutes(routesService: RoutesService) {
         order: 1,
         layout: eLayoutType.application,
       },
-      // --- NUEVO: Buscador de Ciudades ---
+      // --- Buscador de Ciudades ---
       {
         path: '/city-search',
-        name: 'Buscar Ciudades', // Lo que se lee en el menú
-        iconClass: 'fas fa-search', // Icono de lupa
-        order: 2,
+        name: 'Buscar Ciudades',
+        iconClass: 'fas fa-search',
+        order: 2, // Segundo lugar
         layout: eLayoutType.application,
       },
-      // --- NUEVO: Mi Cuenta ---
+      // --- NUEVO: Mis Favoritos ---
+      {
+        path: '/favorites',
+        name: 'Mis Favoritos',
+        iconClass: 'fas fa-heart',
+        order: 3, // Tercer lugar (Corregido para que no se pise con el anterior)
+        layout: eLayoutType.application,
+      },
+      // --- Mi Cuenta ---
       {
         path: '/my-account',
-        name: 'Eliminar Cuenta',
-        iconClass: 'fas fa-user-cog', // Icono de usuario/config
-        order: 3,
+        name: 'Eliminar Cuenta', // ¿Seguro que querés que el menú diga "Eliminar Cuenta"? Quizás "Mi Cuenta" suena menos peligroso jaja
+        iconClass: 'fas fa-user-cog',
+        order: 4, // Cuarto lugar
         layout: eLayoutType.application,
-        requiredPolicy: '', // Opcional: Podés poner permisos aquí si quisieras
+        requiredPolicy: '', 
       },
     ]);
   };

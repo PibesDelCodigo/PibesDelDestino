@@ -7,9 +7,8 @@ import { DestinationService } from '../proxy/destinations';
 import { CreateUpdateDestinationDto } from '../proxy/application/contracts/destinations';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExperienceModalComponent } from '../experiences/experience-modal/experience-modal';
+import { FavoriteService } from '../proxy/favorites';
 import { AuthService } from '@abp/ng.core';
-
-
 
 @Component({
   selector: 'app-city-search',
@@ -25,11 +24,19 @@ export class CitySearch implements OnInit {
   isLoading = false;
   errorMessage = '';
 
+  // 1. VISUAL: Set para pintar los corazones (Solo nombres)
+  likedCities = new Set<string>();
+  
+  // 2. LÓGICA: Mapa para recordar los IDs reales de la BD y NO duplicar
+  // Clave: Nombre Ciudad -> Valor: Guid (ID del Destino)
+  destinationCache = new Map<string, string>(); 
+
   constructor(
     private destinationService: DestinationService,
     private fb: FormBuilder,
     private modalService: NgbModal,
-    private authService: AuthService
+    private authService: AuthService,
+    private favoriteService: FavoriteService
   ) {
     this.searchForm = this.fb.group({
       partialName: [''],
@@ -39,7 +46,7 @@ export class CitySearch implements OnInit {
   }
 
   ngOnInit(): void {
-    // ... (Tu código del ngOnInit queda igual que antes) ...
+    // A. CONFIGURACIÓN DEL BUSCADOR
     this.searchForm.valueChanges.pipe(
       debounceTime(800),
       distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
@@ -56,7 +63,7 @@ export class CitySearch implements OnInit {
         this.errorMessage = '';
       }),
       switchMap(val => {
-        return this.destinationService.searchCities({ 
+        return this.destinationService.searchCities({
           partialName: val.partialName,
           countryId: val.countryId || null,
           minPopulation: val.minPopulation || null
@@ -73,100 +80,113 @@ export class CitySearch implements OnInit {
         this.isLoading = false;
       }
     });
+
+    // B. CARGA DE FAVORITOS (SOLUCIÓN PERSISTENCIA)
+    if (this.authService.isAuthenticated) {
+      this.favoriteService.getMyFavorites().subscribe(favs => {
+        favs.forEach(f => {
+          this.likedCities.add(f.name);         // Pintar corazón
+          this.destinationCache.set(f.name, f.id); // Guardar ID para no duplicar
+        });
+      });
+    }
   }
 
-  // --- NUEVA FUNCIÓN: GUARDAR CIUDAD ---
-  saveCity(city: CityDto) {
-    if(!confirm(`¿Querés guardar a ${city.name} en tu lista de destinos?`)) return;
-
-    // Mapeamos la ciudad de la API (CityDto) al DTO de nuestra Base de Datos
-    const newDestination: CreateUpdateDestinationDto = {
-      name: city.name,
-      country: city.country,
-      city: city.region || city.name, // Si no hay región, repetimos el nombre
-      population: city.population || 0,
-      photo: '', // La API de búsqueda simple no trae foto
-      updateDate: new Date().toISOString(),
-      coordinates: {
-        latitude: city.latitude,
-        longitude: city.longitude
-      }
-    };
-
-    this.destinationService.create(newDestination).subscribe({
-      next: () => {
-        alert('✅ ¡Destino guardado con éxito!');
-      },
-      error: (err) => {
-        console.error(err);
-        alert('❌ Error al guardar. ¿Quizás ya existe?');
-      }
-    });
-  }
-
-rateCity(city: CityDto) {
-
-  if (!this.authService.isAuthenticated) {
-      this.authService.navigateToLogin(); // Lo mandamos a loguearse
-      return; // Cortamos la ejecución
+  // --- HELPER: BUSCAR O CREAR (SOLUCIÓN DUPLICADOS) ---
+  // Este método se encarga de conseguir un ID válido sin crear basura
+  private ensureDestinationExists(city: CityDto, callback: (id: string) => void) {
+    
+    // CASO 1: Ya lo tenemos en memoria (Caché)
+    if (this.destinationCache.has(city.name)) {
+      callback(this.destinationCache.get(city.name)!);
+      return;
     }
 
-    this.isLoading = true;
+    // CASO 2: No está en memoria, buscamos en la BD por si existe
+    this.destinationService.getList({ maxResultCount: 100 }).subscribe(response => {
+      const found = response.items.find(d => d.name === city.name);
+      
+      if (found) {
+        // EXISTÍA EN BD: Lo guardamos en caché y lo usamos
+        this.destinationCache.set(city.name, found.id);
+        callback(found.id);
+      } else {
+        // CASO 3: NO EXISTE EN NINGÚN LADO: Recién ahí creamos
+        const newDestination: CreateUpdateDestinationDto = {
+          name: city.name,
+          country: city.country,
+          city: city.region || city.name,
+          population: city.population || 0,
+          photo: '',
+          updateDate: new Date().toISOString(),
+          coordinates: { latitude: city.latitude, longitude: city.longitude }
+        };
 
-    // 1. Preparamos el objeto
-    const newDestination: CreateUpdateDestinationDto = {
-      name: city.name,
-      country: city.country,
-      city: city.region || city.name,
-      population: city.population || 0,
-      photo: '',
-      updateDate: new Date().toISOString(),
-      coordinates: {
-        latitude: city.latitude,
-        longitude: city.longitude
-      }
-    };
-
-    // 2. Intentamos CREAR
-    this.destinationService.create(newDestination).subscribe({
-      next: (savedDestination) => {
-        // ESCENARIO A: Era nueva, se creó bien.
-        this.isLoading = false;
-        this.openRatingModal(savedDestination.id, savedDestination.name);
-      },
-      error: (err) => {
-        // ESCENARIO B: Falló (probablemente ya existe). La buscamos.
-        console.warn('No se pudo crear (¿ya existe?). Buscando en BD...', err);
-        
-        // Usamos getList filtrando por nombre para recuperar el ID
-        // NOTA: Asegurate que tu servicio acepte un parametro de filtro, si no, traemos todo
-       // ✅ SOLUCIÓN: Traemos hasta 100 destinos y buscamos nosotros el correcto
-this.destinationService.getList({ maxResultCount: 100 }).subscribe({
-          next: (response) => {
-            this.isLoading = false;
-            // Buscamos la coincidencia exacta por nombre
-            const found = response.items.find(d => d.name === city.name);
-            
-            if (found) {
-              this.openRatingModal(found.id, found.name);
-            } else {
-              alert('❌ Error: No se pudo guardar ni encontrar el destino para calificar.');
+        this.destinationService.create(newDestination).subscribe({
+            next: (created) => {
+                this.destinationCache.set(city.name, created.id);
+                callback(created.id);
+            },
+            error: (err) => {
+                console.error('Error creando destino', err);
+                this.isLoading = false;
+                alert('Ocurrió un error al procesar el destino.');
             }
-          },
-          error: (searchErr) => {
-            this.isLoading = false;
-            console.error('Error al buscar:', searchErr);
-          }
         });
       }
     });
   }
 
-  // Helper para no repetir código
+  // --- BOTÓN LIKE ---
+  likeCity(city: CityDto) {
+    if (!this.authService.isAuthenticated) {
+      this.authService.navigateToLogin();
+      return;
+    }
+    this.isLoading = true;
+
+    // Usamos el helper inteligente
+    this.ensureDestinationExists(city, (id) => {
+        this.favoriteService.toggle({ destinationId: id }).subscribe(() => {
+            this.isLoading = false;
+            
+            // Actualizamos visualmente
+            if (this.likedCities.has(city.name)) {
+                this.likedCities.delete(city.name);
+            } else {
+                this.likedCities.add(city.name);
+            }
+        });
+    });
+  }
+
+  // --- BOTÓN CALIFICAR (También arreglado para usar el helper) ---
+  rateCity(city: CityDto) {
+    if (!this.authService.isAuthenticated) {
+      this.authService.navigateToLogin();
+      return;
+    }
+    this.isLoading = true;
+
+    this.ensureDestinationExists(city, (id) => {
+        this.isLoading = false;
+        this.openRatingModal(id, city.name);
+    });
+  }
+
+  // --- BOTÓN GUARDAR (Manual) ---
+  saveCity(city: CityDto) {
+    if (!confirm(`¿Guardar ${city.name}?`)) return;
+    
+    // Reutilizamos lógica para no duplicar si ya existe
+    this.ensureDestinationExists(city, (id) => {
+        alert('✅ Destino asegurado en la base de datos.');
+    });
+  }
+
   private openRatingModal(id: string, name: string) {
     const modalRef = this.modalService.open(ExperienceModalComponent, { size: 'lg' });
     modalRef.componentInstance.destinationId = id;
     modalRef.componentInstance.destinationName = name;
   }
-
 }

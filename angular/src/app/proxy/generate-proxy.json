@@ -1359,174 +1359,6 @@
             }
           ],
           "actions": {
-            "CreateAsyncByInput": {
-              "uniqueName": "CreateAsyncByInput",
-              "name": "CreateAsync",
-              "httpMethod": "POST",
-              "url": "api/app/travel-experience",
-              "supportedVersions": [],
-              "parametersOnMethod": [
-                {
-                  "name": "input",
-                  "typeAsString": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto, PibesDelDestino.Application.Contracts",
-                  "type": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
-                  "typeSimple": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
-                  "isOptional": false,
-                  "defaultValue": null
-                }
-              ],
-              "parameters": [
-                {
-                  "nameOnMethod": "input",
-                  "name": "input",
-                  "jsonName": null,
-                  "type": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
-                  "typeSimple": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
-                  "isOptional": false,
-                  "defaultValue": null,
-                  "constraintTypes": null,
-                  "bindingSourceId": "Body",
-                  "descriptorName": ""
-                }
-              ],
-              "returnValue": {
-                "type": "PibesDelDestino.Experiences.TravelExperienceDto",
-                "typeSimple": "PibesDelDestino.Experiences.TravelExperienceDto"
-              },
-              "allowAnonymous": null,
-              "implementFrom": "Volo.Abp.Application.Services.ICreateAppService<PibesDelDestino.Experiences.TravelExperienceDto,PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto>"
-            },
-            "UpdateAsyncByIdAndInput": {
-              "uniqueName": "UpdateAsyncByIdAndInput",
-              "name": "UpdateAsync",
-              "httpMethod": "PUT",
-              "url": "api/app/travel-experience/{id}",
-              "supportedVersions": [],
-              "parametersOnMethod": [
-                {
-                  "name": "id",
-                  "typeAsString": "System.Guid, System.Private.CoreLib",
-                  "type": "System.Guid",
-                  "typeSimple": "string",
-                  "isOptional": false,
-                  "defaultValue": null
-                },
-                {
-                  "name": "input",
-                  "typeAsString": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto, PibesDelDestino.Application.Contracts",
-                  "type": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
-                  "typeSimple": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
-                  "isOptional": false,
-                  "defaultValue": null
-                }
-              ],
-              "parameters": [
-                {
-                  "nameOnMethod": "id",
-                  "name": "id",
-                  "jsonName": null,
-                  "type": "System.Guid",
-                  "typeSimple": "string",
-                  "isOptional": false,
-                  "defaultValue": null,
-                  "constraintTypes": [],
-                  "bindingSourceId": "Path",
-                  "descriptorName": ""
-                },
-                {
-                  "nameOnMethod": "input",
-                  "name": "input",
-                  "jsonName": null,
-                  "type": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
-                  "typeSimple": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
-                  "isOptional": false,
-                  "defaultValue": null,
-                  "constraintTypes": null,
-                  "bindingSourceId": "Body",
-                  "descriptorName": ""
-                }
-              ],
-              "returnValue": {
-                "type": "PibesDelDestino.Experiences.TravelExperienceDto",
-                "typeSimple": "PibesDelDestino.Experiences.TravelExperienceDto"
-              },
-              "allowAnonymous": null,
-              "implementFrom": "Volo.Abp.Application.Services.IUpdateAppService<PibesDelDestino.Experiences.TravelExperienceDto,System.Guid,PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto>"
-            },
-            "DeleteAsyncById": {
-              "uniqueName": "DeleteAsyncById",
-              "name": "DeleteAsync",
-              "httpMethod": "DELETE",
-              "url": "api/app/travel-experience/{id}",
-              "supportedVersions": [],
-              "parametersOnMethod": [
-                {
-                  "name": "id",
-                  "typeAsString": "System.Guid, System.Private.CoreLib",
-                  "type": "System.Guid",
-                  "typeSimple": "string",
-                  "isOptional": false,
-                  "defaultValue": null
-                }
-              ],
-              "parameters": [
-                {
-                  "nameOnMethod": "id",
-                  "name": "id",
-                  "jsonName": null,
-                  "type": "System.Guid",
-                  "typeSimple": "string",
-                  "isOptional": false,
-                  "defaultValue": null,
-                  "constraintTypes": [],
-                  "bindingSourceId": "Path",
-                  "descriptorName": ""
-                }
-              ],
-              "returnValue": {
-                "type": "System.Void",
-                "typeSimple": "System.Void"
-              },
-              "allowAnonymous": null,
-              "implementFrom": "Volo.Abp.Application.Services.IDeleteAppService<System.Guid>"
-            },
-            "GetAsyncById": {
-              "uniqueName": "GetAsyncById",
-              "name": "GetAsync",
-              "httpMethod": "GET",
-              "url": "api/app/travel-experience/{id}",
-              "supportedVersions": [],
-              "parametersOnMethod": [
-                {
-                  "name": "id",
-                  "typeAsString": "System.Guid, System.Private.CoreLib",
-                  "type": "System.Guid",
-                  "typeSimple": "string",
-                  "isOptional": false,
-                  "defaultValue": null
-                }
-              ],
-              "parameters": [
-                {
-                  "nameOnMethod": "id",
-                  "name": "id",
-                  "jsonName": null,
-                  "type": "System.Guid",
-                  "typeSimple": "string",
-                  "isOptional": false,
-                  "defaultValue": null,
-                  "constraintTypes": [],
-                  "bindingSourceId": "Path",
-                  "descriptorName": ""
-                }
-              ],
-              "returnValue": {
-                "type": "PibesDelDestino.Experiences.TravelExperienceDto",
-                "typeSimple": "PibesDelDestino.Experiences.TravelExperienceDto"
-              },
-              "allowAnonymous": null,
-              "implementFrom": "Volo.Abp.Application.Services.IReadOnlyAppService<PibesDelDestino.Experiences.TravelExperienceDto,PibesDelDestino.Experiences.TravelExperienceDto,System.Guid,PibesDelDestino.Experiences.GetTravelExperiencesInput>"
-            },
             "GetListAsyncByInput": {
               "uniqueName": "GetListAsyncByInput",
               "name": "GetListAsync",
@@ -1621,8 +1453,325 @@
                 "type": "Volo.Abp.Application.Dtos.PagedResultDto<PibesDelDestino.Experiences.TravelExperienceDto>",
                 "typeSimple": "Volo.Abp.Application.Dtos.PagedResultDto<PibesDelDestino.Experiences.TravelExperienceDto>"
               },
-              "allowAnonymous": null,
+              "allowAnonymous": true,
               "implementFrom": "Volo.Abp.Application.Services.IReadOnlyAppService<PibesDelDestino.Experiences.TravelExperienceDto,PibesDelDestino.Experiences.TravelExperienceDto,System.Guid,PibesDelDestino.Experiences.GetTravelExperiencesInput>"
+            },
+            "CreateAsyncByInput": {
+              "uniqueName": "CreateAsyncByInput",
+              "name": "CreateAsync",
+              "httpMethod": "POST",
+              "url": "api/app/travel-experience",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "input",
+                  "typeAsString": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto, PibesDelDestino.Application.Contracts",
+                  "type": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
+                  "typeSimple": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "input",
+                  "name": "input",
+                  "jsonName": null,
+                  "type": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
+                  "typeSimple": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "Body",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "PibesDelDestino.Experiences.TravelExperienceDto",
+                "typeSimple": "PibesDelDestino.Experiences.TravelExperienceDto"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "Volo.Abp.Application.Services.ICreateAppService<PibesDelDestino.Experiences.TravelExperienceDto,PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto>"
+            },
+            "UpdateAsyncByIdAndInput": {
+              "uniqueName": "UpdateAsyncByIdAndInput",
+              "name": "UpdateAsync",
+              "httpMethod": "PUT",
+              "url": "api/app/travel-experience/{id}",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "id",
+                  "typeAsString": "System.Guid, System.Private.CoreLib",
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null
+                },
+                {
+                  "name": "input",
+                  "typeAsString": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto, PibesDelDestino.Application.Contracts",
+                  "type": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
+                  "typeSimple": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "id",
+                  "name": "id",
+                  "jsonName": null,
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": [],
+                  "bindingSourceId": "Path",
+                  "descriptorName": ""
+                },
+                {
+                  "nameOnMethod": "input",
+                  "name": "input",
+                  "jsonName": null,
+                  "type": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
+                  "typeSimple": "PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "Body",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "PibesDelDestino.Experiences.TravelExperienceDto",
+                "typeSimple": "PibesDelDestino.Experiences.TravelExperienceDto"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "Volo.Abp.Application.Services.IUpdateAppService<PibesDelDestino.Experiences.TravelExperienceDto,System.Guid,PibesDelDestino.Experiences.CreateUpdateTravelExperienceDto>"
+            },
+            "DeleteAsyncById": {
+              "uniqueName": "DeleteAsyncById",
+              "name": "DeleteAsync",
+              "httpMethod": "DELETE",
+              "url": "api/app/travel-experience/{id}",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "id",
+                  "typeAsString": "System.Guid, System.Private.CoreLib",
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "id",
+                  "name": "id",
+                  "jsonName": null,
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": [],
+                  "bindingSourceId": "Path",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "System.Void",
+                "typeSimple": "System.Void"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "Volo.Abp.Application.Services.IDeleteAppService<System.Guid>"
+            },
+            "GetAsyncById": {
+              "uniqueName": "GetAsyncById",
+              "name": "GetAsync",
+              "httpMethod": "GET",
+              "url": "api/app/travel-experience/{id}",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "id",
+                  "typeAsString": "System.Guid, System.Private.CoreLib",
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "id",
+                  "name": "id",
+                  "jsonName": null,
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": [],
+                  "bindingSourceId": "Path",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "PibesDelDestino.Experiences.TravelExperienceDto",
+                "typeSimple": "PibesDelDestino.Experiences.TravelExperienceDto"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "Volo.Abp.Application.Services.IReadOnlyAppService<PibesDelDestino.Experiences.TravelExperienceDto,PibesDelDestino.Experiences.TravelExperienceDto,System.Guid,PibesDelDestino.Experiences.GetTravelExperiencesInput>"
+            }
+          }
+        },
+        "PibesDelDestino.Favorites.FavoriteAppService": {
+          "controllerName": "Favorite",
+          "controllerGroupName": "Favorite",
+          "isRemoteService": true,
+          "isIntegrationService": false,
+          "apiVersion": null,
+          "type": "PibesDelDestino.Favorites.FavoriteAppService",
+          "interfaces": [
+            {
+              "type": "PibesDelDestino.Favorites.IFavoriteAppService",
+              "name": "IFavoriteAppService",
+              "methods": [
+                {
+                  "name": "ToggleAsync",
+                  "parametersOnMethod": [
+                    {
+                      "name": "input",
+                      "typeAsString": "PibesDelDestino.Favorites.CreateFavoriteDto, PibesDelDestino.Application.Contracts",
+                      "type": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                      "typeSimple": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                      "isOptional": false,
+                      "defaultValue": null
+                    }
+                  ],
+                  "returnValue": {
+                    "type": "System.Boolean",
+                    "typeSimple": "boolean"
+                  }
+                },
+                {
+                  "name": "GetMyFavoritesAsync",
+                  "parametersOnMethod": [],
+                  "returnValue": {
+                    "type": "System.Collections.Generic.List<PibesDelDestino.Application.Contracts.Destinations.DestinationDto>",
+                    "typeSimple": "[PibesDelDestino.Application.Contracts.Destinations.DestinationDto]"
+                  }
+                },
+                {
+                  "name": "IsFavoriteAsync",
+                  "parametersOnMethod": [
+                    {
+                      "name": "input",
+                      "typeAsString": "PibesDelDestino.Favorites.CreateFavoriteDto, PibesDelDestino.Application.Contracts",
+                      "type": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                      "typeSimple": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                      "isOptional": false,
+                      "defaultValue": null
+                    }
+                  ],
+                  "returnValue": {
+                    "type": "System.Boolean",
+                    "typeSimple": "boolean"
+                  }
+                }
+              ]
+            }
+          ],
+          "actions": {
+            "ToggleAsyncByInput": {
+              "uniqueName": "ToggleAsyncByInput",
+              "name": "ToggleAsync",
+              "httpMethod": "POST",
+              "url": "api/app/favorite/toggle",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "input",
+                  "typeAsString": "PibesDelDestino.Favorites.CreateFavoriteDto, PibesDelDestino.Application.Contracts",
+                  "type": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                  "typeSimple": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "input",
+                  "name": "input",
+                  "jsonName": null,
+                  "type": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                  "typeSimple": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "Body",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "System.Boolean",
+                "typeSimple": "boolean"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Favorites.IFavoriteAppService"
+            },
+            "IsFavoriteAsyncByInput": {
+              "uniqueName": "IsFavoriteAsyncByInput",
+              "name": "IsFavoriteAsync",
+              "httpMethod": "POST",
+              "url": "api/app/favorite/is-favorite",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "input",
+                  "typeAsString": "PibesDelDestino.Favorites.CreateFavoriteDto, PibesDelDestino.Application.Contracts",
+                  "type": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                  "typeSimple": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "input",
+                  "name": "input",
+                  "jsonName": null,
+                  "type": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                  "typeSimple": "PibesDelDestino.Favorites.CreateFavoriteDto",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "Body",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "System.Boolean",
+                "typeSimple": "boolean"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Favorites.IFavoriteAppService"
+            },
+            "GetMyFavoritesAsync": {
+              "uniqueName": "GetMyFavoritesAsync",
+              "name": "GetMyFavoritesAsync",
+              "httpMethod": "GET",
+              "url": "api/app/favorite/my-favorites",
+              "supportedVersions": [],
+              "parametersOnMethod": [],
+              "parameters": [],
+              "returnValue": {
+                "type": "System.Collections.Generic.List<PibesDelDestino.Application.Contracts.Destinations.DestinationDto>",
+                "typeSimple": "[PibesDelDestino.Application.Contracts.Destinations.DestinationDto]"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Favorites.IFavoriteAppService"
             }
           }
         },
@@ -4581,6 +4730,27 @@
           "type": "System.Int32",
           "typeSimple": "number",
           "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        }
+      ]
+    },
+    "PibesDelDestino.Favorites.CreateFavoriteDto": {
+      "baseType": null,
+      "isEnum": false,
+      "enumNames": null,
+      "enumValues": null,
+      "genericArguments": null,
+      "properties": [
+        {
+          "name": "DestinationId",
+          "jsonName": null,
+          "type": "System.Guid",
+          "typeSimple": "string",
+          "isRequired": true,
           "minLength": null,
           "maxLength": null,
           "minimum": null,

@@ -2,6 +2,7 @@ import * as Application from './application';
 import * as Cities from './cities';
 import * as Destinations from './destinations';
 import * as Experiences from './experiences';
+import * as Favorites from './favorites';
 import * as Ratings from './ratings';
 import * as Users from './users';
-export { Application, Cities, Destinations, Experiences, Ratings, Users };
+export { Application, Cities, Destinations, Experiences, Favorites, Ratings, Users };

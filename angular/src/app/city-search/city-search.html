@@ -40,7 +40,8 @@
   <div *ngIf="errorMessage" class="error-message">❌ {{ errorMessage }}</div>
 
   <ul *ngIf="cities.length > 0" class="results-list">
-<li *ngFor="let city of cities" class="result-item">
+    <li *ngFor="let city of cities" class="result-item">
+      
       <div class="city-header">
         <span class="city-name">{{ city.name }}</span>
         <span class="city-region" *ngIf="city.region">{{ city.region }}</span>
@@ -54,7 +55,8 @@
       
       <small>Lat: {{ city.latitude }} | Lon: {{ city.longitude }}</small>
 
-<div class="d-flex gap-2 mt-2">
+      <div class="d-flex gap-2 mt-2">
+        
         <button class="btn btn-success flex-grow-1" (click)="saveCity(city)">
           💾 Guardar
         </button>
@@ -62,8 +64,15 @@
         <button class="btn btn-warning flex-grow-1" (click)="rateCity(city)">
           ⭐ Calificar
         </button>
+
+        <button class="btn btn-outline-danger" (click)="likeCity(city)" title="Me gusta">
+          <i class="fa-heart" 
+             [ngClass]="likedCities.has(city.name) ? 'fas' : 'far'">
+          </i>
+        </button>
+
       </div>
-    </li>
+      </li>
   </ul>
 
   <div *ngIf="!isLoading && cities.length === 0 && searchForm.get('partialName')?.value?.length! > 2" class="no-results">
