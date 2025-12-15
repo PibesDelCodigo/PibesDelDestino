@@ -8,10 +8,12 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Authorization;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
+// 1. IMPORTAMOS LOS NUEVOS NAMESPACES
+using PibesDelDestino.Favorites;
+using PibesDelDestino.Notifications;
 
 namespace PibesDelDestino.Experiences
 {
-    // 🔒 1. LA CLASE ESTÁ PROTEGIDA POR DEFECTO (Nadie entra sin login)
     [Authorize]
     public class TravelExperienceAppService : CrudAppService<
             TravelExperience,
@@ -23,41 +25,44 @@ namespace PibesDelDestino.Experiences
     {
         private readonly IRepository<IdentityUser, Guid> _userRepository;
 
+        // 2. DECLARAMOS LOS NUEVOS REPOSITORIOS
+        private readonly IRepository<FavoriteDestination, Guid> _favoriteRepository;
+        private readonly IRepository<AppNotification, Guid> _notificationRepository;
+
         public TravelExperienceAppService(
             IRepository<TravelExperience, Guid> repository,
-            IRepository<IdentityUser, Guid> userRepository)
+            IRepository<IdentityUser, Guid> userRepository,
+            // 3. INYECTAMOS EN EL CONSTRUCTOR
+            IRepository<FavoriteDestination, Guid> favoriteRepository,
+            IRepository<AppNotification, Guid> notificationRepository)
             : base(repository)
         {
             _userRepository = userRepository;
+            _favoriteRepository = favoriteRepository;
+            _notificationRepository = notificationRepository;
         }
 
-        // 🔓 2. EXCEPCIÓN: ABRIMOS LA LECTURA PARA TODOS
-        // Esto permite que usuarios anónimos vean la lista de reseñas
         [AllowAnonymous]
         public override async Task<PagedResultDto<TravelExperienceDto>> GetListAsync(GetTravelExperiencesInput input)
         {
             return await base.GetListAsync(input);
         }
 
-        // 3. LOGICA DE FILTROS (Destino, Texto, Estrellas)
         protected override async Task<IQueryable<TravelExperience>> CreateFilteredQueryAsync(GetTravelExperiencesInput input)
         {
             var query = await base.CreateFilteredQueryAsync(input);
 
-            // Filtro por Destino
             if (input.DestinationId.HasValue)
             {
                 query = query.Where(x => x.DestinationId == input.DestinationId);
             }
 
-            // Búsqueda por Texto
             if (!string.IsNullOrWhiteSpace(input.FilterText))
             {
                 query = query.Where(x => x.Title.Contains(input.FilterText) ||
                                          x.Description.Contains(input.FilterText));
             }
 
-            // Filtro por Valoración
             if (input.Type.HasValue)
             {
                 switch (input.Type.Value)
@@ -77,7 +82,7 @@ namespace PibesDelDestino.Experiences
             return query;
         }
 
-        // 4. CREACIÓN SEGURA (Asigna el usuario logueado)
+        // 4. MODIFICAMOS EL CREATE PARA DISPARAR NOTIFICACIONES
         public override async Task<TravelExperienceDto> CreateAsync(CreateUpdateTravelExperienceDto input)
         {
             if (CurrentUser.Id == null)
@@ -85,9 +90,10 @@ namespace PibesDelDestino.Experiences
                 throw new AbpAuthorizationException("Debes estar logueado para crear una experiencia.");
             }
 
+            // A. Creamos la experiencia normalmente
             var newExperience = new TravelExperience(
                 GuidGenerator.Create(),
-                CurrentUser.Id.Value, // Asignamos el ID real
+                CurrentUser.Id.Value,
                 input.DestinationId,
                 input.Title,
                 input.Description,
@@ -97,10 +103,41 @@ namespace PibesDelDestino.Experiences
 
             await Repository.InsertAsync(newExperience);
 
+            // -------------------------------------------------------------
+            // B. LÓGICA DE NOTIFICACIONES (Requisito 6.1) 🔔
+            // -------------------------------------------------------------
+
+            // 1. Buscamos quiénes siguen este destino
+            var followers = await _favoriteRepository.GetListAsync(x => x.DestinationId == input.DestinationId);
+
+            // 2. Preparamos la lista de notificaciones
+            var notifications = new List<AppNotification>();
+
+            foreach (var follow in followers)
+            {
+                // No me notifico a mí mismo si comento en algo que sigo
+                if (follow.UserId != CurrentUser.Id.Value)
+                {
+                    notifications.Add(new AppNotification(
+                        GuidGenerator.Create(),
+                        follow.UserId,
+                        "Nuevo Comentario 💬",
+                        $"Alguien comentó sobre un destino que sigues: '{input.Title}'",
+                        "Comment" // Tipo de notificación
+                    ));
+                }
+            }
+
+            // 3. Guardamos todo junto (InsertMany es más eficiente)
+            if (notifications.Any())
+            {
+                await _notificationRepository.InsertManyAsync(notifications);
+            }
+            // -------------------------------------------------------------
+
             return ObjectMapper.Map<TravelExperience, TravelExperienceDto>(newExperience);
         }
 
-        // 5. MAPE DE NOMBRES DE USUARIO
         protected override async Task<List<TravelExperienceDto>> MapToGetListOutputDtosAsync(List<TravelExperience> entities)
         {
             var dtos = await base.MapToGetListOutputDtosAsync(entities);

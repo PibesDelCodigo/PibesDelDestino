@@ -10,6 +10,9 @@ using Volo.Abp.Guids;
 using Volo.Abp.Modularity;
 using Volo.Abp.Validation;
 using Xunit;
+// IMPORTANTE: Agregamos los namespaces de los nuevos repositorios
+using PibesDelDestino.Favorites;
+using PibesDelDestino.Notifications;
 
 namespace PibesDelDestino.Destinations
 {
@@ -29,13 +32,19 @@ namespace PibesDelDestino.Destinations
             var repositoryMock = Substitute.For<IRepository<Destination, Guid>>();
             var guidGeneratorMock = Substitute.For<IGuidGenerator>();
 
+            // --- NUEVOS MOCKS ---
+            var favoriteRepositoryMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
+            var notificationRepositoryMock = Substitute.For<IRepository<AppNotification, Guid>>();
+
             // Le enseñamos al mock qué Guid debe devolver
             guidGeneratorMock.Create().Returns(Guid.NewGuid());
 
             var appService = new DestinationAppService(
                 repositoryMock,
                 citySearchServiceMock,
-                guidGeneratorMock
+                guidGeneratorMock,
+                favoriteRepositoryMock,     // <--- Nuevo parámetro 4
+                notificationRepositoryMock  // <--- Nuevo parámetro 5
             );
 
             var input = new CreateUpdateDestinationDto
@@ -65,14 +74,19 @@ namespace PibesDelDestino.Destinations
             var repositoryMock = Substitute.For<IRepository<Destination, Guid>>();
             var guidGeneratorMock = Substitute.For<IGuidGenerator>();
 
+            // --- NUEVOS MOCKS ---
+            var favoriteRepositoryMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
+            var notificationRepositoryMock = Substitute.For<IRepository<AppNotification, Guid>>();
+
             var appService = new DestinationAppService(
                 repositoryMock,
                 citySearchServiceMock,
-                guidGeneratorMock
+                guidGeneratorMock,
+                favoriteRepositoryMock,     // <--- Nuevo parámetro 4
+                notificationRepositoryMock  // <--- Nuevo parámetro 5
             );
 
             // ACT & ASSERT
-            // Capturamos la excepción 'ArgumentException' que lanza tu Entidad
             var exception = await Assert.ThrowsAsync<ArgumentException>(async () =>
             {
                 var invalidInput = new CreateUpdateDestinationDto
@@ -87,8 +101,6 @@ namespace PibesDelDestino.Destinations
                 await appService.CreateAsync(invalidInput);
             });
 
-            // Verificamos que el mensaje de error mencione el campo "name"
-            // (ABP Check.NotNullOrWhiteSpace suele poner el nombre del parámetro en el mensaje)
             exception.Message.ShouldContain("name", Case.Insensitive);
         }
 
@@ -100,10 +112,16 @@ namespace PibesDelDestino.Destinations
             var repositoryMock = Substitute.For<IRepository<Destination, Guid>>();
             var guidGeneratorMock = Substitute.For<IGuidGenerator>();
 
+            // --- NUEVOS MOCKS ---
+            var favoriteRepositoryMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
+            var notificationRepositoryMock = Substitute.For<IRepository<AppNotification, Guid>>();
+
             var appService = new DestinationAppService(
                 repositoryMock,
                 citySearchServiceMock,
-                guidGeneratorMock
+                guidGeneratorMock,
+                favoriteRepositoryMock,     // <--- Nuevo parámetro 4
+                notificationRepositoryMock  // <--- Nuevo parámetro 5
             );
 
             var fakeCities = new CityResultDto

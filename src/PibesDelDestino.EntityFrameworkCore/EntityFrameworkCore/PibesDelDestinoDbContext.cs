@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PibesDelDestino.Destinations;
 using PibesDelDestino.Experiences;
 using PibesDelDestino.Favorites;
+using PibesDelDestino.Notifications;
 using PibesDelDestino.Ratings;
 using PibesDelDestino.Users;
 using System;
@@ -31,6 +32,7 @@ public class PibesDelDestinoDbContext :
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
+    public DbSet<AppNotification> AppNotifications { get; set; }
     public DbSet<FavoriteDestination> FavoriteDestinations { get; set; }
     public DbSet<TravelExperience> TravelExperiences { get; set; }
     public DbSet<Destination> Destinations { get; set; }
@@ -108,6 +110,13 @@ public class PibesDelDestinoDbContext :
             b.HasIndex(x => new { x.UserId, x.DestinationId }).IsUnique();
         });
 
+        builder.Entity<AppNotification>(b =>
+        {
+            b.ToTable(PibesDelDestinoConsts.DbTablePrefix + "Notifications", PibesDelDestinoConsts.DbSchema);
+            b.ConfigureByConvention();
+            // Índice para buscar rápido las notificaciones de un usuario
+            b.HasIndex(x => x.UserId);
+        });
 
         builder.Entity<Destination>(b =>
         {
