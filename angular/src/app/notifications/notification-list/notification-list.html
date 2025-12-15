@@ -1,0 +1,41 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>🔔 Notificaciones</h3>
+    <button class="btn btn-sm btn-outline-primary" (click)="loadNotifications()">
+      <i class="fa fa-sync"></i> Actualizar
+    </button>
+  </div>
+
+  <div *ngIf="isLoading" class="text-center p-4">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <div *ngIf="!isLoading && notifications.length === 0" class="alert alert-light text-center">
+    🎉 ¡Estás al día! No tienes notificaciones nuevas.
+  </div>
+
+  <div class="list-group">
+    <button *ngFor="let n of notifications" 
+            class="list-group-item list-group-item-action d-flex align-items-start p-3"
+            [ngClass]="n.isRead ? 'bg-white' : 'bg-light border-primary border-start border-3'"
+            (click)="markAsRead(n)">
+      
+      <div class="me-3 mt-1 fs-4">
+        <i class="fas" [ngClass]="[getIcon(n.type), getColor(n.type)]"></i>
+      </div>
+
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between">
+          <h6 class="mb-1 fw-bold" [class.text-muted]="n.isRead">{{ n.title }}</h6>
+          <small class="text-muted">{{ n.creationTime | date:'short' }}</small>
+        </div>
+        <p class="mb-1 text-break">{{ n.message }}</p>
+        
+        <small *ngIf="!n.isRead" class="text-primary fw-bold">
+          ● Nueva
+        </small>
+      </div>
+
+    </button>
+  </div>
+</div>

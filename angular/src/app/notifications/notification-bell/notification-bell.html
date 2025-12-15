@@ -1,0 +1,12 @@
+<div class="d-flex align-items-center h-100 px-2 pointer" (click)="goToNotifications()" style="cursor: pointer;">
+  <div class="position-relative">
+    
+    <i class="fas fa-bell fa-lg text-secondary"></i> 
+    
+    <span *ngIf="unreadCount > 0" 
+          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+          style="font-size: 0.6rem;">
+      {{ unreadCount > 99 ? '99+' : unreadCount }}
+    </span>
+  </div>
+</div>

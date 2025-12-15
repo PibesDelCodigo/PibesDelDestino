@@ -24,7 +24,7 @@ export const APP_ROUTES: Routes = [
     loadChildren: () => import('@abp/ng.setting-management').then(c => c.createRoutes()),
   },
 
-  // --- TUS FAVORITOS ---
+
   {
     path: 'favorites',
     loadComponent: () => 
@@ -33,7 +33,12 @@ export const APP_ROUTES: Routes = [
       .then(m => m.MyFavoritesComponent),
     canActivate: [authGuard] // CORRECCIÓN: Usamos authGuard (minúscula) que importaste en la línea 1
   },
-  // --------------------
+
+{
+    path: 'notifications',
+    loadComponent: () => import('./notifications/notification-list/notification-list').then(m => m.NotificationListComponent),
+    canActivate: [authGuard]
+  },
 
   {
     path: 'users/:id', 

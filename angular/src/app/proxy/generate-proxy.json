@@ -1019,43 +1019,6 @@
               "allowAnonymous": null,
               "implementFrom": "Volo.Abp.Application.Services.ICreateAppService<PibesDelDestino.Application.Contracts.Destinations.DestinationDto,PibesDelDestino.Application.Contracts.Destinations.CreateUpdateDestinationDto>"
             },
-            "SearchCitiesAsyncByRequest": {
-              "uniqueName": "SearchCitiesAsyncByRequest",
-              "name": "SearchCitiesAsync",
-              "httpMethod": "POST",
-              "url": "api/app/destination/search-cities",
-              "supportedVersions": [],
-              "parametersOnMethod": [
-                {
-                  "name": "request",
-                  "typeAsString": "PibesDelDestino.Cities.CityRequestDTO, PibesDelDestino.Application.Contracts",
-                  "type": "PibesDelDestino.Cities.CityRequestDTO",
-                  "typeSimple": "PibesDelDestino.Cities.CityRequestDTO",
-                  "isOptional": false,
-                  "defaultValue": null
-                }
-              ],
-              "parameters": [
-                {
-                  "nameOnMethod": "request",
-                  "name": "request",
-                  "jsonName": null,
-                  "type": "PibesDelDestino.Cities.CityRequestDTO",
-                  "typeSimple": "PibesDelDestino.Cities.CityRequestDTO",
-                  "isOptional": false,
-                  "defaultValue": null,
-                  "constraintTypes": null,
-                  "bindingSourceId": "Body",
-                  "descriptorName": ""
-                }
-              ],
-              "returnValue": {
-                "type": "PibesDelDestino.Cities.CityResultDto",
-                "typeSimple": "PibesDelDestino.Cities.CityResultDto"
-              },
-              "allowAnonymous": null,
-              "implementFrom": "PibesDelDestino.Destinations.DestinationAppService"
-            },
             "UpdateAsyncByIdAndInput": {
               "uniqueName": "UpdateAsyncByIdAndInput",
               "name": "UpdateAsync",
@@ -1112,6 +1075,43 @@
               },
               "allowAnonymous": null,
               "implementFrom": "Volo.Abp.Application.Services.IUpdateAppService<PibesDelDestino.Application.Contracts.Destinations.DestinationDto,System.Guid,PibesDelDestino.Application.Contracts.Destinations.CreateUpdateDestinationDto>"
+            },
+            "SearchCitiesAsyncByRequest": {
+              "uniqueName": "SearchCitiesAsyncByRequest",
+              "name": "SearchCitiesAsync",
+              "httpMethod": "POST",
+              "url": "api/app/destination/search-cities",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "request",
+                  "typeAsString": "PibesDelDestino.Cities.CityRequestDTO, PibesDelDestino.Application.Contracts",
+                  "type": "PibesDelDestino.Cities.CityRequestDTO",
+                  "typeSimple": "PibesDelDestino.Cities.CityRequestDTO",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "request",
+                  "name": "request",
+                  "jsonName": null,
+                  "type": "PibesDelDestino.Cities.CityRequestDTO",
+                  "typeSimple": "PibesDelDestino.Cities.CityRequestDTO",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "Body",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "PibesDelDestino.Cities.CityResultDto",
+                "typeSimple": "PibesDelDestino.Cities.CityResultDto"
+              },
+              "allowAnonymous": null,
+              "implementFrom": "PibesDelDestino.Destinations.DestinationAppService"
             },
             "DeleteAsyncById": {
               "uniqueName": "DeleteAsyncById",
@@ -1772,6 +1772,178 @@
               },
               "allowAnonymous": false,
               "implementFrom": "PibesDelDestino.Favorites.IFavoriteAppService"
+            }
+          }
+        },
+        "PibesDelDestino.Notifications.NotificationAppService": {
+          "controllerName": "Notification",
+          "controllerGroupName": "Notification",
+          "isRemoteService": true,
+          "isIntegrationService": false,
+          "apiVersion": null,
+          "type": "PibesDelDestino.Notifications.NotificationAppService",
+          "interfaces": [
+            {
+              "type": "PibesDelDestino.Notifications.INotificationAppService",
+              "name": "INotificationAppService",
+              "methods": [
+                {
+                  "name": "GetMyNotificationsAsync",
+                  "parametersOnMethod": [],
+                  "returnValue": {
+                    "type": "System.Collections.Generic.List<PibesDelDestino.Notifications.AppNotificationDto>",
+                    "typeSimple": "[PibesDelDestino.Notifications.AppNotificationDto]"
+                  }
+                },
+                {
+                  "name": "MarkAsReadAsync",
+                  "parametersOnMethod": [
+                    {
+                      "name": "id",
+                      "typeAsString": "System.Guid, System.Private.CoreLib",
+                      "type": "System.Guid",
+                      "typeSimple": "string",
+                      "isOptional": false,
+                      "defaultValue": null
+                    }
+                  ],
+                  "returnValue": {
+                    "type": "System.Void",
+                    "typeSimple": "System.Void"
+                  }
+                },
+                {
+                  "name": "MarkAsUnreadAsync",
+                  "parametersOnMethod": [
+                    {
+                      "name": "id",
+                      "typeAsString": "System.Guid, System.Private.CoreLib",
+                      "type": "System.Guid",
+                      "typeSimple": "string",
+                      "isOptional": false,
+                      "defaultValue": null
+                    }
+                  ],
+                  "returnValue": {
+                    "type": "System.Void",
+                    "typeSimple": "System.Void"
+                  }
+                },
+                {
+                  "name": "GetUnreadCountAsync",
+                  "parametersOnMethod": [],
+                  "returnValue": {
+                    "type": "System.Int32",
+                    "typeSimple": "number"
+                  }
+                }
+              ]
+            }
+          ],
+          "actions": {
+            "GetMyNotificationsAsync": {
+              "uniqueName": "GetMyNotificationsAsync",
+              "name": "GetMyNotificationsAsync",
+              "httpMethod": "GET",
+              "url": "api/app/notification/my-notifications",
+              "supportedVersions": [],
+              "parametersOnMethod": [],
+              "parameters": [],
+              "returnValue": {
+                "type": "System.Collections.Generic.List<PibesDelDestino.Notifications.AppNotificationDto>",
+                "typeSimple": "[PibesDelDestino.Notifications.AppNotificationDto]"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Notifications.INotificationAppService"
+            },
+            "MarkAsReadAsyncById": {
+              "uniqueName": "MarkAsReadAsyncById",
+              "name": "MarkAsReadAsync",
+              "httpMethod": "POST",
+              "url": "api/app/notification/{id}/mark-as-read",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "id",
+                  "typeAsString": "System.Guid, System.Private.CoreLib",
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "id",
+                  "name": "id",
+                  "jsonName": null,
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": [],
+                  "bindingSourceId": "Path",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "System.Void",
+                "typeSimple": "System.Void"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Notifications.INotificationAppService"
+            },
+            "MarkAsUnreadAsyncById": {
+              "uniqueName": "MarkAsUnreadAsyncById",
+              "name": "MarkAsUnreadAsync",
+              "httpMethod": "POST",
+              "url": "api/app/notification/{id}/mark-as-unread",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "id",
+                  "typeAsString": "System.Guid, System.Private.CoreLib",
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "id",
+                  "name": "id",
+                  "jsonName": null,
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": [],
+                  "bindingSourceId": "Path",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "System.Void",
+                "typeSimple": "System.Void"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Notifications.INotificationAppService"
+            },
+            "GetUnreadCountAsync": {
+              "uniqueName": "GetUnreadCountAsync",
+              "name": "GetUnreadCountAsync",
+              "httpMethod": "GET",
+              "url": "api/app/notification/unread-count",
+              "supportedVersions": [],
+              "parametersOnMethod": [],
+              "parameters": [],
+              "returnValue": {
+                "type": "System.Int32",
+                "typeSimple": "number"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Notifications.INotificationAppService"
             }
           }
         },
@@ -4751,6 +4923,63 @@
           "type": "System.Guid",
           "typeSimple": "string",
           "isRequired": true,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        }
+      ]
+    },
+    "PibesDelDestino.Notifications.AppNotificationDto": {
+      "baseType": "Volo.Abp.Application.Dtos.EntityDto<System.Guid>",
+      "isEnum": false,
+      "enumNames": null,
+      "enumValues": null,
+      "genericArguments": null,
+      "properties": [
+        {
+          "name": "Title",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "Message",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "IsRead",
+          "jsonName": null,
+          "type": "System.Boolean",
+          "typeSimple": "boolean",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "CreationTime",
+          "jsonName": null,
+          "type": "System.DateTime",
+          "typeSimple": "string",
+          "isRequired": false,
           "minLength": null,
           "maxLength": null,
           "minimum": null,
