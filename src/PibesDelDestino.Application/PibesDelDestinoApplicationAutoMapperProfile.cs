@@ -1,10 +1,11 @@
 using AutoMapper;
 using PibesDelDestino.Application.Contracts.Destinations;
 using PibesDelDestino.Destinations;
+using PibesDelDestino.Experiences;  
 using PibesDelDestino.Ratings;
 using PibesDelDestino.Users;
+using PibesDelDestino.Notifications;
 using Volo.Abp.Identity;
-using PibesDelDestino.Experiences;  
 
 namespace PibesDelDestino;
 
@@ -25,6 +26,6 @@ public class PibesDelDestinoApplicationAutoMapperProfile : Profile
         CreateMap<TravelExperience, TravelExperienceDto>()
     .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => "Usuario Anónimo"));
         CreateMap<CreateUpdateTravelExperienceDto, TravelExperience>();
-
+        CreateMap<AppNotification, AppNotificationDto>();
     }
 }
