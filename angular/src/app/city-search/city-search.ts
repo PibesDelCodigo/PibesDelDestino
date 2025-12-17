@@ -4,11 +4,18 @@ import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { CityDto } from '../proxy/cities';
 import { DestinationService } from '../proxy/destinations';
+import { DestinationDto } from '../proxy/application/contracts/destinations';
 import { CreateUpdateDestinationDto } from '../proxy/application/contracts/destinations';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExperienceModalComponent } from '../experiences/experience-modal/experience-modal';
 import { FavoriteService } from '../proxy/favorites';
 import { AuthService } from '@abp/ng.core';
+import { Router } from '@angular/router';
+import { CitySearchStateService } from './city-search-state-service';
+
+interface CityWithRating extends CityDto {
+  averageRating?: number;
+}
 
 @Component({
   selector: 'app-city-search',
@@ -20,23 +27,24 @@ import { AuthService } from '@abp/ng.core';
 export class CitySearch implements OnInit {
 
   searchForm: FormGroup;
-  cities: CityDto[] = [];
+  cities: CityWithRating[] = [];
   isLoading = false;
   errorMessage = '';
 
-  // 1. VISUAL: Set para pintar los corazones (Solo nombres)
   likedCities = new Set<string>();
   
-  // 2. LÓGICA: Mapa para recordar los IDs reales de la BD y NO duplicar
-  // Clave: Nombre Ciudad -> Valor: Guid (ID del Destino)
-  destinationCache = new Map<string, string>(); 
+  // Clave: Nombre + País -> Valor: ID y Rating
+  destinationCache = new Map<string, { id: string, rating: number }>(); 
 
   constructor(
     private destinationService: DestinationService,
     private fb: FormBuilder,
     private modalService: NgbModal,
     private authService: AuthService,
-    private favoriteService: FavoriteService
+    private favoriteService: FavoriteService,
+    private router: Router,
+    // 👇 2. INYECTAMOS EL SERVICIO DE ESTADO
+    private stateService: CitySearchStateService
   ) {
     this.searchForm = this.fb.group({
       partialName: [''],
@@ -46,7 +54,23 @@ export class CitySearch implements OnInit {
   }
 
   ngOnInit(): void {
-    // A. CONFIGURACIÓN DEL BUSCADOR
+    
+    // 👇 3. LÓGICA DE RECUPERACIÓN (SI VOLVEMOS DE DETALLES)
+    if (this.stateService.hasData()) {
+        console.log('♻️ Recuperando estado anterior...');
+        
+        // A. Recuperamos resultados y caché
+        this.cities = this.stateService.lastResults;
+        this.destinationCache = this.stateService.lastCache;
+
+        // B. Recuperamos el formulario (sin disparar evento para no buscar de nuevo)
+        this.searchForm.patchValue(this.stateService.lastFormValues, { emitEvent: false });
+    } else {
+        // Si no hay datos guardados, cargamos lo local normalmente
+        this.preloadLocalDestinations();
+    }
+
+    // CONFIGURACIÓN DEL BUSCADOR
     this.searchForm.valueChanges.pipe(
       debounceTime(800),
       distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
@@ -71,7 +95,21 @@ export class CitySearch implements OnInit {
       })
     ).subscribe({
       next: (response) => {
-        this.cities = response.cities || [];
+        this.cities = (response.cities || []).map(city => {
+          const uniqueKey = this.getUniqueKey(city.name, city.country);
+          const cached = this.destinationCache.get(uniqueKey);
+          
+          return {
+            ...city,
+            averageRating: cached ? cached.rating : 0 
+          };
+        });
+
+        // 👇 4. GUARDAR ESTADO CADA VEZ QUE BUSCAMOS
+        this.stateService.lastResults = this.cities;
+        this.stateService.lastFormValues = this.searchForm.value;
+        this.stateService.lastCache = this.destinationCache;
+
         this.isLoading = false;
       },
       error: (err) => {
@@ -81,76 +119,77 @@ export class CitySearch implements OnInit {
       }
     });
 
-    // B. CARGA DE FAVORITOS (SOLUCIÓN PERSISTENCIA)
     if (this.authService.isAuthenticated) {
       this.favoriteService.getMyFavorites().subscribe(favs => {
         favs.forEach(f => {
-          this.likedCities.add(f.name);         // Pintar corazón
-          this.destinationCache.set(f.name, f.id); // Guardar ID para no duplicar
+          this.likedCities.add(f.name); 
         });
       });
     }
   }
 
-  // --- HELPER: BUSCAR O CREAR (SOLUCIÓN DUPLICADOS) ---
-  // Este método se encarga de conseguir un ID válido sin crear basura
-  private ensureDestinationExists(city: CityDto, callback: (id: string) => void) {
-    
-    // CASO 1: Ya lo tenemos en memoria (Caché)
-    if (this.destinationCache.has(city.name)) {
-      callback(this.destinationCache.get(city.name)!);
-      return;
-    }
+  private getUniqueKey(name: string, country: string): string {
+    return `${name.toLowerCase().trim()}_${country.toLowerCase().trim()}`;
+  }
 
-    // CASO 2: No está en memoria, buscamos en la BD por si existe
+  private preloadLocalDestinations() {
     this.destinationService.getList({ maxResultCount: 100 }).subscribe(response => {
-      const found = response.items.find(d => d.name === city.name);
-      
-      if (found) {
-        // EXISTÍA EN BD: Lo guardamos en caché y lo usamos
-        this.destinationCache.set(city.name, found.id);
-        callback(found.id);
-      } else {
-        // CASO 3: NO EXISTE EN NINGÚN LADO: Recién ahí creamos
-        const newDestination: CreateUpdateDestinationDto = {
-          name: city.name,
-          country: city.country,
-          city: city.region || city.name,
-          population: city.population || 0,
-          photo: '',
-          updateDate: new Date().toISOString(),
-          coordinates: { latitude: city.latitude, longitude: city.longitude }
-        };
-
-        this.destinationService.create(newDestination).subscribe({
-            next: (created) => {
-                this.destinationCache.set(city.name, created.id);
-                callback(created.id);
-            },
-            error: (err) => {
-                console.error('Error creando destino', err);
-                this.isLoading = false;
-                alert('Ocurrió un error al procesar el destino.');
-            }
+      response.items.forEach(dest => {
+        const key = this.getUniqueKey(dest.name, dest.country);
+        this.destinationCache.set(key, { 
+          id: dest.id, 
+          rating: dest.averageRating || 0 
         });
-      }
+      });
+      // Actualizamos el estado también aquí por si acaso
+      this.stateService.lastCache = this.destinationCache;
     });
   }
 
-  // --- BOTÓN LIKE ---
-  likeCity(city: CityDto) {
+  private ensureDestinationExists(city: CityWithRating, callback: (id: string) => void) {
+    const key = this.getUniqueKey(city.name, city.country);
+
+    if (this.destinationCache.has(key)) {
+      callback(this.destinationCache.get(key)!.id);
+      return;
+    }
+
+    const newDestination: CreateUpdateDestinationDto = {
+      name: city.name,
+      country: city.country,
+      city: city.region || city.name,
+      population: city.population || 0,
+      photo: '',
+      updateDate: new Date().toISOString(),
+      coordinates: { latitude: city.latitude, longitude: city.longitude }
+    };
+
+    this.destinationService.create(newDestination).subscribe({
+        next: (created) => {
+            this.destinationCache.set(key, { id: created.id, rating: 0 });
+            // Guardamos el caché actualizado en el servicio
+            this.stateService.lastCache = this.destinationCache;
+            
+            callback(created.id);
+        },
+        error: (err) => {
+            console.error('Error creando destino', err);
+            this.isLoading = false;
+            alert('Ocurrió un error al procesar el destino.');
+        }
+    });
+  }
+
+  likeCity(city: CityWithRating) {
     if (!this.authService.isAuthenticated) {
       this.authService.navigateToLogin();
       return;
     }
     this.isLoading = true;
 
-    // Usamos el helper inteligente
     this.ensureDestinationExists(city, (id) => {
         this.favoriteService.toggle({ destinationId: id }).subscribe(() => {
             this.isLoading = false;
-            
-            // Actualizamos visualmente
             if (this.likedCities.has(city.name)) {
                 this.likedCities.delete(city.name);
             } else {
@@ -160,25 +199,19 @@ export class CitySearch implements OnInit {
     });
   }
 
-  // --- BOTÓN CALIFICAR (También arreglado para usar el helper) ---
-  rateCity(city: CityDto) {
+  rateCity(city: CityWithRating) {
     if (!this.authService.isAuthenticated) {
       this.authService.navigateToLogin();
       return;
     }
-    this.isLoading = true;
-
+    
     this.ensureDestinationExists(city, (id) => {
-        this.isLoading = false;
         this.openRatingModal(id, city.name);
     });
   }
 
-  // --- BOTÓN GUARDAR (Manual) ---
-  saveCity(city: CityDto) {
+  saveCity(city: CityWithRating) {
     if (!confirm(`¿Guardar ${city.name}?`)) return;
-    
-    // Reutilizamos lógica para no duplicar si ya existe
     this.ensureDestinationExists(city, (id) => {
         alert('✅ Destino asegurado en la base de datos.');
     });
@@ -188,5 +221,17 @@ export class CitySearch implements OnInit {
     const modalRef = this.modalService.open(ExperienceModalComponent, { size: 'lg' });
     modalRef.componentInstance.destinationId = id;
     modalRef.componentInstance.destinationName = name;
+    
+    modalRef.result.then(() => {
+        this.preloadLocalDestinations(); 
+    }, () => {});
+  }
+
+  goToDetails(city: CityWithRating) {
+      this.isLoading = true;
+      this.ensureDestinationExists(city, (id) => {
+          this.isLoading = false;
+          this.router.navigate(['/destination-detail', id]);
+      });
   }
 }

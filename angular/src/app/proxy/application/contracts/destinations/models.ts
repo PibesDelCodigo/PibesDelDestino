@@ -23,4 +23,5 @@ export interface DestinationDto extends AuditedEntityDto<string> {
   photo?: string;
   updateDate?: string;
   coordinates: CoordinatesDto;
+  averageRating: number;
 }

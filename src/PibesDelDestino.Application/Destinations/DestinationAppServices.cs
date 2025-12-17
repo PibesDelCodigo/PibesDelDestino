@@ -2,16 +2,17 @@
 using PibesDelDestino.Cities;
 using PibesDelDestino.Destinations;
 using System;
-using System.Collections.Generic; // <--- Necesario para List<>
-using System.Linq; // <--- Necesario para .Any()
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
-// 1. IMPORTAMOS LOS NUEVOS NAMESPACES
 using PibesDelDestino.Favorites;
 using PibesDelDestino.Notifications;
+// 👇 1. IMPORTAMOS EXPERIENCIAS PARA LEER LAS CALIFICACIONES
+using PibesDelDestino.Experiences;
 
 namespace PibesDelDestino.Destinations
 {
@@ -21,25 +22,89 @@ namespace PibesDelDestino.Destinations
     {
         private readonly ICitySearchService _citySearchService;
         private readonly IGuidGenerator _guidGenerator;
-
-        // 2. DECLARAMOS LOS NUEVOS REPOSITORIOS
         private readonly IRepository<FavoriteDestination, Guid> _favoriteRepository;
         private readonly IRepository<AppNotification, Guid> _notificationRepository;
+
+        // 👇 2. NUEVO REPOSITORIO DE EXPERIENCIAS
+        private readonly IRepository<TravelExperience, Guid> _experienceRepository;
 
         public DestinationAppService(
             IRepository<Destination, Guid> repository,
             ICitySearchService citySearchService,
             IGuidGenerator guidGenerator,
-            // 3. INYECTAMOS EN EL CONSTRUCTOR
             IRepository<FavoriteDestination, Guid> favoriteRepository,
-            IRepository<AppNotification, Guid> notificationRepository)
+            IRepository<AppNotification, Guid> notificationRepository,
+            // 👇 3. INYECTAMOS EN EL CONSTRUCTOR
+            IRepository<TravelExperience, Guid> experienceRepository)
             : base(repository)
         {
             _citySearchService = citySearchService;
             _guidGenerator = guidGenerator;
             _favoriteRepository = favoriteRepository;
             _notificationRepository = notificationRepository;
+            _experienceRepository = experienceRepository;
         }
+
+        // -----------------------------------------------------------------------
+        // ⭐ MAGIA PARA LAS ESTRELLAS: CÁLCULO DE PROMEDIO AL LISTAR ⭐
+        // -----------------------------------------------------------------------
+        protected override async Task<List<DestinationDto>> MapToGetListOutputDtosAsync(List<Destination> entities)
+        {
+            // 1. Obtenemos los DTOs básicos (Nombre, Ciudad, etc.)
+            var dtos = await base.MapToGetListOutputDtosAsync(entities);
+
+            // 2. Sacamos los IDs de los destinos que estamos listando
+            var destinationIds = entities.Select(x => x.Id).ToList();
+
+            // 3. Traemos TODAS las calificaciones de estos destinos de una sola vez (Optimización)
+            var query = await _experienceRepository.GetQueryableAsync();
+            var allRatings = query
+                .Where(x => destinationIds.Contains(x.DestinationId))
+                .Select(x => new { x.DestinationId, x.Rating }) // Solo traemos lo necesario
+                .ToList();
+
+            // 4. Asignamos el promedio a cada DTO
+            foreach (var dto in dtos)
+            {
+                // Filtramos las notas de este destino específico
+                var specificRatings = allRatings
+                    .Where(x => x.DestinationId == dto.Id)
+                    .Select(x => x.Rating)
+                    .ToList();
+
+                if (specificRatings.Any())
+                {
+                    dto.AverageRating = specificRatings.Average();
+                }
+                else
+                {
+                    dto.AverageRating = 0; // Si no tiene reseñas, 0 estrellas
+                }
+            }
+
+            return dtos;
+        }
+
+        // ⭐ MAGIA PARA LAS ESTRELLAS: CÁLCULO AL VER DETALLE INDIVIDUAL ⭐
+        protected override async Task<DestinationDto> MapToGetOutputDtoAsync(Destination entity)
+        {
+            var dto = await base.MapToGetOutputDtoAsync(entity);
+
+            var query = await _experienceRepository.GetQueryableAsync();
+            var ratings = query.Where(x => x.DestinationId == entity.Id);
+
+            if (await AsyncExecuter.AnyAsync(ratings))
+            {
+                dto.AverageRating = await AsyncExecuter.AverageAsync(ratings, x => x.Rating);
+            }
+            else
+            {
+                dto.AverageRating = 0;
+            }
+
+            return dto;
+        }
+        // -----------------------------------------------------------------------
 
         public override async Task<DestinationDto> CreateAsync(CreateUpdateDestinationDto input)
         {
@@ -69,37 +134,29 @@ namespace PibesDelDestino.Destinations
                 {
                     Latitude = destination.Coordinates.Latitude,
                     Longitude = destination.Coordinates.Longitude
-                }
+                },
+                AverageRating = 0 // Al crear es nuevo, tiene 0 estrellas
             };
         }
 
-        // -------------------------------------------------------------
-        // 4. SOBRESCRIBIMOS EL UPDATE PARA NOTIFICAR (Requisito 6.2) 🔔
-        // -------------------------------------------------------------
         public override async Task<DestinationDto> UpdateAsync(Guid id, CreateUpdateDestinationDto input)
         {
-            // A. Primero actualizamos el dato en la base de datos (lógica original)
             var updatedDestination = await base.UpdateAsync(id, input);
 
-            // B. Buscamos a los seguidores de este destino (Favoritos)
             var followers = await _favoriteRepository.GetListAsync(x => x.DestinationId == id);
-
-            // C. Preparamos las notificaciones
             var notifications = new List<AppNotification>();
 
             foreach (var follow in followers)
             {
-                // Creamos la alerta para cada usuario
                 notifications.Add(new AppNotification(
                     _guidGenerator.Create(),
                     follow.UserId,
-                    "Actualización de Destino 📢", // Título
-                    $"Hubo cambios recientes en la información de {input.Name}. ¡Revisa los detalles!", // Mensaje
-                    "DestinationUpdate" // Tipo (Para filtrar luego en preferencias)
+                    "Actualización de Destino 📢",
+                    $"Hubo cambios recientes en la información de {input.Name}. ¡Revisa los detalles!",
+                    "DestinationUpdate"
                 ));
             }
 
-            // D. Guardamos las notificaciones masivamente
             if (notifications.Any())
             {
                 await _notificationRepository.InsertManyAsync(notifications);
@@ -107,7 +164,6 @@ namespace PibesDelDestino.Destinations
 
             return updatedDestination;
         }
-        // -------------------------------------------------------------
 
         public async Task<CityResultDto> SearchCitiesAsync(CityRequestDTO request)
         {

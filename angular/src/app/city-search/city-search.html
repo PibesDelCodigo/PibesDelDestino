@@ -40,7 +40,7 @@
   <div *ngIf="errorMessage" class="error-message">❌ {{ errorMessage }}</div>
 
   <ul *ngIf="cities.length > 0" class="results-list">
-    <li *ngFor="let city of cities" class="result-item">
+<li *ngFor="let city of cities" class="result-item">
       
       <div class="city-header">
         <span class="city-name">{{ city.name }}</span>
@@ -48,7 +48,26 @@
       </div>
       
       <div class="city-country">{{ city.country }}</div>
-      
+
+      <div class="city-rating my-2">
+        <span class="text-warning" style="font-size: 1.1rem;">
+          <i class="fa fa-star" *ngIf="(city.averageRating || 0) >= 1"></i>
+          <i class="fa fa-star" *ngIf="(city.averageRating || 0) >= 2"></i>
+          <i class="fa fa-star" *ngIf="(city.averageRating || 0) >= 3"></i>
+          <i class="fa fa-star" *ngIf="(city.averageRating || 0) >= 4"></i>
+          <i class="fa fa-star" *ngIf="(city.averageRating || 0) >= 5"></i>
+          
+          <i class="far fa-star" *ngIf="(city.averageRating || 0) < 1"></i>
+          <i class="far fa-star" *ngIf="(city.averageRating || 0) < 2"></i>
+          <i class="far fa-star" *ngIf="(city.averageRating || 0) < 3"></i>
+          <i class="far fa-star" *ngIf="(city.averageRating || 0) < 4"></i>
+          <i class="far fa-star" *ngIf="(city.averageRating || 0) < 5"></i>
+        </span>
+        
+        <span class="ms-2 text-muted fw-bold small">
+           {{ (city.averageRating || 0) | number:'1.1-1' }}
+        </span>
+      </div>
       <div class="city-stats">
         👥 Población: {{ city.population | number }}
       </div>
@@ -63,6 +82,10 @@
 
         <button class="btn btn-warning flex-grow-1" (click)="rateCity(city)">
           ⭐ Calificar
+        </button>
+
+        <button class="btn btn-info flex-grow-1 text-white" (click)="goToDetails(city)">
+            👁️ Ver Reseñas
         </button>
 
         <button class="btn btn-outline-danger" (click)="likeCity(city)" title="Me gusta">
