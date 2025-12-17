@@ -13,5 +13,7 @@ namespace PibesDelDestino.Application.Contracts.Destinations
         public string Photo { get; set; }
         public DateTime UpdateDate { get; set; }
         public CoordinatesDto Coordinates { get; set; }
+
+        public double AverageRating { get; set; }
     }
 }

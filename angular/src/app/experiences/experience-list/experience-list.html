@@ -40,14 +40,21 @@
     
     <div *ngFor="let exp of experiences" class="list-group-item position-relative">
       
-      <button *ngIf="exp.userId === currentUserId" 
-              class="btn btn-outline-danger btn-sm position-absolute top-0 end-0 m-2"
-              (click)="delete(exp)"
-              title="Eliminar mi reseña">
-        <i class="fa fa-trash"></i>
-      </button>
-      <div class="d-flex justify-content-between align-items-center me-4">
-        <div class="text-warning">
+      <div *ngIf="exp.userId === currentUserId" class="position-absolute top-0 end-0 m-2">
+        
+        <button class="btn btn-outline-primary btn-sm me-1" 
+                (click)="editExperience(exp)" 
+                title="Editar mi reseña">
+            <i class="fa fa-pencil"></i>
+        </button>
+
+        <button class="btn btn-outline-danger btn-sm"
+                (click)="delete(exp)"
+                title="Eliminar mi reseña">
+            <i class="fa fa-trash"></i>
+        </button>
+      </div>
+      <div class="d-flex justify-content-between align-items-center me-5"> <div class="text-warning">
           <span *ngFor="let s of stars">
             <i [class]="s <= exp.rating ? 'fas fa-star' : 'far fa-star'"></i>
           </span>

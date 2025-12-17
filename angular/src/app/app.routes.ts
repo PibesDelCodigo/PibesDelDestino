@@ -1,5 +1,6 @@
 import { authGuard, permissionGuard } from '@abp/ng.core'; // Usamos este que ya trajiste
 import { Routes } from '@angular/router';
+import { DestinationDetailComponent } from './destinations/destination-detail/destination-detail';
 
 export const APP_ROUTES: Routes = [
   {
@@ -24,6 +25,10 @@ export const APP_ROUTES: Routes = [
     loadChildren: () => import('@abp/ng.setting-management').then(c => c.createRoutes()),
   },
 
+{
+    path: 'destination-detail/:id', // 👈 El ":id" es la clave mágica
+    component: DestinationDetailComponent,
+  },
 
   {
     path: 'favorites',

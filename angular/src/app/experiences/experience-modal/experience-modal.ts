@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap'; // Para cerrar el modal
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TravelExperienceService } from 'src/app/proxy/experiences';
 import { ToasterService } from '@abp/ng.theme.shared';
 
@@ -14,13 +14,14 @@ import { ToasterService } from '@abp/ng.theme.shared';
 })
 export class ExperienceModalComponent implements OnInit {
   
-  @Input() destinationId: string = ''; // Recibimos el ID del destino
-  @Input() destinationName: string = ''; // Recibimos el nombre para mostrarlo
+  @Input() destinationId: string = '';
+  @Input() destinationName: string = '';
+
+  // 👇 1. NUEVO: Recibimos la experiencia para editar (si viene vacía, es creación)
+  @Input() selectedExperience: any = null; 
 
   form: FormGroup;
   isSaving = false;
-  
-  // Array para dibujar las 5 estrellas
   stars = [1, 2, 3, 4, 5]; 
 
   constructor(
@@ -32,6 +33,16 @@ export class ExperienceModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.buildForm();
+
+    // 👇 2. LOGICA DE RELLENADO: Si es edición, cargamos los datos
+    if (this.selectedExperience) {
+      this.form.patchValue({
+        title: this.selectedExperience.title,
+        description: this.selectedExperience.description,
+        rating: this.selectedExperience.rating,
+        date: this.selectedExperience.date || new Date().toISOString()
+      });
+    }
   }
 
   buildForm() {
@@ -39,12 +50,11 @@ export class ExperienceModalComponent implements OnInit {
       destinationId: [this.destinationId, Validators.required],
       title: ['', [Validators.required, Validators.maxLength(100)]],
       description: ['', [Validators.required, Validators.maxLength(4000)]],
-      rating: [5, [Validators.required, Validators.min(1), Validators.max(5)]], // Default 5 estrellas
+      rating: [5, [Validators.required, Validators.min(1), Validators.max(5)]],
       date: [new Date().toISOString(), Validators.required]
     });
   }
 
-  // Función para cambiar el rating al hacer clic en una estrella
   setRating(star: number) {
     this.form.patchValue({ rating: star });
   }
@@ -53,18 +63,40 @@ export class ExperienceModalComponent implements OnInit {
     if (this.form.invalid) return;
 
     this.isSaving = true;
+    const formData = this.form.value;
 
-    this.experienceService.create(this.form.value).subscribe({
-      next: () => {
-        this.toaster.success('¡Gracias por compartir tu experiencia!', 'Éxito');
-        this.activeModal.close(true); // Cerramos devolviendo "true" (éxito)
-      },
-      error: (err) => {
-        this.isSaving = false;
-        this.toaster.error('Ocurrió un error al guardar.', 'Error');
-        console.error(err);
-      }
-    });
+    // 👇 3. DECISIÓN: ¿CREAR O ACTUALIZAR?
+    if (this.selectedExperience) {
+      
+      // --- MODO EDICIÓN (UPDATE) ---
+      this.experienceService.update(this.selectedExperience.id, formData).subscribe({
+        next: () => {
+          this.toaster.success('¡Experiencia actualizada con éxito!', 'Guardado');
+          this.activeModal.close(true);
+        },
+        error: (err) => {
+          this.isSaving = false;
+          this.toaster.error('Error al actualizar la reseña.', 'Error');
+          console.error(err);
+        }
+      });
+
+    } else {
+
+      // --- MODO CREACIÓN (CREATE) ---
+      this.experienceService.create(formData).subscribe({
+        next: () => {
+          this.toaster.success('¡Gracias por compartir tu experiencia!', 'Éxito');
+          this.activeModal.close(true);
+        },
+        error: (err) => {
+          this.isSaving = false;
+          this.toaster.error('Ocurrió un error al guardar.', 'Error');
+          console.error(err);
+        }
+      });
+      
+    }
   }
 
   close() {

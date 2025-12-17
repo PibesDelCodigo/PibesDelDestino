@@ -1,15 +1,16 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Volo.Abp.Application.Services;
 
 namespace PibesDelDestino.Experiences
 {
-    public interface ITravelExperienceAppService :
-        ICrudAppService< // Interfaz estándar de CRUD
-            TravelExperienceDto,
-            Guid,
-            GetTravelExperiencesInput, // Usamos nuestro filtro nuevo
-            CreateUpdateTravelExperienceDto>
+    public interface ITravelExperienceAppService : ICrudAppService<
+        TravelExperienceDto,
+        Guid,
+        GetTravelExperiencesInput,
+        CreateUpdateTravelExperienceDto>
     {
-        
+    
+        Task<double> GetAverageRatingAsync(Guid destinationId);
     }
 }

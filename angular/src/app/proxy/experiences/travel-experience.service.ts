@@ -35,6 +35,14 @@ export class TravelExperienceService {
     { apiName: this.apiName,...config });
   
 
+  getAverageRating = (destinationId: string, config?: Partial<Rest.Config>) =>
+    this.restService.request<any, number>({
+      method: 'GET',
+      url: `/api/app/travel-experience/average-rating/${destinationId}`,
+    },
+    { apiName: this.apiName,...config });
+  
+
   getList = (input: GetTravelExperiencesInput, config?: Partial<Rest.Config>) =>
     this.restService.request<any, PagedResultDto<TravelExperienceDto>>({
       method: 'GET',
