@@ -1,15 +1,15 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TravelExperienceService } from 'src/app/proxy/experiences';
 import { FormsModule } from '@angular/forms';
 import { TravelExperienceDto } from 'src/app/proxy/experiences';
 import { ConfigStateService } from '@abp/ng.core';
 import { ConfirmationService, Confirmation } from '@abp/ng.theme.shared';
-
-// 👇 1. IMPORTAMOS LO NECESARIO PARA EL MODAL
+import { RouterModule } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-// Asegurate que esta ruta sea correcta según tu carpeta
 import { ExperienceModalComponent } from '../experience-modal/experience-modal'; 
+import { Router } from '@angular/router';
+
 
 @Component({
   selector: 'app-experience-list',
@@ -28,12 +28,33 @@ export class ExperienceListComponent implements OnInit {
   searchText: string = '';
   filterType: number = null; 
 
+  private router = inject(Router);
+  
   constructor(
     private experienceService: TravelExperienceService,
     private config: ConfigStateService, 
     private confirmation: ConfirmationService,
-    private modalService: NgbModal // 👈 2. INYECTAMOS EL MODAL SERVICE
+    private modalService: NgbModal 
   ) {}
+
+// 1. Asegurate de tener "Router" inyectado.
+// Si usás "inject", agregá: private router = inject(Router);
+// Si usás constructor: private router: Router
+
+// 2. Agregá esta función:
+goToUserProfile(userId: string | undefined, userName: string | undefined) {
+    console.log('👉 Intentando ir al perfil de:', userName);
+    console.log('🔑 ID del usuario:', userId);
+
+    if (!userId) {
+        console.error('❌ ERROR: El userId está vacío o indefinido. No se puede navegar.');
+        alert('Error: No se encontró el ID de este usuario.');
+        return;
+    }
+
+    // Navegamos manualmente
+    this.router.navigate(['/profile', userId]);
+}
 
   // Getter para obtener MI ID de usuario actual
   get currentUserId(): string {

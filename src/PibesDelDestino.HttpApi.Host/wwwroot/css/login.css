@@ -1,0 +1,78 @@
+/* wwwroot/css/login.css */
+
+/* --- 1. FONDO GENERAL --- */
+body.abp-account-layout,
+.lpx-login-bg,
+#lpx-wrapper {
+    background: #f4f6f8 !important; /* Gris muy suave profesional */
+    background-image: none !important;
+}
+
+/* Limpieza de contenedores internos */
+.lpx-content-container, .lpx-content {
+    background: transparent !important;
+}
+
+
+/* Le sacamos el fondo y el borde para que NO parezca una tarjeta aparte */
+.abp-account-layout .row .card:first-child {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    /* Lo alineamos a la derecha para que quede prolijo */
+    display: flex !important;
+    justify-content: flex-end !important;
+    /* Lo pegamos un poquito más al formulario */
+    margin-bottom: -10px !important;
+    padding: 0 0 10px 0 !important;
+    /* Aseguramos que tenga el mismo ancho que el login */
+    max-width: 400px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+    /* Estilizamos el BOTÓN de idioma para que se vea bien sobre el gris */
+    .abp-account-layout .row .card:first-child .dropdown-toggle,
+    .abp-account-layout .row .card:first-child .btn {
+        background-color: #ffffff !important;
+        border: 1px solid #e0e0e0 !important;
+        color: #555 !important;
+        border-radius: 20px !important; /* Redondito */
+        font-size: 0.85rem !important;
+        padding: 5px 15px !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+    }
+
+/* --- 3. TARJETA DE LOGIN (PRINCIPAL) --- */
+.abp-account-layout .row .card:last-child, /* Aseguramos que sea la del login */
+.lpx-login-content {
+    background-color: #ffffff !important;
+    border: 1px solid #e6e8eb !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important; /* Sombra muy sutil */
+    border-radius: 12px !important;
+    /* Ajuste de tamaño */
+    width: fit-content !important;
+    min-width: 350px !important;
+    max-width: 90% !important;
+    margin: 0 auto !important;
+    padding: 2rem !important;
+}
+
+/* --- 4. BOTÓN Y LOGO --- */
+.btn-primary {
+    background-color: #4e4376 !important;
+    border-color: #4e4376 !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    width: 100%;
+    padding: 0.6rem !important;
+}
+
+    .btn-primary:hover {
+        background-color: #3b3358 !important;
+    }
+
+.lpx-brand-logo {
+    background-image: none !important;
+    margin-bottom: 0.5rem !important;
+}

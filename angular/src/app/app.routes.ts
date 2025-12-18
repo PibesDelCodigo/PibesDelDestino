@@ -1,6 +1,7 @@
 import { authGuard, permissionGuard } from '@abp/ng.core'; // Usamos este que ya trajiste
 import { Routes } from '@angular/router';
 import { DestinationDetailComponent } from './destinations/destination-detail/destination-detail';
+import { PublicProfile } from './users/public-profile/public-profile';
 
 export const APP_ROUTES: Routes = [
   {
@@ -12,6 +13,13 @@ export const APP_ROUTES: Routes = [
     path: 'city-search',
     loadComponent: () => import('./city-search/city-search').then(c => c.CitySearch),
   },
+{
+    path: 'profile/:id',
+    loadComponent: () => 
+      import('./profiles/public-profile/public-profile')
+      .then(m => m.PublicProfileComponent)
+  },
+
   {
     path: 'account',
     loadChildren: () => import('@abp/ng.account').then(c => c.createRoutes()),
@@ -20,6 +28,13 @@ export const APP_ROUTES: Routes = [
     path: 'identity',
     loadChildren: () => import('@abp/ng.identity').then(c => c.createRoutes()),
   },
+
+  {
+  path: 'settings',
+  loadComponent: () => import('./settings/settings').then(m => m.SettingsComponent),
+  canActivate: [authGuard] // 👈 Importante: Solo si está logueado
+},
+
   {
     path: 'setting-management',
     loadChildren: () => import('@abp/ng.setting-management').then(c => c.createRoutes()),
@@ -28,6 +43,11 @@ export const APP_ROUTES: Routes = [
 {
     path: 'destination-detail/:id', // 👈 El ":id" es la clave mágica
     component: DestinationDetailComponent,
+  },
+
+{
+    path: 'profile/:id', // 👈 Recibimos el ID del usuario
+    component: PublicProfile,
   },
 
   {

@@ -1639,6 +1639,18 @@
                 },
                 {
                   "nameOnMethod": "input",
+                  "name": "UserId",
+                  "jsonName": null,
+                  "type": "System.Guid?",
+                  "typeSimple": "string?",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "ModelBinding",
+                  "descriptorName": "input"
+                },
+                {
+                  "nameOnMethod": "input",
                   "name": "Sorting",
                   "jsonName": null,
                   "type": "System.String",
@@ -2110,6 +2122,69 @@
               },
               "allowAnonymous": false,
               "implementFrom": "PibesDelDestino.Ratings.IRatingAppService"
+            }
+          }
+        },
+        "PibesDelDestino.Settings.SettingsAppService": {
+          "controllerName": "Settings",
+          "controllerGroupName": "Settings",
+          "isRemoteService": true,
+          "isIntegrationService": false,
+          "apiVersion": null,
+          "type": "PibesDelDestino.Settings.SettingsAppService",
+          "interfaces": [],
+          "actions": {
+            "GetNotificationPreferenceAsync": {
+              "uniqueName": "GetNotificationPreferenceAsync",
+              "name": "GetNotificationPreferenceAsync",
+              "httpMethod": "GET",
+              "url": "api/app/settings/notification-preference",
+              "supportedVersions": [],
+              "parametersOnMethod": [],
+              "parameters": [],
+              "returnValue": {
+                "type": "System.Boolean",
+                "typeSimple": "boolean"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Settings.SettingsAppService"
+            },
+            "UpdateNotificationPreferenceAsyncByEnabled": {
+              "uniqueName": "UpdateNotificationPreferenceAsyncByEnabled",
+              "name": "UpdateNotificationPreferenceAsync",
+              "httpMethod": "PUT",
+              "url": "api/app/settings/notification-preference",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "enabled",
+                  "typeAsString": "System.Boolean, System.Private.CoreLib",
+                  "type": "System.Boolean",
+                  "typeSimple": "boolean",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "enabled",
+                  "name": "enabled",
+                  "jsonName": null,
+                  "type": "System.Boolean",
+                  "typeSimple": "boolean",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "ModelBinding",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "System.Void",
+                "typeSimple": "System.Void"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Settings.SettingsAppService"
             }
           }
         },
@@ -4914,6 +4989,18 @@
           "jsonName": null,
           "type": "PibesDelDestino.Experiences.ExperienceFilterType?",
           "typeSimple": "enum?",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "UserId",
+          "jsonName": null,
+          "type": "System.Guid?",
+          "typeSimple": "string?",
           "isRequired": false,
           "minLength": null,
           "maxLength": null,

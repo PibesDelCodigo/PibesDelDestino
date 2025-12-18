@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router'; // 👈 1. Importamos esto
 import { NotificationService } from 'src/app/proxy/notifications';
 import { AppNotificationDto } from 'src/app/proxy/notifications';
 
 @Component({
   selector: 'app-notification-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule], // 👈 2. Lo agregamos acá
   templateUrl: './notification-list.html',
   styleUrls: ['./notification-list.scss']
 })
@@ -36,24 +37,22 @@ export class NotificationListComponent implements OnInit {
   }
 
   markAsRead(item: AppNotificationDto) {
-    if (item.isRead) return; // Si ya está leída, no hacemos nada
+    if (item.isRead) return; 
 
     this.notificationService.markAsRead(item.id).subscribe(() => {
-      item.isRead = true; // Actualizamos visualmente al instante
+      item.isRead = true; 
     });
   }
 
-  // Helper para elegir el ícono según el tipo
   getIcon(type: string): string {
     if (type === 'Comment') return 'fa-comments';
     if (type === 'DestinationUpdate') return 'fa-map-marked-alt';
-    return 'fa-bell'; // Default
+    return 'fa-bell'; 
   }
   
-  // Helper para el color del ícono
   getColor(type: string): string {
-    if (type === 'Comment') return 'text-primary';       // Azul
-    if (type === 'DestinationUpdate') return 'text-warning'; // Amarillo/Naranja
+    if (type === 'Comment') return 'text-primary';       
+    if (type === 'DestinationUpdate') return 'text-warning'; 
     return 'text-secondary';
   }
 }
