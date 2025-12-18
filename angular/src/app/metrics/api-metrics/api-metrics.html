@@ -1,0 +1,95 @@
+<div class="container mt-5">
+  
+  <div *ngIf="hasAccess; else accessDenied">
+    
+    <h2 class="fw-bold mb-4">📊 Métricas de API Externa</h2>
+
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card bg-primary text-white border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h1 class="display-4 fw-bold">{{ totalCalls }}</h1>
+            <p class="mb-0">Peticiones Totales</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm" [ngClass]="successRate > 90 ? 'bg-success text-white' : 'bg-warning text-dark'">
+          <div class="card-body text-center">
+            <h1 class="display-4 fw-bold">{{ successRate | number:'1.0-0' }}%</h1>
+            <p class="mb-0">Tasa de Éxito</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-info text-white border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h1 class="display-4 fw-bold">{{ avgTime | number:'1.0-0' }}ms</h1>
+            <p class="mb-0">Tiempo Promedio</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="m-0 fw-bold">📜 Historial de Uso (Traductor)</h5>
+      </div>
+      <div class="card-body p-0">
+        <div *ngIf="isLoading" class="text-center p-5">
+          <div class="spinner-border text-primary"></div>
+        </div>
+        <div class="table-responsive" *ngIf="!isLoading">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-4">Fecha</th>
+                <th>Servicio</th>
+                <th>Endpoint</th>
+                <th>Estado</th>
+                <th>Tiempo</th>
+                <th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let m of metrics">
+                <td class="ps-4 text-muted">{{ m.creationTime | date:'medium' }}</td>
+                <td class="fw-bold text-primary">{{ m.serviceName }}</td>
+                <td><code>{{ m.endpoint }}</code></td>
+                <td>
+                  <span class="badge rounded-pill" [ngClass]="m.isSuccess ? 'bg-success' : 'bg-danger'">
+                    {{ m.isSuccess ? 'EXITOSO' : 'ERROR' }}
+                  </span>
+                </td>
+                <td>{{ m.responseTimeMs }} ms</td>
+                <td>
+                  <small class="text-danger" *ngIf="!m.isSuccess">{{ m.errorMessage }}</small>
+                  <small class="text-success" *ngIf="m.isSuccess">OK</small>
+                </td>
+              </tr>
+              <tr *ngIf="metrics.length === 0">
+                <td colspan="6" class="text-center py-4 text-muted">
+                  No hay datos registrados aún.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #accessDenied>
+    <div class="text-center mt-5 pt-5">
+      <div class="mb-4">
+        <i class="fa fa-lock fa-5x text-secondary"></i>
+      </div>
+      <h2 class="fw-bold text-danger">Acceso Restringido</h2>
+      <p class="text-muted fs-5">Solo los administradores pueden ver las métricas del sistema.</p>
+      <a routerLink="/" class="btn btn-outline-primary mt-3">
+        <i class="fa fa-arrow-left"></i> Volver al Inicio
+      </a>
+    </div>
+  </ng-template>
+
+</div>

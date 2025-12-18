@@ -20,6 +20,12 @@ export const APP_ROUTES: Routes = [
       .then(m => m.PublicProfileComponent)
   },
 
+{
+    path: 'metrics',
+    loadComponent: () => import('./metrics/api-metrics/api-metrics').then(m => m.ApiMetricsComponent),
+    canActivate: [authGuard]
+  },
+
   {
     path: 'account',
     loadChildren: () => import('@abp/ng.account').then(c => c.createRoutes()),

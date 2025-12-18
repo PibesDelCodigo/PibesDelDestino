@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PibesDelDestino.Destinations;
 using PibesDelDestino.Experiences;
 using PibesDelDestino.Favorites;
+using PibesDelDestino.Metrics;
 using PibesDelDestino.Notifications;
 using PibesDelDestino.Ratings;
 using PibesDelDestino.Users;
@@ -31,7 +32,7 @@ public class PibesDelDestinoDbContext :
     IIdentityDbContext
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
-
+    public DbSet<ApiMetric> ApiMetrics { get; set; }
     public DbSet<AppNotification> AppNotifications { get; set; }
     public DbSet<FavoriteDestination> FavoriteDestinations { get; set; }
     public DbSet<TravelExperience> TravelExperiences { get; set; }
@@ -108,6 +109,16 @@ public class PibesDelDestinoDbContext :
             // IMPORTANTE: Índice ÚNICO compuesto.
             // Esto impide que la base de datos acepte dos filas con el mismo Usuario + Destino.
             b.HasIndex(x => new { x.UserId, x.DestinationId }).IsUnique();
+        });
+
+        builder.Entity<ApiMetric>(b =>
+        {
+            b.ToTable(PibesDelDestinoConsts.DbTablePrefix + "ApiMetrics", PibesDelDestinoConsts.DbSchema);
+            b.ConfigureByConvention();
+
+            // Índices para que las búsquedas sean rápidas
+            b.HasIndex(x => x.CreationTime);
+            b.HasIndex(x => x.ServiceName);
         });
 
         builder.Entity<AppNotification>(b =>
