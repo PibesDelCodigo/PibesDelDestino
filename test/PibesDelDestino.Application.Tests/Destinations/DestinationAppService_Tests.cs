@@ -10,9 +10,10 @@ using Volo.Abp.Guids;
 using Volo.Abp.Modularity;
 using Volo.Abp.Validation;
 using Xunit;
-// IMPORTANTE: Agregamos los namespaces de los nuevos repositorios
 using PibesDelDestino.Favorites;
 using PibesDelDestino.Notifications;
+// 👇 1. IMPORTANTE: Agregamos el namespace de Experiencias
+using PibesDelDestino.Experiences;
 
 namespace PibesDelDestino.Destinations
 {
@@ -31,10 +32,11 @@ namespace PibesDelDestino.Destinations
             var citySearchServiceMock = Substitute.For<ICitySearchService>();
             var repositoryMock = Substitute.For<IRepository<Destination, Guid>>();
             var guidGeneratorMock = Substitute.For<IGuidGenerator>();
-
-            // --- NUEVOS MOCKS ---
             var favoriteRepositoryMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
             var notificationRepositoryMock = Substitute.For<IRepository<AppNotification, Guid>>();
+
+            // 👇 2. NUEVO MOCK: Repositorio de Experiencias
+            var experienceRepositoryMock = Substitute.For<IRepository<TravelExperience, Guid>>();
 
             // Le enseñamos al mock qué Guid debe devolver
             guidGeneratorMock.Create().Returns(Guid.NewGuid());
@@ -43,8 +45,9 @@ namespace PibesDelDestino.Destinations
                 repositoryMock,
                 citySearchServiceMock,
                 guidGeneratorMock,
-                favoriteRepositoryMock,     // <--- Nuevo parámetro 4
-                notificationRepositoryMock  // <--- Nuevo parámetro 5
+                favoriteRepositoryMock,
+                notificationRepositoryMock,
+                experienceRepositoryMock // 👈 3. LO AGREGAMOS AL CONSTRUCTOR
             );
 
             var input = new CreateUpdateDestinationDto
@@ -73,17 +76,19 @@ namespace PibesDelDestino.Destinations
             var citySearchServiceMock = Substitute.For<ICitySearchService>();
             var repositoryMock = Substitute.For<IRepository<Destination, Guid>>();
             var guidGeneratorMock = Substitute.For<IGuidGenerator>();
-
-            // --- NUEVOS MOCKS ---
             var favoriteRepositoryMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
             var notificationRepositoryMock = Substitute.For<IRepository<AppNotification, Guid>>();
+
+            // 👇 NUEVO MOCK
+            var experienceRepositoryMock = Substitute.For<IRepository<TravelExperience, Guid>>();
 
             var appService = new DestinationAppService(
                 repositoryMock,
                 citySearchServiceMock,
                 guidGeneratorMock,
-                favoriteRepositoryMock,     // <--- Nuevo parámetro 4
-                notificationRepositoryMock  // <--- Nuevo parámetro 5
+                favoriteRepositoryMock,
+                notificationRepositoryMock,
+                experienceRepositoryMock // 👈 AGREGADO
             );
 
             // ACT & ASSERT
@@ -111,17 +116,19 @@ namespace PibesDelDestino.Destinations
             var citySearchServiceMock = Substitute.For<ICitySearchService>();
             var repositoryMock = Substitute.For<IRepository<Destination, Guid>>();
             var guidGeneratorMock = Substitute.For<IGuidGenerator>();
-
-            // --- NUEVOS MOCKS ---
             var favoriteRepositoryMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
             var notificationRepositoryMock = Substitute.For<IRepository<AppNotification, Guid>>();
+
+            // 👇 NUEVO MOCK
+            var experienceRepositoryMock = Substitute.For<IRepository<TravelExperience, Guid>>();
 
             var appService = new DestinationAppService(
                 repositoryMock,
                 citySearchServiceMock,
                 guidGeneratorMock,
-                favoriteRepositoryMock,     // <--- Nuevo parámetro 4
-                notificationRepositoryMock  // <--- Nuevo parámetro 5
+                favoriteRepositoryMock,
+                notificationRepositoryMock,
+                experienceRepositoryMock // 👈 AGREGADO
             );
 
             var fakeCities = new CityResultDto
