@@ -47,7 +47,7 @@ export class TravelExperienceService {
     this.restService.request<any, PagedResultDto<TravelExperienceDto>>({
       method: 'GET',
       url: '/api/app/travel-experience',
-      params: { destinationId: input.destinationId, filterText: input.filterText, type: input.type, sorting: input.sorting, skipCount: input.skipCount, maxResultCount: input.maxResultCount },
+      params: { destinationId: input.destinationId, filterText: input.filterText, type: input.type, userId: input.userId, sorting: input.sorting, skipCount: input.skipCount, maxResultCount: input.maxResultCount },
     },
     { apiName: this.apiName,...config });
   

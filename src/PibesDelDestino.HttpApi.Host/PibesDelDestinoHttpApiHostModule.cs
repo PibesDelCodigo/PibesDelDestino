@@ -14,7 +14,6 @@ using OpenIddict.Validation.AspNetCore;
 using PibesDelDestino.EntityFrameworkCore;
 using PibesDelDestino.MultiTenancy;
 using PibesDelDestino.HealthChecks;
-using PibesDelDestino.MultiTenancy;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -35,19 +34,12 @@ using Volo.Abp.AspNetCore.Mvc.UI.Bundling;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.LeptonXLite.Bundling;
-using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared;
 using Volo.Abp.AspNetCore.Serilog;
-using Volo.Abp.Autofac;
 using Volo.Abp.Identity;
-using Volo.Abp.Localization;
-using Volo.Abp.Modularity;
 using Volo.Abp.OpenIddict;
 using Volo.Abp.Security.Claims;
-using Volo.Abp.Studio;
 using Volo.Abp.Studio.Client.AspNetCore;
 using Volo.Abp.Swashbuckle;
-using Volo.Abp.UI.Navigation.Urls;
-using Volo.Abp.VirtualFileSystem;
 
 namespace PibesDelDestino;
 
@@ -65,6 +57,7 @@ namespace PibesDelDestino;
     )]
 public class PibesDelDestinoHttpApiHostModule : AbpModule
 {
+
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
         var hostingEnvironment = context.Services.GetHostingEnvironment();
@@ -112,7 +105,7 @@ public class PibesDelDestinoHttpApiHostModule : AbpModule
             {
                 options.DisableTransportSecurityRequirement = true;
             });
-            
+
             Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
@@ -158,6 +151,8 @@ public class PibesDelDestinoHttpApiHostModule : AbpModule
                 bundle =>
                 {
                     bundle.AddFiles("/global-styles.css");
+                    // Se agrega el archivo CSS personalizado para el Login
+                    bundle.AddFiles("/css/login.css");
                 }
             );
 
@@ -201,11 +196,10 @@ public class PibesDelDestinoHttpApiHostModule : AbpModule
         context.Services.AddAbpSwaggerGen(
             options =>
             {
-                options.SwaggerDoc("v1", new OpenApiInfo { Title = "PibesDelDestino API", Version = "v1" }); // Ajusta el título si quieres
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "PibesDelDestino API", Version = "v1" });
                 options.DocInclusionPredicate((docName, description) => true);
                 options.CustomSchemaIds(type => type.FullName);
 
-                // Agregar definición de seguridad (Código del TP 7)
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "Ingrese el token JWT en el formato: Bearer {token}",
@@ -226,7 +220,7 @@ public class PibesDelDestinoHttpApiHostModule : AbpModule
                             Id = "Bearer"
                         }
                     },
-                    Array.Empty<string>() // Corrección: Era Array.Empty() en el código que me pasaste
+                    Array.Empty<string>()
                 }
                 });
             });

@@ -8,6 +8,8 @@ namespace PibesDelDestino.Experiences
         public Guid? DestinationId { get; set; }
         public string? FilterText { get; set; }
         public ExperienceFilterType? Type { get; set; }
+
+        public Guid? UserId { get; set; }
     }
 
     public enum ExperienceFilterType

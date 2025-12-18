@@ -66,9 +66,15 @@
       <h6 class="fw-bold mt-2">{{ exp.title }}</h6>
       <p class="mb-1">{{ exp.description }}</p>
       
-      <small class="text-primary">
-        <i class="fa fa-user-circle"></i> {{ exp.userName || 'Usuario Anónimo' }}
-      </small>
+<small class="text-muted">
+  <i class="fa fa-user-circle"></i> 
+  
+  <span class="text-primary fw-bold ms-1" 
+        style="cursor: pointer; text-decoration: underline;"
+        (click)="goToUserProfile(exp.userId, exp.userName)">
+     {{ exp.userName || 'Usuario Anónimo' }}
+  </span>
+</small>
     </div>
 
   </div>

@@ -13,6 +13,7 @@ export interface GetTravelExperiencesInput extends PagedAndSortedResultRequestDt
   destinationId?: string;
   filterText?: string;
   type?: ExperienceFilterType;
+  userId?: string;
 }
 
 export interface TravelExperienceDto extends AuditedEntityDto<string> {
