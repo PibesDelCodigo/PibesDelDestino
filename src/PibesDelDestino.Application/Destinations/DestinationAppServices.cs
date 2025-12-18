@@ -11,7 +11,6 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
 using PibesDelDestino.Favorites;
 using PibesDelDestino.Notifications;
-// 👇 1. IMPORTAMOS EXPERIENCIAS PARA LEER LAS CALIFICACIONES
 using PibesDelDestino.Experiences;
 
 namespace PibesDelDestino.Destinations
@@ -24,8 +23,6 @@ namespace PibesDelDestino.Destinations
         private readonly IGuidGenerator _guidGenerator;
         private readonly IRepository<FavoriteDestination, Guid> _favoriteRepository;
         private readonly IRepository<AppNotification, Guid> _notificationRepository;
-
-        // 👇 2. NUEVO REPOSITORIO DE EXPERIENCIAS
         private readonly IRepository<TravelExperience, Guid> _experienceRepository;
 
         public DestinationAppService(
@@ -34,7 +31,6 @@ namespace PibesDelDestino.Destinations
             IGuidGenerator guidGenerator,
             IRepository<FavoriteDestination, Guid> favoriteRepository,
             IRepository<AppNotification, Guid> notificationRepository,
-            // 👇 3. INYECTAMOS EN EL CONSTRUCTOR
             IRepository<TravelExperience, Guid> experienceRepository)
             : base(repository)
         {
@@ -45,28 +41,19 @@ namespace PibesDelDestino.Destinations
             _experienceRepository = experienceRepository;
         }
 
-        // -----------------------------------------------------------------------
-        // ⭐ MAGIA PARA LAS ESTRELLAS: CÁLCULO DE PROMEDIO AL LISTAR ⭐
-        // -----------------------------------------------------------------------
         protected override async Task<List<DestinationDto>> MapToGetListOutputDtosAsync(List<Destination> entities)
         {
-            // 1. Obtenemos los DTOs básicos (Nombre, Ciudad, etc.)
             var dtos = await base.MapToGetListOutputDtosAsync(entities);
-
-            // 2. Sacamos los IDs de los destinos que estamos listando
             var destinationIds = entities.Select(x => x.Id).ToList();
 
-            // 3. Traemos TODAS las calificaciones de estos destinos de una sola vez (Optimización)
             var query = await _experienceRepository.GetQueryableAsync();
             var allRatings = query
                 .Where(x => destinationIds.Contains(x.DestinationId))
-                .Select(x => new { x.DestinationId, x.Rating }) // Solo traemos lo necesario
+                .Select(x => new { x.DestinationId, x.Rating })
                 .ToList();
 
-            // 4. Asignamos el promedio a cada DTO
             foreach (var dto in dtos)
             {
-                // Filtramos las notas de este destino específico
                 var specificRatings = allRatings
                     .Where(x => x.DestinationId == dto.Id)
                     .Select(x => x.Rating)
@@ -78,14 +65,13 @@ namespace PibesDelDestino.Destinations
                 }
                 else
                 {
-                    dto.AverageRating = 0; // Si no tiene reseñas, 0 estrellas
+                    dto.AverageRating = 0;
                 }
             }
 
             return dtos;
         }
 
-        // ⭐ MAGIA PARA LAS ESTRELLAS: CÁLCULO AL VER DETALLE INDIVIDUAL ⭐
         protected override async Task<DestinationDto> MapToGetOutputDtoAsync(Destination entity)
         {
             var dto = await base.MapToGetOutputDtoAsync(entity);
@@ -104,7 +90,6 @@ namespace PibesDelDestino.Destinations
 
             return dto;
         }
-        // -----------------------------------------------------------------------
 
         public override async Task<DestinationDto> CreateAsync(CreateUpdateDestinationDto input)
         {
@@ -135,7 +120,7 @@ namespace PibesDelDestino.Destinations
                     Latitude = destination.Coordinates.Latitude,
                     Longitude = destination.Coordinates.Longitude
                 },
-                AverageRating = 0 // Al crear es nuevo, tiene 0 estrellas
+                AverageRating = 0
             };
         }
 
@@ -168,6 +153,47 @@ namespace PibesDelDestino.Destinations
         public async Task<CityResultDto> SearchCitiesAsync(CityRequestDTO request)
         {
             return await _citySearchService.SearchCitiesAsync(request);
+        }
+
+        // 👇 NUEVO MÉTODO AGREGADO: TOP DESTINOS POPULARES 🏆
+        public async Task<List<DestinationDto>> GetTopDestinationsAsync()
+        {
+            // 1. Obtenemos las consultas base
+            var destinationsQuery = await Repository.GetQueryableAsync();
+            var experiencesQuery = await _experienceRepository.GetQueryableAsync();
+
+            // 2. LINQ: Unimos, agrupamos, promediamos y ordenamos
+            var query = from dest in destinationsQuery
+                        join exp in experiencesQuery on dest.Id equals exp.DestinationId into ratings
+                        where ratings.Any() // Solo destinos con al menos 1 voto
+                        let avg = ratings.Average(r => r.Rating)
+                        orderby avg descending
+                        select new
+                        {
+                            Destination = dest,
+                            AverageRating = avg
+                        };
+
+            // 3. Ejecutamos (Top 10)
+            var topList = await AsyncExecuter.ToListAsync(query.Take(10));
+
+            // 4. Mapeamos a DTO para devolver al Frontend
+            return topList.Select(item => new DestinationDto
+            {
+                Id = item.Destination.Id,
+                Name = item.Destination.Name,
+                Country = item.Destination.Country,
+                City = item.Destination.City,
+                Population = item.Destination.Population,
+                Photo = item.Destination.Photo,
+                UpdateDate = item.Destination.UpdateDate,
+                Coordinates = new CoordinatesDto
+                {
+                    Latitude = item.Destination.Coordinates.Latitude,
+                    Longitude = item.Destination.Coordinates.Longitude
+                },
+                AverageRating = item.AverageRating // ¡El promedio real calculado!
+            }).ToList();
         }
     }
 }

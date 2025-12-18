@@ -886,6 +886,31 @@
               "name": "IDestinationAppService",
               "methods": [
                 {
+                  "name": "SearchCitiesAsync",
+                  "parametersOnMethod": [
+                    {
+                      "name": "request",
+                      "typeAsString": "PibesDelDestino.Cities.CityRequestDTO, PibesDelDestino.Application.Contracts",
+                      "type": "PibesDelDestino.Cities.CityRequestDTO",
+                      "typeSimple": "PibesDelDestino.Cities.CityRequestDTO",
+                      "isOptional": false,
+                      "defaultValue": null
+                    }
+                  ],
+                  "returnValue": {
+                    "type": "PibesDelDestino.Cities.CityResultDto",
+                    "typeSimple": "PibesDelDestino.Cities.CityResultDto"
+                  }
+                },
+                {
+                  "name": "GetTopDestinationsAsync",
+                  "parametersOnMethod": [],
+                  "returnValue": {
+                    "type": "System.Collections.Generic.List<PibesDelDestino.Application.Contracts.Destinations.DestinationDto>",
+                    "typeSimple": "[PibesDelDestino.Application.Contracts.Destinations.DestinationDto]"
+                  }
+                },
+                {
                   "name": "GetAsync",
                   "parametersOnMethod": [
                     {
@@ -1111,7 +1136,22 @@
                 "typeSimple": "PibesDelDestino.Cities.CityResultDto"
               },
               "allowAnonymous": null,
-              "implementFrom": "PibesDelDestino.Destinations.DestinationAppService"
+              "implementFrom": "PibesDelDestino.Destinations.IDestinationAppService"
+            },
+            "GetTopDestinationsAsync": {
+              "uniqueName": "GetTopDestinationsAsync",
+              "name": "GetTopDestinationsAsync",
+              "httpMethod": "GET",
+              "url": "api/app/destination/top-destinations",
+              "supportedVersions": [],
+              "parametersOnMethod": [],
+              "parameters": [],
+              "returnValue": {
+                "type": "System.Collections.Generic.List<PibesDelDestino.Application.Contracts.Destinations.DestinationDto>",
+                "typeSimple": "[PibesDelDestino.Application.Contracts.Destinations.DestinationDto]"
+              },
+              "allowAnonymous": null,
+              "implementFrom": "PibesDelDestino.Destinations.IDestinationAppService"
             },
             "DeleteAsyncById": {
               "uniqueName": "DeleteAsyncById",
