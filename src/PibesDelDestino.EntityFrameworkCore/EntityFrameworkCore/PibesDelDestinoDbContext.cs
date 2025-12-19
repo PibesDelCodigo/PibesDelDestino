@@ -60,9 +60,13 @@ public class PibesDelDestinoDbContext :
     public DbSet<IdentityUserDelegation> UserDelegations { get; set; }
     public DbSet<IdentitySession> Sessions { get; set; }
     public DbSet<Rating> Ratings { get; set; }
+    public DbSet<ApiMetric> ApiMetric { get; set; }
+    public DbSet<Rating> Rating { get; set; }
+
 
     private readonly ICurrentUser _currentUser;
     #endregion
+   
 
     public PibesDelDestinoDbContext(
             DbContextOptions<PibesDelDestinoDbContext> options,
