@@ -1881,6 +1881,192 @@
             }
           }
         },
+        "PibesDelDestino.Metrics.ApiMetricAppService": {
+          "controllerName": "ApiMetric",
+          "controllerGroupName": "ApiMetric",
+          "isRemoteService": true,
+          "isIntegrationService": false,
+          "apiVersion": null,
+          "type": "PibesDelDestino.Metrics.ApiMetricAppService",
+          "interfaces": [
+            {
+              "type": "PibesDelDestino.Metrics.IApiMetricAppService",
+              "name": "IApiMetricAppService",
+              "methods": [
+                {
+                  "name": "GetAsync",
+                  "parametersOnMethod": [
+                    {
+                      "name": "id",
+                      "typeAsString": "System.Guid, System.Private.CoreLib",
+                      "type": "System.Guid",
+                      "typeSimple": "string",
+                      "isOptional": false,
+                      "defaultValue": null
+                    }
+                  ],
+                  "returnValue": {
+                    "type": "PibesDelDestino.Metrics.ApiMetricDto",
+                    "typeSimple": "PibesDelDestino.Metrics.ApiMetricDto"
+                  }
+                },
+                {
+                  "name": "GetListAsync",
+                  "parametersOnMethod": [
+                    {
+                      "name": "input",
+                      "typeAsString": "PibesDelDestino.Metrics.GetApiMetricsInput, PibesDelDestino.Application.Contracts",
+                      "type": "PibesDelDestino.Metrics.GetApiMetricsInput",
+                      "typeSimple": "PibesDelDestino.Metrics.GetApiMetricsInput",
+                      "isOptional": false,
+                      "defaultValue": null
+                    }
+                  ],
+                  "returnValue": {
+                    "type": "Volo.Abp.Application.Dtos.PagedResultDto<PibesDelDestino.Metrics.ApiMetricDto>",
+                    "typeSimple": "Volo.Abp.Application.Dtos.PagedResultDto<PibesDelDestino.Metrics.ApiMetricDto>"
+                  }
+                }
+              ]
+            }
+          ],
+          "actions": {
+            "GetAsyncById": {
+              "uniqueName": "GetAsyncById",
+              "name": "GetAsync",
+              "httpMethod": "GET",
+              "url": "api/app/api-metric/{id}",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "id",
+                  "typeAsString": "System.Guid, System.Private.CoreLib",
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "id",
+                  "name": "id",
+                  "jsonName": null,
+                  "type": "System.Guid",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": [],
+                  "bindingSourceId": "Path",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "PibesDelDestino.Metrics.ApiMetricDto",
+                "typeSimple": "PibesDelDestino.Metrics.ApiMetricDto"
+              },
+              "allowAnonymous": null,
+              "implementFrom": "Volo.Abp.Application.Services.IReadOnlyAppService<PibesDelDestino.Metrics.ApiMetricDto,PibesDelDestino.Metrics.ApiMetricDto,System.Guid,PibesDelDestino.Metrics.GetApiMetricsInput>"
+            },
+            "GetListAsyncByInput": {
+              "uniqueName": "GetListAsyncByInput",
+              "name": "GetListAsync",
+              "httpMethod": "GET",
+              "url": "api/app/api-metric",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "input",
+                  "typeAsString": "PibesDelDestino.Metrics.GetApiMetricsInput, PibesDelDestino.Application.Contracts",
+                  "type": "PibesDelDestino.Metrics.GetApiMetricsInput",
+                  "typeSimple": "PibesDelDestino.Metrics.GetApiMetricsInput",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "input",
+                  "name": "ServiceName",
+                  "jsonName": null,
+                  "type": "System.String",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "ModelBinding",
+                  "descriptorName": "input"
+                },
+                {
+                  "nameOnMethod": "input",
+                  "name": "StartDate",
+                  "jsonName": null,
+                  "type": "System.DateTime?",
+                  "typeSimple": "string?",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "ModelBinding",
+                  "descriptorName": "input"
+                },
+                {
+                  "nameOnMethod": "input",
+                  "name": "EndDate",
+                  "jsonName": null,
+                  "type": "System.DateTime?",
+                  "typeSimple": "string?",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "ModelBinding",
+                  "descriptorName": "input"
+                },
+                {
+                  "nameOnMethod": "input",
+                  "name": "Sorting",
+                  "jsonName": null,
+                  "type": "System.String",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "ModelBinding",
+                  "descriptorName": "input"
+                },
+                {
+                  "nameOnMethod": "input",
+                  "name": "SkipCount",
+                  "jsonName": null,
+                  "type": "System.Int32",
+                  "typeSimple": "number",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "ModelBinding",
+                  "descriptorName": "input"
+                },
+                {
+                  "nameOnMethod": "input",
+                  "name": "MaxResultCount",
+                  "jsonName": null,
+                  "type": "System.Int32",
+                  "typeSimple": "number",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "ModelBinding",
+                  "descriptorName": "input"
+                }
+              ],
+              "returnValue": {
+                "type": "Volo.Abp.Application.Dtos.PagedResultDto<PibesDelDestino.Metrics.ApiMetricDto>",
+                "typeSimple": "Volo.Abp.Application.Dtos.PagedResultDto<PibesDelDestino.Metrics.ApiMetricDto>"
+              },
+              "allowAnonymous": null,
+              "implementFrom": "Volo.Abp.Application.Services.IReadOnlyAppService<PibesDelDestino.Metrics.ApiMetricDto,PibesDelDestino.Metrics.ApiMetricDto,System.Guid,PibesDelDestino.Metrics.GetApiMetricsInput>"
+            }
+          }
+        },
         "PibesDelDestino.Notifications.NotificationAppService": {
           "controllerName": "Notification",
           "controllerGroupName": "Notification",
@@ -2185,6 +2371,78 @@
               },
               "allowAnonymous": false,
               "implementFrom": "PibesDelDestino.Settings.SettingsAppService"
+            }
+          }
+        },
+        "PibesDelDestino.Translation.TranslationAppService": {
+          "controllerName": "Translation",
+          "controllerGroupName": "Translation",
+          "isRemoteService": true,
+          "isIntegrationService": false,
+          "apiVersion": null,
+          "type": "PibesDelDestino.Translation.TranslationAppService",
+          "interfaces": [
+            {
+              "type": "PibesDelDestino.Translation.ITranslationAppService",
+              "name": "ITranslationAppService",
+              "methods": [
+                {
+                  "name": "TranslateAsync",
+                  "parametersOnMethod": [
+                    {
+                      "name": "input",
+                      "typeAsString": "PibesDelDestino.Translation.TranslateDto, PibesDelDestino.Application.Contracts",
+                      "type": "PibesDelDestino.Translation.TranslateDto",
+                      "typeSimple": "PibesDelDestino.Translation.TranslateDto",
+                      "isOptional": false,
+                      "defaultValue": null
+                    }
+                  ],
+                  "returnValue": {
+                    "type": "PibesDelDestino.Translation.TranslationResultDto",
+                    "typeSimple": "PibesDelDestino.Translation.TranslationResultDto"
+                  }
+                }
+              ]
+            }
+          ],
+          "actions": {
+            "TranslateAsyncByInput": {
+              "uniqueName": "TranslateAsyncByInput",
+              "name": "TranslateAsync",
+              "httpMethod": "POST",
+              "url": "api/app/translation/translate",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "input",
+                  "typeAsString": "PibesDelDestino.Translation.TranslateDto, PibesDelDestino.Application.Contracts",
+                  "type": "PibesDelDestino.Translation.TranslateDto",
+                  "typeSimple": "PibesDelDestino.Translation.TranslateDto",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "input",
+                  "name": "input",
+                  "jsonName": null,
+                  "type": "PibesDelDestino.Translation.TranslateDto",
+                  "typeSimple": "PibesDelDestino.Translation.TranslateDto",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "Body",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "PibesDelDestino.Translation.TranslationResultDto",
+                "typeSimple": "PibesDelDestino.Translation.TranslationResultDto"
+              },
+              "allowAnonymous": null,
+              "implementFrom": "PibesDelDestino.Translation.ITranslationAppService"
             }
           }
         },
@@ -5124,6 +5382,120 @@
         }
       ]
     },
+    "PibesDelDestino.Metrics.ApiMetricDto": {
+      "baseType": "Volo.Abp.Application.Dtos.AuditedEntityDto<System.Guid>",
+      "isEnum": false,
+      "enumNames": null,
+      "enumValues": null,
+      "genericArguments": null,
+      "properties": [
+        {
+          "name": "ServiceName",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "Endpoint",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "IsSuccess",
+          "jsonName": null,
+          "type": "System.Boolean",
+          "typeSimple": "boolean",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "ResponseTimeMs",
+          "jsonName": null,
+          "type": "System.Int32",
+          "typeSimple": "number",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "ErrorMessage",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        }
+      ]
+    },
+    "PibesDelDestino.Metrics.GetApiMetricsInput": {
+      "baseType": "Volo.Abp.Application.Dtos.PagedAndSortedResultRequestDto",
+      "isEnum": false,
+      "enumNames": null,
+      "enumValues": null,
+      "genericArguments": null,
+      "properties": [
+        {
+          "name": "ServiceName",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "StartDate",
+          "jsonName": null,
+          "type": "System.DateTime?",
+          "typeSimple": "string?",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "EndDate",
+          "jsonName": null,
+          "type": "System.DateTime?",
+          "typeSimple": "string?",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        }
+      ]
+    },
     "PibesDelDestino.Notifications.AppNotificationDto": {
       "baseType": "Volo.Abp.Application.Dtos.EntityDto<System.Guid>",
       "isEnum": false,
@@ -5271,6 +5643,60 @@
         },
         {
           "name": "Comment",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        }
+      ]
+    },
+    "PibesDelDestino.Translation.TranslateDto": {
+      "baseType": null,
+      "isEnum": false,
+      "enumNames": null,
+      "enumValues": null,
+      "genericArguments": null,
+      "properties": [
+        {
+          "name": "TextToTranslate",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": true,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "TargetLanguage",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        }
+      ]
+    },
+    "PibesDelDestino.Translation.TranslationResultDto": {
+      "baseType": null,
+      "isEnum": false,
+      "enumNames": null,
+      "enumValues": null,
+      "genericArguments": null,
+      "properties": [
+        {
+          "name": "TranslatedText",
           "jsonName": null,
           "type": "System.String",
           "typeSimple": "string",

@@ -38,10 +38,9 @@
 
   <div class="list-group" [hidden]="isLoading || experiences.length === 0">
     
-    <div *ngFor="let exp of experiences" class="list-group-item position-relative">
+    <div *ngFor="let exp of experiences" class="list-group-item position-relative mb-2 shadow-sm border rounded">
       
       <div *ngIf="exp.userId === currentUserId" class="position-absolute top-0 end-0 m-2">
-        
         <button class="btn btn-outline-primary btn-sm me-1" 
                 (click)="editExperience(exp)" 
                 title="Editar mi reseña">
@@ -54,7 +53,9 @@
             <i class="fa fa-trash"></i>
         </button>
       </div>
-      <div class="d-flex justify-content-between align-items-center me-5"> <div class="text-warning">
+
+      <div class="d-flex justify-content-between align-items-center me-5"> 
+        <div class="text-warning">
           <span *ngFor="let s of stars">
             <i [class]="s <= exp.rating ? 'fas fa-star' : 'far fa-star'"></i>
           </span>
@@ -66,15 +67,41 @@
       <h6 class="fw-bold mt-2">{{ exp.title }}</h6>
       <p class="mb-1">{{ exp.description }}</p>
       
-<small class="text-muted">
-  <i class="fa fa-user-circle"></i> 
-  
-  <span class="text-primary fw-bold ms-1" 
-        style="cursor: pointer; text-decoration: underline;"
-        (click)="goToUserProfile(exp.userId, exp.userName)">
-     {{ exp.userName || 'Usuario Anónimo' }}
-  </span>
-</small>
+      <div class="mb-2 mt-1">
+        
+        <button *ngIf="!translatedTexts[exp.id]" 
+                class="btn btn-link p-0 text-decoration-none small"
+                style="font-size: 0.85rem;"
+                (click)="translate(exp.id, exp.description)"
+                [disabled]="isTranslating[exp.id]">
+          
+          <span *ngIf="!isTranslating[exp.id]">
+             <i class="fa fa-language text-primary"></i> Traducir al Inglés
+          </span>
+          
+          <span *ngIf="isTranslating[exp.id]">
+             <i class="fa fa-spinner fa-spin text-secondary"></i> Traduciendo...
+          </span>
+        </button>
+
+        <div *ngIf="translatedTexts[exp.id]" class="p-2 bg-light rounded border mt-1">
+          <small class="text-muted d-block fw-bold mb-1" style="font-size: 0.75rem;">
+            <i class="fa fa-check-circle text-success"></i> Traducción (API Externa):
+          </small>
+          <p class="mb-0 fst-italic text-dark small">{{ translatedTexts[exp.id] }}</p>
+        </div>
+
+      </div>
+      <small class="text-muted">
+        <i class="fa fa-user-circle"></i> 
+        
+        <span class="text-primary fw-bold ms-1" 
+              style="cursor: pointer; text-decoration: underline;"
+              (click)="goToUserProfile(exp.userId, exp.userName)">
+           {{ exp.userName || 'Usuario Anónimo' }}
+        </span>
+      </small>
+
     </div>
 
   </div>
