@@ -3,16 +3,21 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using PibesDelDestino.Destinations;
 using PibesDelDestino.Favorites;
+using PibesDelDestino.Notifications;
 using PibesDelDestino.TicketMaster;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Volo.Abp.BackgroundWorkers;
+using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Emailing; // 👈 Importante para enviar mails
+using Volo.Abp.Guids;
+using Volo.Abp.Identity;
 using Volo.Abp.Threading;
-using Volo.Abp.Uow;      // 👈 Importante para la base de datos
+using Volo.Abp.Uow;     // 👈 Importante para la base de datos
 
 namespace PibesDelDestino.Workers
 {
@@ -29,11 +34,9 @@ namespace PibesDelDestino.Workers
         {
             _serviceScopeFactory = serviceScopeFactory;
 
-            // ⏰ TIEMPO:
-            // 86400000 = 24 Horas (Modo Producción)
-            // 5000 = 5 Segundos (Modo Prueba - cambialo si querés probar ya)
-            //Timer.Period = 86400000;
-            Timer.Period = 5000;
+            // 86400000 = 24 Horas 
+            // 5000 = 5 Segundos (Prueba)
+            Timer.Period = 15000;
             Logger = NullLogger<EventCheckingWorker>.Instance;
         }
 
@@ -56,13 +59,13 @@ namespace PibesDelDestino.Workers
                         var favoriteRepo = scope.ServiceProvider.GetRequiredService<IRepository<FavoriteDestination, Guid>>();
                         var ticketMasterService = scope.ServiceProvider.GetRequiredService<ITicketMasterService>();
                         var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>(); // 📧 Servicio de Mail
+                        var userRepo = scope.ServiceProvider.GetRequiredService<IIdentityUserRepository>(); // 👤 Repo de Usuarios
+                        var guidGenerator = scope.ServiceProvider.GetRequiredService<IGuidGenerator>();
+                        var notificationRepo = scope.ServiceProvider.GetRequiredService<IRepository<AppNotification, Guid>>();
 
                         // 4. Lógica de Negocio
                         var favoriteQuery = await favoriteRepo.GetQueryableAsync();
-                        var activeDestinationIds = favoriteQuery
-                            .Select(f => f.DestinationId)
-                            .Distinct()
-                            .ToList();
+                        var activeDestinationIds = favoriteQuery.Select(f => f.DestinationId).Distinct().ToList();
 
                         if (!activeDestinationIds.Any())
                         {
@@ -92,23 +95,61 @@ namespace PibesDelDestino.Workers
                                         // usamos tu mail hardcodeado para la prueba.
                                         // En el futuro, haríamos: var email = await userRepo.GetEmailAsync(follower.UserId);
 
-                                        var targetEmail = "mateofleglerutn@gmail.com"; // <--- PONÉ TU MAIL ACÁ SI NO LO LEES DE CONFIG
+                                        var user = await userRepo.FindAsync(follower.UserId);
 
-                                        var subject = $"¡Planazo en {destination.Name}!";
-                                        var body = $"<h3>¡Hola viajero!</h3> " +
-                                                   $"<p>Encontramos eventos imperdibles en <b>{destination.Name}</b>:</p>" +
-                                                   $"<ul>";
 
-                                        foreach (var evt in events)
+                                        if (user != null && !string.IsNullOrWhiteSpace(user.Email))
                                         {
-                                            body += $"<li>📅 <b>{evt.Name}</b> ({evt.Date}) - <a href='{evt.Url}'>Ver Entradas</a></li>";
+                                            var recibeNotificaciones = user.ExtraProperties.ContainsKey("ReceiveNotifications") ? Convert.ToBoolean(user.ExtraProperties["ReceiveNotifications"]) : true;
+
+                                            if (!recibeNotificaciones)
+                                            {
+                                                Logger.LogInformation($"🔕 Usuario {user.UserName} tiene notificaciones desactivadas. Omitiendo.");
+                                                continue; 
+                                            }
+
+                                            var subject = $"¡Planazo en {destination.Name}!";
+                                            var body = $"<h3>¡Hola viajero!</h3> " +
+                                                       $"<p>Encontramos eventos imperdibles en <b>{destination.Name}</b>:</p>" +
+                                                       $"<ul>";
+
+                                            foreach (var evt in events)
+                                            {
+                                                body += $"<li>📅 <b>{evt.Name}</b> ({evt.Date}) - <a href='{evt.Url}'>Ver Entradas</a></li>";
+                                            }
+                                            body += "</ul>";
+
+                                            var preferencia = user.GetProperty<string>("NotifPref") ?? "Ambas";
+
+                                            bool enviarMail = preferencia == "Mail" || preferencia == "Ambas";
+                                            bool enviarPantalla = preferencia == "Pantalla" || preferencia == "Ambas";
+
+                                            if (enviarMail && !string.IsNullOrWhiteSpace(user.Email))
+                                            {
+                                                //Enviar Email
+                                                await emailSender.SendAsync(user.Email, subject, body);
+                                                Logger.LogInformation($"   -> 📧 Email enviado exitosamente a {user.Email}");
+                                            }
+
+                                            if (enviarPantalla)
+                                            {
+                                                //Crear Notificación en Pantalla
+                                                var nuevaNotificacion = new AppNotification(
+                                                    guidGenerator.Create(),      
+                                                    user.Id,                     
+                                                    "¡Nuevos Eventos!",          
+                                                    $"Se encontraron {events.Count} eventos en {destination.City}.",
+                                                    "EventAlert");
+
+                                                nuevaNotificacion.IsRead = false;
+
+                                                await notificationRepo.InsertAsync(nuevaNotificacion, autoSave: true);
+                                            }
                                         }
-                                        body += "</ul>";
-
-                                        // C. Enviar Email
-                                        await emailSender.SendAsync(targetEmail, subject, body);
-
-                                        Logger.LogInformation($"   -> 📧 Email enviado exitosamente a {targetEmail}");
+                                        else
+                                        {
+                                            Logger.LogWarning($"   -> ⚠️ No se pudo enviar email a UserId {follower.UserId} (Email no encontrado)");
+                                        }
                                     }
                                 }
                             }

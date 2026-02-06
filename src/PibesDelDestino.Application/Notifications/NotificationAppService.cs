@@ -5,6 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Users;
+using Volo.Abp.Identity;
+using Volo.Abp.Data;
 
 namespace PibesDelDestino.Notifications
 {
@@ -12,10 +15,12 @@ namespace PibesDelDestino.Notifications
     public class NotificationAppService : ApplicationService, INotificationAppService
     {
         private readonly IRepository<AppNotification, Guid> _repository;
+        private readonly IIdentityUserRepository _userRepository;
 
-        public NotificationAppService(IRepository<AppNotification, Guid> repository)
+        public NotificationAppService(IRepository<AppNotification, Guid> repository, IIdentityUserRepository userRepository)
         {
             _repository = repository;
+            _userRepository = userRepository;
         }
 
         public async Task<List<AppNotificationDto>> GetMyNotificationsAsync()
@@ -49,6 +54,23 @@ namespace PibesDelDestino.Notifications
         public async Task<int> GetUnreadCountAsync()
         {
             return await _repository.CountAsync(x => x.UserId == CurrentUser.Id && !x.IsRead);
+        }
+
+        public async Task SetNotificationPreferenceAsync(string preference)
+        {
+            var user = await _userRepository.GetAsync(CurrentUser.Id.Value);
+
+            // Valores esperados: "Mail", "Pantalla", "Ambas"
+            user.SetProperty("NotifPref", preference);
+
+            await _userRepository.UpdateAsync(user);
+        }
+
+        public async Task<string> GetNotificationPreferenceAsync()
+        {
+            var user = await _userRepository.GetAsync(CurrentUser.Id.Value);
+
+            return user.GetProperty<string>("NotifPref") ?? "Ambas"; // Default "Ambas"
         }
     }
 }

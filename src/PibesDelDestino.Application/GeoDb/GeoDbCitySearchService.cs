@@ -24,7 +24,7 @@ namespace PibesDelDestino.GeoDb
 
         public async Task<CityResultDto> SearchCitiesAsync(CityRequestDTO request)
         {
-            var apiUrl = _configuration["GeoDb:ApiUrl"]; // O la URL hardcodeada si la dejaste así por ahora
+            var apiUrl = _configuration["GeoDb:ApiUrl"]; 
             var apiKey = _configuration["GeoDb:ApiKey"];
 
             var client = _httpClientFactory.CreateClient();

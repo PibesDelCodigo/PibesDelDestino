@@ -34,6 +34,7 @@ namespace PibesDelDestino.Destinations
             IRepository<TravelExperience, Guid> experienceRepository)
             : base(repository)
         {
+            // inyeccion de dependencias
             _citySearchService = citySearchService;
             _guidGenerator = guidGenerator;
             _favoriteRepository = favoriteRepository;
@@ -155,7 +156,7 @@ namespace PibesDelDestino.Destinations
             return await _citySearchService.SearchCitiesAsync(request);
         }
 
-        // 👇 NUEVO MÉTODO AGREGADO: TOP DESTINOS POPULARES 🏆
+        
         public async Task<List<DestinationDto>> GetTopDestinationsAsync()
         {
             // 1. Obtenemos las consultas base

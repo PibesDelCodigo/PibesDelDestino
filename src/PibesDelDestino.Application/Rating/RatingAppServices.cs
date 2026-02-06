@@ -5,7 +5,7 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
 using Volo.Abp.ObjectMapping;
-using Volo.Abp.Users; // <-- Asegúrate de tener este using
+using Volo.Abp.Users; //necesario
 
 namespace PibesDelDestino.Ratings
 {

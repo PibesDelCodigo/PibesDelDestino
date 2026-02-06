@@ -11,5 +11,7 @@ namespace PibesDelDestino.Notifications
         Task MarkAsReadAsync(Guid id);
         Task MarkAsUnreadAsync(Guid id); // Para cumplir el 6.4 completo (toggle)
         Task<int> GetUnreadCountAsync();
+        Task SetNotificationPreferenceAsync(string preference);
+        Task<string> GetNotificationPreferenceAsync();
     }
 }
