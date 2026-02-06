@@ -40,6 +40,7 @@ using Volo.Abp.OpenIddict;
 using Volo.Abp.Security.Claims;
 using Volo.Abp.Studio.Client.AspNetCore;
 using Volo.Abp.Swashbuckle;
+using Volo.Abp.Emailing;
 
 namespace PibesDelDestino;
 
@@ -53,7 +54,8 @@ namespace PibesDelDestino;
     typeof(PibesDelDestinoEntityFrameworkCoreModule),
     typeof(AbpAccountWebOpenIddictModule),
     typeof(AbpSwashbuckleModule),
-    typeof(AbpAspNetCoreSerilogModule)
+    typeof(AbpAspNetCoreSerilogModule),
+    typeof(AbpEmailingModule)
     )]
 public class PibesDelDestinoHttpApiHostModule : AbpModule
 {
