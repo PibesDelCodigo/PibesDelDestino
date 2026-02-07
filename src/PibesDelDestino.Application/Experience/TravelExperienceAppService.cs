@@ -8,7 +8,7 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Authorization;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
-using Volo.Abp.Data; // Necesario para leer .GetProperty
+using Volo.Abp.Data; // 👈 IMPORTANTE: Necesario para leer .GetProperty
 using PibesDelDestino.Favorites;
 using PibesDelDestino.Notifications;
 

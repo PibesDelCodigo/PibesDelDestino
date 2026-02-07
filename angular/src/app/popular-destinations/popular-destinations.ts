@@ -7,7 +7,7 @@ import { ExperienceListComponent } from '../experiences/experience-list/experien
 // --- NUEVOS IMPORTS PARA FAVORITOS Y CALIFICAR ---
 import { FavoriteService } from '../proxy/favorites'; // El servicio nuevo
 import { AuthService } from '@abp/ng.core';         // Para chequear login
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap'; // Para el modal de calificar
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap'; // Para calificar
 import { ExperienceModalComponent } from '../experiences/experience-modal/experience-modal';
 @Component({
   selector: 'app-popular-destinations',
@@ -39,7 +39,7 @@ loadDestinations() {
     this.destinationService.getList({ maxResultCount: 50 }).subscribe(response => {
       const rawList = response.items || [];
 
-      // 2. FILTRO DE UNICIDAD (Magia 🪄)
+      // 2. FILTRO DE UNICIDAD 
       // Solo dejamos pasar el item si es la PRIMERA vez que vemos ese nombre
       const uniqueList = rawList.filter((item, index, self) =>
         index === self.findIndex((t) => (

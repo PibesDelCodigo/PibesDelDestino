@@ -6,11 +6,6 @@ using Volo.Abp.Identity;
 using Volo.Abp.Modularity;
 using Volo.Abp.PermissionManagement;
 using Volo.Abp.SettingManagement;
-using System.Threading.Tasks;
-using Volo.Abp;
-using Volo.Abp.BackgroundWorkers;
-using PibesDelDestino.Workers;
-using Volo.Abp.Emailing;
 
 namespace PibesDelDestino;
 
@@ -21,8 +16,7 @@ namespace PibesDelDestino;
     typeof(AbpFeatureManagementApplicationModule),
     typeof(AbpIdentityApplicationModule),
     typeof(AbpAccountApplicationModule),
-    typeof(AbpSettingManagementApplicationModule),
-    typeof(AbpEmailingModule)
+    typeof(AbpSettingManagementApplicationModule)
     )]
 public class PibesDelDestinoApplicationModule : AbpModule
 {
@@ -33,9 +27,5 @@ public class PibesDelDestinoApplicationModule : AbpModule
         {
             options.AddMaps<PibesDelDestinoApplicationModule>();
         });
-    }
-    public override async Task OnApplicationInitializationAsync(ApplicationInitializationContext context)
-    {
-        await context.AddBackgroundWorkerAsync<EventCheckingWorker>();
     }
 }
