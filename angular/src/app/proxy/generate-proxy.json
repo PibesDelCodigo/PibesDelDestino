@@ -2128,6 +2128,31 @@
                     "type": "System.Int32",
                     "typeSimple": "number"
                   }
+                },
+                {
+                  "name": "SetNotificationPreferenceAsync",
+                  "parametersOnMethod": [
+                    {
+                      "name": "preference",
+                      "typeAsString": "System.String, System.Private.CoreLib",
+                      "type": "System.String",
+                      "typeSimple": "string",
+                      "isOptional": false,
+                      "defaultValue": null
+                    }
+                  ],
+                  "returnValue": {
+                    "type": "System.Void",
+                    "typeSimple": "System.Void"
+                  }
+                },
+                {
+                  "name": "GetNotificationPreferenceAsync",
+                  "parametersOnMethod": [],
+                  "returnValue": {
+                    "type": "System.String",
+                    "typeSimple": "string"
+                  }
                 }
               ]
             }
@@ -2233,6 +2258,58 @@
               "returnValue": {
                 "type": "System.Int32",
                 "typeSimple": "number"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Notifications.INotificationAppService"
+            },
+            "SetNotificationPreferenceAsyncByPreference": {
+              "uniqueName": "SetNotificationPreferenceAsyncByPreference",
+              "name": "SetNotificationPreferenceAsync",
+              "httpMethod": "POST",
+              "url": "api/app/notification/set-notification-preference",
+              "supportedVersions": [],
+              "parametersOnMethod": [
+                {
+                  "name": "preference",
+                  "typeAsString": "System.String, System.Private.CoreLib",
+                  "type": "System.String",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null
+                }
+              ],
+              "parameters": [
+                {
+                  "nameOnMethod": "preference",
+                  "name": "preference",
+                  "jsonName": null,
+                  "type": "System.String",
+                  "typeSimple": "string",
+                  "isOptional": false,
+                  "defaultValue": null,
+                  "constraintTypes": null,
+                  "bindingSourceId": "ModelBinding",
+                  "descriptorName": ""
+                }
+              ],
+              "returnValue": {
+                "type": "System.Void",
+                "typeSimple": "System.Void"
+              },
+              "allowAnonymous": false,
+              "implementFrom": "PibesDelDestino.Notifications.INotificationAppService"
+            },
+            "GetNotificationPreferenceAsync": {
+              "uniqueName": "GetNotificationPreferenceAsync",
+              "name": "GetNotificationPreferenceAsync",
+              "httpMethod": "GET",
+              "url": "api/app/notification/notification-preference",
+              "supportedVersions": [],
+              "parametersOnMethod": [],
+              "parameters": [],
+              "returnValue": {
+                "type": "System.String",
+                "typeSimple": "string"
               },
               "allowAnonymous": false,
               "implementFrom": "PibesDelDestino.Notifications.INotificationAppService"
