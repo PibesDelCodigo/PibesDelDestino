@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using PibesDelDestino.Cities;
+using PibesDelDestino.Metrics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,8 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Repositories; // 👈 Para usar IRepository
+using Volo.Abp.Guids;
 
 namespace PibesDelDestino.GeoDb
 {
@@ -14,12 +17,17 @@ namespace PibesDelDestino.GeoDb
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
+        private readonly IRepository<SearchHistory, Guid> _searchHistoryRepo;
+        private readonly IGuidGenerator _guidGenerator;
 
         // Inyectamos las dependencias necesarias: IHttpClientFactory y IConfiguration
-        public GeoDbCitySearchService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public GeoDbCitySearchService(IHttpClientFactory httpClientFactory, IConfiguration configuration, IRepository<SearchHistory, Guid> searchHistoryRepo, // 👈 Inyectamos Repo
+            IGuidGenerator guidGenerator)
         {
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
+            _searchHistoryRepo = searchHistoryRepo;
+            _guidGenerator = guidGenerator;
         }
 
         public async Task<CityResultDto> SearchCitiesAsync(CityRequestDTO request)
@@ -87,6 +95,16 @@ namespace PibesDelDestino.GeoDb
                         Longitude = city.Longitude,
                         Population = city.Population
                     }).ToList();
+
+                    // Solo guardamos si el usuario escribió algo en el buscador
+                    if (!string.IsNullOrWhiteSpace(request.PartialName))
+                    {
+                        await _searchHistoryRepo.InsertAsync(new SearchHistory(
+                            _guidGenerator.Create(),
+                            request.PartialName.Trim().ToLower(), // Guardamos "madrid", no "MaDrId"
+                            cityDtos.Count
+                        ));
+                    }
 
                     return new CityResultDto { Cities = cityDtos };
                 }

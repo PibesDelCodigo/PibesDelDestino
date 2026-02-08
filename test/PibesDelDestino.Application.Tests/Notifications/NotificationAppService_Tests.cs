@@ -15,7 +15,7 @@ namespace PibesDelDestino.Notifications
     // ✅ LA CLASE DE TEST DEBE SER PÚBLICA
     public class NotificationAppService_Tests : PibesDelDestinoApplicationTestBase<PibesDelDestinoApplicationTestModule>
     {
-        private readonly INotificationAppService _notificationAppService;
+        private readonly NotificationAppService _notificationAppService;
         private readonly IRepository<AppNotification, Guid> _notificationRepositoryMock;
 
         public NotificationAppService_Tests()
@@ -49,7 +49,7 @@ namespace PibesDelDestino.Notifications
     {
         public NotificationAppServiceTestProxy(
             IRepository<AppNotification, Guid> repository,
-            IServiceProvider serviceProvider) : base(repository)
+            IServiceProvider serviceProvider) : base(repository, null)
         {
             // Resolvemos el LazyServiceProvider para que CurrentUser y ObjectMapper funcionen
             LazyServiceProvider = serviceProvider.GetRequiredService<IAbpLazyServiceProvider>();

@@ -36,7 +36,7 @@ namespace PibesDelDestino.Workers
 
             // 86400000 = 24 Horas 
             // 5000 = 5 Segundos (Prueba)
-            Timer.Period = 15000;
+            Timer.Period = 86400000;
             Logger = NullLogger<EventCheckingWorker>.Instance;
         }
 

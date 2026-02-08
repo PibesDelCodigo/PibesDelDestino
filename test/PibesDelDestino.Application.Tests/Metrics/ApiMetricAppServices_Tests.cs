@@ -61,7 +61,7 @@ namespace PibesDelDestino.Metrics
     {
         public ApiMetricAppServiceTestProxy(
             IRepository<ApiMetric, Guid> repository,
-            IServiceProvider serviceProvider) : base(repository)
+            IServiceProvider serviceProvider) : base(repository, null)
         {
             LazyServiceProvider = serviceProvider.GetRequiredService<IAbpLazyServiceProvider>();
         }
