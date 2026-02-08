@@ -13,3 +13,10 @@ export interface GetApiMetricsInput extends PagedAndSortedResultRequestDto {
   startDate?: string;
   endDate?: string;
 }
+
+export interface DashboardDto {
+  totalApiCalls: number;
+  successRate: number;
+  avgResponseTime: number;
+  topSearches: Record<string, number>;
+}

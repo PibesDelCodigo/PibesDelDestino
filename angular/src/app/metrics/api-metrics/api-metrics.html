@@ -1,8 +1,8 @@
 <div class="container mt-5">
-  
+
   <div *ngIf="hasAccess; else accessDenied">
-    
-    <h2 class="fw-bold mb-4">📊 Métricas de API Externa</h2>
+
+    <h2 class="fw-bold mb-4">📊 Panel de Control (Admin)</h2>
 
     <div class="row mb-4">
       <div class="col-md-4">
@@ -14,7 +14,8 @@
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card border-0 shadow-sm" [ngClass]="successRate > 90 ? 'bg-success text-white' : 'bg-warning text-dark'">
+        <div class="card border-0 shadow-sm"
+          [ngClass]="successRate > 90 ? 'bg-success text-white' : 'bg-warning text-dark'">
           <div class="card-body text-center">
             <h1 class="display-4 fw-bold">{{ successRate | number:'1.0-0' }}%</h1>
             <p class="mb-0">Tasa de Éxito</p>
@@ -31,9 +32,39 @@
       </div>
     </div>
 
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white py-3">
+            <h5 class="m-0 fw-bold text-primary">🏆 Top 5 Destinos Más Buscados</h5>
+          </div>
+          <div class="card-body">
+
+            <div *ngIf="topSearchesKeys.length === 0" class="text-center text-muted py-4">
+              <i class="fa fa-search fa-2x mb-3 opacity-50"></i>
+              <p>Aún no hay búsquedas registradas.</p>
+            </div>
+
+            <div *ngFor="let city of topSearchesKeys" class="mb-3">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="fw-bold text-capitalize">{{ city }}</span>
+                <span class="badge bg-dark">{{ topSearches[city] }} búsquedas</span>
+              </div>
+              <div class="progress" style="height: 12px;">
+                <div class="progress-bar bg-primary progress-bar-striped" role="progressbar"
+                  [style.width.%]="(topSearches[city] / totalCalls * 100) + 5">
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-white py-3">
-        <h5 class="m-0 fw-bold">📜 Historial de Uso (Traductor)</h5>
+        <h5 class="m-0 fw-bold">📜 Historial de APIs (TicketMaster / GeoDB)</h5>
       </div>
       <div class="card-body p-0">
         <div *ngIf="isLoading" class="text-center p-5">
@@ -48,7 +79,6 @@
                 <th>Endpoint</th>
                 <th>Estado</th>
                 <th>Tiempo</th>
-                <th>Detalle</th>
               </tr>
             </thead>
             <tbody>
@@ -62,33 +92,20 @@
                   </span>
                 </td>
                 <td>{{ m.responseTimeMs }} ms</td>
-                <td>
-                  <small class="text-danger" *ngIf="!m.isSuccess">{{ m.errorMessage }}</small>
-                  <small class="text-success" *ngIf="m.isSuccess">OK</small>
-                </td>
-              </tr>
-              <tr *ngIf="metrics.length === 0">
-                <td colspan="6" class="text-center py-4 text-muted">
-                  No hay datos registrados aún.
-                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
+
   </div>
 
   <ng-template #accessDenied>
     <div class="text-center mt-5 pt-5">
-      <div class="mb-4">
-        <i class="fa fa-lock fa-5x text-secondary"></i>
-      </div>
+      <div class="mb-4"><i class="fa fa-lock fa-5x text-secondary"></i></div>
       <h2 class="fw-bold text-danger">Acceso Restringido</h2>
-      <p class="text-muted fs-5">Solo los administradores pueden ver las métricas del sistema.</p>
-      <a routerLink="/" class="btn btn-outline-primary mt-3">
-        <i class="fa fa-arrow-left"></i> Volver al Inicio
-      </a>
+      <p class="text-muted">Solo administradores.</p>
     </div>
   </ng-template>
 

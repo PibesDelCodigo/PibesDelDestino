@@ -40,6 +40,16 @@ function configureRoutes(routesService: RoutesService) {
         layout: eLayoutType.application,
         requiredPolicy: '', 
       },
+      // --- Dashboard de Métricas ---
+      {
+        path: '/metrics',
+        name: 'Dashboard de Métricas',     // El texto que se verá
+        parentName: 'AbpUiNavigation::Menu:Administration', // 👈 ESTO LO METE EN "ADMINISTRACIÓN"
+        layout: eLayoutType.application,
+        iconClass: 'fa fa-bar-chart',      // Icono de gráfico
+        order: 1,                          // Para que salga arriba del todo
+        requiredPolicy: 'AbpIdentity.Users', // Solo visible si tienes permisos (Admin)
+      },
     ]);
   };
 }
