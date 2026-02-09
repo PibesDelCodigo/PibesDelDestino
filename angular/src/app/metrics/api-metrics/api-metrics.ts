@@ -4,6 +4,8 @@ import { ApiMetricService, DashboardDto } from 'src/app/proxy/metrics'; // Aseg�
 import { ApiMetricDto } from 'src/app/proxy/metrics';
 import { PermissionService } from '@abp/ng.core';
 import { RouterModule } from '@angular/router';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable'; // Importante para la tabla linda
 
 @Component({
   selector: 'app-api-metrics',
@@ -90,5 +92,70 @@ export class ApiMetricsComponent implements OnInit {
     this.successRate = (successful / this.totalCalls) * 100;
     const totalTime = this.metrics.reduce((acc, curr) => acc + curr.responseTimeMs, 0);
     this.avgTime = totalTime / this.totalCalls;
+  }
+
+  // 🟢 EXPORTAR A CSV (Excel simple)
+  downloadCSV() {
+    // 1. Definimos las cabeceras
+    const header = ['Fecha', 'Servicio', 'Endpoint', 'Estado', 'Tiempo (ms)'];
+
+    // 2. Convertimos los datos a formato CSV (separado por comas)
+    const rows = this.metrics.map(m => [
+      new Date(m.creationTime).toLocaleString(), // Formato de fecha legible
+      m.serviceName,
+      m.endpoint,
+      m.isSuccess ? 'EXITOSO' : 'FALLIDO',
+      m.responseTimeMs
+    ]);
+
+    // 3. Unimos todo con comas y saltos de línea
+    const csvContent =
+      header.join(',') + '\n' +
+      rows.map(row => row.join(',')).join('\n');
+
+    // 4. Creamos el archivo "fantasma" y lo descargamos
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'reporte_metricas.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // 🔴 EXPORTAR A PDF (Documento profesional)
+  downloadPDF() {
+    const doc = new jsPDF();
+
+    // Título del PDF
+    doc.setFontSize(18);
+    doc.text('Reporte de APIs Externas - Pibes del Destino', 14, 20);
+
+    // Fecha de generación
+    doc.setFontSize(10);
+    doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 30);
+
+    // Definir columnas y filas para la tabla del PDF
+    const head = [['Fecha', 'Servicio', 'Endpoint', 'Estado', 'Tiempo']];
+    const data = this.metrics.map(m => [
+      new Date(m.creationTime).toLocaleString(),
+      m.serviceName,
+      m.endpoint,
+      m.isSuccess ? 'EXITOSO' : 'FALLIDO',
+      m.responseTimeMs + ' ms'
+    ]);
+
+    // Generar la tabla usando el plugin autoTable
+    autoTable(doc, {
+      head: head,
+      body: data,
+      startY: 35, // Empezar debajo del título
+      theme: 'grid', // Estilo de rejilla
+      headStyles: { fillColor: [63, 81, 181] } // Color azul bonito para cabecera
+    });
+
+    // Guardar archivo
+    doc.save('reporte_metricas.pdf');
   }
 }
