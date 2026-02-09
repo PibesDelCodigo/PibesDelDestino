@@ -39,7 +39,11 @@ loadDestinations() {
     this.destinationService.getList({ maxResultCount: 50 }).subscribe(response => {
       const rawList = response.items || [];
 
+<<<<<<< Updated upstream
       // 2. FILTRO DE UNICIDAD 
+=======
+      // 2.4 FILTRO DE UNICIDAD (Magia 🪄)
+>>>>>>> Stashed changes
       // Solo dejamos pasar el item si es la PRIMERA vez que vemos ese nombre
       const uniqueList = rawList.filter((item, index, self) =>
         index === self.findIndex((t) => (

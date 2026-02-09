@@ -1,3 +1,6 @@
+// REQUERIMIENTO 3.5 y 3.6 (Lógica):
+// Construye el objeto de consulta con los filtros seleccionados (texto, rating)
+// y lo envía al Backend para refrescar la lista.
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';

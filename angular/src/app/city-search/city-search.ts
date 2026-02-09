@@ -1,3 +1,11 @@
+// REQUERIMIENTO 2.1 y 2.2 (UI): Interfaz de Búsqueda.
+// Captura el input del usuario y los filtros seleccionados para invocar
+// al servicio de GeoDB
+
+// REQUERIMIENTOS 5.1 y 5.2: Acción de Favoritos (Toggle)
+// Verifica autenticación y asegura que el destino exista localmente.
+// Luego invoca al servicio para agregar o quitar de la lista personal. 
+// Metodo likeCity(city: CityWithRating) {
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -209,6 +217,10 @@ export class CitySearch implements OnInit {
         this.openRatingModal(id, city.name);
     });
   }
+
+// REQUERIMIENTO 2.5 (UI): Acción de Guardar.
+// Al seleccionar un resultado de la API externa, se envía la información
+// completa al Backend para registrarla permanentemente.
 
   saveCity(city: CityWithRating) {
     if (!confirm(`¿Guardar ${city.name}?`)) return;

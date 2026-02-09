@@ -6,8 +6,8 @@
     <button class="btn btn-link position-absolute top-0 end-0 m-2 p-0 text-decoration-none" 
             style="z-index: 10;"
             (click)="toggleFavorite(dest)"
-            title="Agregar/Quitar de favoritos">
-      <i class="fa-heart fa-2x" 
+            title="Agregar/Quitar de favoritos">      
+            <i class="fa-heart fa-2x" 
          [ngClass]="favoriteIds.has(dest.id) ? 'fas text-danger' : 'far text-muted'">
       </i>
     </button>

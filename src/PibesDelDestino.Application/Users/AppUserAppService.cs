@@ -22,7 +22,9 @@ namespace PibesDelDestino.Users
             _userManager = userManager;
             _userRepository = userRepository;
         }
-
+        // REQUERIMIENTO 1.6: Backend para Perfil Público.
+        // Este método expone los datos NO sensibles (nombre, foto) de un usuario
+        // para que otros puedan verlo.
         public async Task<PublicUserDto> GetPublicProfileAsync(Guid userId)
         {
             // Buscamos al usuario por ID
@@ -37,7 +39,7 @@ namespace PibesDelDestino.Users
                 Surname = user.Surname
             };
         }
-
+        // REQUERIMIENTO 1.5: Eliminar mi propia cuenta.
         public async Task DeleteSelfAsync()
         {
             var currentUserId = CurrentUser.Id;

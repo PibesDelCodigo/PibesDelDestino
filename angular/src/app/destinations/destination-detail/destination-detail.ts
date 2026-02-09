@@ -1,3 +1,4 @@
+//REQ 2.3 recuperar y mostrar detalle
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router'; // Para leer la URL
 import { DestinationService } from 'src/app/proxy/destinations';

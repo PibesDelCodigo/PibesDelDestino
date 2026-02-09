@@ -1,4 +1,7 @@
-﻿using PibesDelDestino.Application.Contracts.Destinations;
+﻿// REQUERIMIENTO 4.4: Consultar promedio de calificaciones.
+// Al cargar el detalle del destino, consultamos el repositorio de Experiencias,
+// calculamos el promedio de estrellas y lo inyectamos en el DTO.
+using PibesDelDestino.Application.Contracts.Destinations;
 using PibesDelDestino.Cities;
 using PibesDelDestino.Destinations;
 using System;
@@ -45,7 +48,7 @@ namespace PibesDelDestino.Destinations
         {
             var dtos = await base.MapToGetListOutputDtosAsync(entities);
             var destinationIds = entities.Select(x => x.Id).ToList();
-
+            //REQ 4.4 Promedio de calificaciones
             var query = await _experienceRepository.GetQueryableAsync();
             var allRatings = query
                 .Where(x => destinationIds.Contains(x.DestinationId))
@@ -71,7 +74,7 @@ namespace PibesDelDestino.Destinations
 
             return dtos;
         }
-
+        //REQ 2.3 Obtener información detallada de un destino, incluyendo su calificación promedio.
         protected override async Task<DestinationDto> MapToGetOutputDtoAsync(Destination entity)
         {
             var dto = await base.MapToGetOutputDtoAsync(entity);
@@ -90,9 +93,13 @@ namespace PibesDelDestino.Destinations
 
             return dto;
         }
-
+        // REQUERIMIENTO 2.3 y 2.5: Guardar Destino y Detalle.
+  
         public override async Task<DestinationDto> CreateAsync(CreateUpdateDestinationDto input)
-        {
+        {//por que sobreescribimos el metodo createAsync? lo hicimos ya que
+        // el mapeo manual de la entidad destination tiene un constructor con validaciones
+        // entonces si le decimos al automapper va a intentar crear un objeto vacio y 
+        // setear propiedades, pero no va a poder por los private set, ademas aca seteamos el VO
             var destination = new Destination(
                 _guidGenerator.Create(),
                 input.Name,
@@ -103,7 +110,7 @@ namespace PibesDelDestino.Destinations
                 input.UpdateDate,
                 new Coordinates(input.Coordinates.Latitude, input.Coordinates.Longitude)
             );
-
+            //REQ 2.5
             await Repository.InsertAsync(destination);
 
             return new DestinationDto
@@ -124,6 +131,7 @@ namespace PibesDelDestino.Destinations
             };
         }
 
+        //REQ 6.2 Notificar sobre cambios relevantes en destinos seguidos.
         public override async Task<DestinationDto> UpdateAsync(Guid id, CreateUpdateDestinationDto input)
         {
             var updatedDestination = await base.UpdateAsync(id, input);
@@ -131,19 +139,20 @@ namespace PibesDelDestino.Destinations
             var followers = await _favoriteRepository.GetListAsync(x => x.DestinationId == id);
             var notifications = new List<AppNotification>();
 
+         
             foreach (var follow in followers)
             {
                 notifications.Add(new AppNotification(
                     _guidGenerator.Create(),
                     follow.UserId,
-                    "Actualización de Destino 📢",
+                    "Actualización de Destino ",
                     $"Hubo cambios recientes en la información de {input.Name}. ¡Revisa los detalles!",
                     "DestinationUpdate"
                 ));
             }
 
             if (notifications.Any())
-            {
+            { //optimizacion : Insertamos todas las notificaciones de una sola vez en lugar de hacer múltiples llamadas a la base de datos
                 await _notificationRepository.InsertManyAsync(notifications);
             }
 
@@ -155,29 +164,32 @@ namespace PibesDelDestino.Destinations
             return await _citySearchService.SearchCitiesAsync(request);
         }
 
-        // 👇 NUEVO MÉTODO AGREGADO: TOP DESTINOS POPULARES 🏆
+        // NUEVO MÉTODO AGREGADO: TOP DESTINOS POPULARES 
         public async Task<List<DestinationDto>> GetTopDestinationsAsync()
         {
             // 1. Obtenemos las consultas base
             var destinationsQuery = await Repository.GetQueryableAsync();
             var experiencesQuery = await _experienceRepository.GetQueryableAsync();
 
-            // 2. LINQ: Unimos, agrupamos, promediamos y ordenamos
+            // 2. LINQ: por cada destino juntame todas las experiencias en una bolsita ratings
             var query = from dest in destinationsQuery
                         join exp in experiencesQuery on dest.Id equals exp.DestinationId into ratings
-                        where ratings.Any() // Solo destinos con al menos 1 voto
+                        // Solo destinos con al menos 1 voto
+                        where ratings.Any() 
+                        // variable temporal (avg) para decirle a SQL ordename la lista de mayor a menor
                         let avg = ratings.Average(r => r.Rating)
                         orderby avg descending
+                        //Creamos un objeto hibrido anonimo, destino + promedio
                         select new
                         {
                             Destination = dest,
                             AverageRating = avg
                         };
 
-            // 3. Ejecutamos (Top 10)
+            // 3. Ejecutamos (Top 10), Recien aca va a la base de datos
             var topList = await AsyncExecuter.ToListAsync(query.Take(10));
 
-            // 4. Mapeamos a DTO para devolver al Frontend
+            // 4. Transforma los objetos hibridos en DestinationDto, para devolverlos
             return topList.Select(item => new DestinationDto
             {
                 Id = item.Destination.Id,
@@ -192,7 +204,7 @@ namespace PibesDelDestino.Destinations
                     Latitude = item.Destination.Coordinates.Latitude,
                     Longitude = item.Destination.Coordinates.Longitude
                 },
-                AverageRating = item.AverageRating // ¡El promedio real calculado!
+                AverageRating = item.AverageRating 
             }).ToList();
         }
     }

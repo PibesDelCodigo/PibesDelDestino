@@ -1,14 +1,13 @@
 ﻿using PibesDelDestino.Localization;
 using Volo.Abp.Application.Services;
 
-namespace PibesDelDestino;
-
-/* Inherit your application services from this class.
- */
-public abstract class PibesDelDestinoAppService : ApplicationService
+namespace PibesDelDestino
 {
-    protected PibesDelDestinoAppService()
+    abstract class PibesDelDestinoAppService : ApplicationService
     {
-        LocalizationResource = typeof(PibesDelDestinoResource);
+        protected PibesDelDestinoAppService()
+        {
+            LocalizationResource = typeof(PibesDelDestinoResource);
+        }
     }
 }

@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿// REQUERIMIENTO 6.4: Gestión de Leídos.
+// Permite al usuario marcar una o todas sus notificaciones como leídas,
+// actualizando el estado en la base de datos (State = Read).
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;

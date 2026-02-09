@@ -4,6 +4,7 @@ import { AppUserService } from 'src/app/proxy/users';
 import { AuthService } from '@abp/ng.core'; // Para cerrar sesión después de borrar
 import { Router } from '@angular/router';
 
+
 @Component({
   selector: 'app-my-account',
   standalone: true,
@@ -13,11 +14,13 @@ import { Router } from '@angular/router';
 })
 export class MyAccount {
 
+
   constructor(
     private userService: AppUserService,
     private authService: AuthService,
     private router: Router
   ) {}
+
 
   deleteAccount() {
     if (confirm('¿Estás SEGURO de que querés eliminar tu cuenta? Esta acción no se puede deshacer.')) {
