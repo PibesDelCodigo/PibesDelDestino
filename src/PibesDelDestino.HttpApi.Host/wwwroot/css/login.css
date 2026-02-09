@@ -1,78 +1,180 @@
-/* wwwroot/css/login.css */
+/* wwwroot/css/login.css - VERSIÓN FINAL "CENTRADO INFALIBLE"*/
 
-/* --- 1. FONDO GENERAL --- */
-body.abp-account-layout,
-.lpx-login-bg,
-#lpx-wrapper {
-    background: #f4f6f8 !important; /* Gris muy suave profesional */
-    background-image: none !important;
+/* =========================================================
+   1. FONDO DE PANTALLA
+   ========================================================= */
+body.abp-account-layout, .lpx-login-bg, #lpx-wrapper {
+    background: url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed !important;
+    background-size: cover !important;
 }
 
-/* Limpieza de contenedores internos */
+    body.abp-account-layout::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(24, 66, 125, 0.4);
+        z-index: -1;
+    }
+
 .lpx-content-container, .lpx-content {
-    background: transparent !important;
-}
-
-
-/* Le sacamos el fondo y el borde para que NO parezca una tarjeta aparte */
-.abp-account-layout .row .card:first-child {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    /* Lo alineamos a la derecha para que quede prolijo */
-    display: flex !important;
-    justify-content: flex-end !important;
-    /* Lo pegamos un poquito más al formulario */
-    margin-bottom: -10px !important;
-    padding: 0 0 10px 0 !important;
-    /* Aseguramos que tenga el mismo ancho que el login */
-    max-width: 400px !important;
+}
+
+/* =========================================================
+   2. EL BOTÓN DE IDIOMA (ESQUINA SUPERIOR)
+   ========================================================= */
+.card.mb-3 {
+    position: absolute !important;
+    top: 20px !important;
+    right: 30px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: auto !important;
+    margin: 0 !important;
+    z-index: 1000;
+}
+
+    .card.mb-3 .btn,
+    .dropdown-toggle {
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(5px);
+        border: none !important;
+        border-radius: 30px !important;
+        color: #18427D !important;
+        font-weight: 700 !important;
+        padding: 8px 20px !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+    }
+
+        .card.mb-3 .btn:hover {
+            background-color: #ffffff !important;
+            transform: translateY(-2px);
+        }
+
+/* =========================================================
+   3. EL LOGO (LA CORRECCIÓN CLAVE)
+   ========================================================= */
+.lpx-brand-name {
+    display: none !important;
+}
+
+hr {
+    display: none !important;
+}
+
+.lpx-brand-logo {
+    background-image: url('/images/logo.png') !important;
+    /* ESTO ES LO IMPORTANTE: Centrar la imagen dentro de la caja */
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    /* Ajustamos el tamaño aquí. 'contain' a veces queda chico, probemos un ancho fijo */
+    background-size: 180px auto !important;
+    /* Hacemos que la caja ocupe TODO el ancho del padre */
+    width: 100% !important;
+    height: 100px !important; /* Altura suficiente para el logo */
+    display: block !important;
+    /* Solo margen abajo para separar del login */
+    margin: 0 0 25px 0 !important;
+}
+
+/* Aseguramos que el contenedor padre no nos moleste */
+.lpx-logo-container {
+    width: 100% !important;
+    text-align: center !important;
+    padding: 0 !important;
+}
+
+/* =========================================================
+   4. LA TARJETA DE LOGIN (Sin cambios)
+   ========================================================= */
+.card.mt-3 {
+    background-color: rgba(255, 255, 255, 0.98) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5) !important;
+    border: none !important;
+    padding: 40px 40px !important;
+    max-width: 450px !important;
+    /* Aseguramos que la tarjeta también esté centrada */
     margin-left: auto !important;
     margin-right: auto !important;
 }
 
-    /* Estilizamos el BOTÓN de idioma para que se vea bien sobre el gris */
-    .abp-account-layout .row .card:first-child .dropdown-toggle,
-    .abp-account-layout .row .card:first-child .btn {
-        background-color: #ffffff !important;
-        border: 1px solid #e0e0e0 !important;
-        color: #555 !important;
-        border-radius: 20px !important; /* Redondito */
-        font-size: 0.85rem !important;
-        padding: 5px 15px !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
-    }
-
-/* --- 3. TARJETA DE LOGIN (PRINCIPAL) --- */
-.abp-account-layout .row .card:last-child, /* Aseguramos que sea la del login */
-.lpx-login-content {
-    background-color: #ffffff !important;
-    border: 1px solid #e6e8eb !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important; /* Sombra muy sutil */
-    border-radius: 12px !important;
-    /* Ajuste de tamaño */
-    width: fit-content !important;
-    min-width: 350px !important;
-    max-width: 90% !important;
-    margin: 0 auto !important;
-    padding: 2rem !important;
+.card-title, h4 {
+    color: #18427D !important;
+    font-weight: 800 !important;
+    text-align: center;
+    margin-bottom: 20px !important;
 }
 
-/* --- 4. BOTÓN Y LOGO --- */
+.card-body, label {
+    color: #555 !important;
+}
+
+a {
+    color: #F28C28 !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    transition: color 0.3s;
+}
+
+    a:hover {
+        color: #d97706 !important;
+        text-decoration: underline !important;
+    }
+
+/* =========================================================
+   5. INPUTS Y BOTONES (Sin cambios)
+   ========================================================= */
+.form-control {
+    background-color: #f8f9fa !important;
+    border: 1px solid #e1e1e1 !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+    color: #18427D !important;
+}
+
+    .form-control:focus {
+        border-color: #18427D !important;
+        box-shadow: 0 0 0 3px rgba(24, 66, 125, 0.1) !important;
+        background-color: white !important;
+    }
+
+.btn-outline-secondary, .input-group-text {
+    border-color: #e1e1e1 !important;
+    color: #18427D !important;
+}
+
+    .btn-outline-secondary:hover {
+        background-color: #18427D !important;
+        color: white !important;
+    }
+
 .btn-primary {
-    background-color: #4e4376 !important;
-    border-color: #4e4376 !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
+    background-color: #F28C28 !important;
+    border-color: #F28C28 !important;
+    border-radius: 50px !important;
+    padding: 12px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(242, 140, 40, 0.4) !important;
     width: 100%;
-    padding: 0.6rem !important;
+    margin-top: 20px;
 }
 
     .btn-primary:hover {
-        background-color: #3b3358 !important;
+        background-color: #d97706 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(242, 140, 40, 0.6) !important;
     }
 
-.lpx-brand-logo {
-    background-image: none !important;
-    margin-bottom: 0.5rem !important;
+.form-check-input:checked {
+    background-color: #18427D !important;
+    border-color: #18427D !important;
 }

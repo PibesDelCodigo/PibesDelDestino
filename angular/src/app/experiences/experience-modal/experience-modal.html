@@ -1,41 +1,73 @@
-<div class="modal-header">
-  <h5 class="modal-title">Calificar a {{ destinationName }}</h5>
-  <button type="button" class="btn-close" (click)="close()"></button>
-</div>
+<div class="modal-content-pd p-4">
 
-<div class="modal-body">
-  <form [formGroup]="form">
-    
-    <div class="mb-3 text-center">
-      <label class="d-block fw-bold mb-2">Tu Calificación</label>
-      <div class="stars-container">
-        <i *ngFor="let star of stars" 
-           class="fa-star fa-2x cursor-pointer"
-           [ngClass]="star <= form.get('rating').value ? 'fas text-warning' : 'far text-muted'"
-           (click)="setRating(star)">
-        </i>
+  <div class="modal-header border-0 p-0 mb-4 position-relative justify-content-center">
+    <div class="text-center">
+      <h4 class="modal-title fw-bold" style="color: #18427D;">
+        Calificar Experiencia
+      </h4>
+      <p class="text-muted mb-0 small" *ngIf="destinationName">
+        en <span class="fw-bold text-dark">{{ destinationName }}</span>
+      </p>
+    </div>
+    <button type="button" class="btn-close position-absolute top-0 end-0" aria-label="Close" (click)="close()"></button>
+  </div>
+
+  <div class="modal-body p-0">
+    <form [formGroup]="form">
+      
+      <div class="mb-4 text-center">
+        <p class="text-uppercase text-muted fw-bold small mb-2" style="letter-spacing: 1px;">Tu Puntuación</p>
+        
+        <div class="stars-container d-inline-flex gap-2">
+          <i *ngFor="let star of stars" 
+             class="fa-star cursor-pointer star-icon transition-transform"
+             [ngClass]="star <= form.get('rating').value ? 'fas text-warning' : 'far text-muted'"
+             style="font-size: 2.5rem;"
+             (click)="setRating(star)">
+          </i>
+        </div>
+        
+        <div class="mt-2 fw-bold text-warning" *ngIf="form.get('rating').value > 0">
+          {{ form.get('rating').value }} de 5 estrellas
+        </div>
       </div>
-      <div class="text-muted mt-1">
-        {{ form.get('rating').value }} / 5
+
+      <div class="mb-3">
+        <label class="form-label fw-bold text-secondary small">TÍTULO BREVE</label>
+        <input type="text" 
+               class="form-control form-control-lg bg-light border-0 rounded-3" 
+               formControlName="title" 
+               placeholder="Ej: ¡Increíble gastronomía!"
+               style="font-size: 1rem;">
       </div>
-    </div>
 
-    <div class="mb-3">
-      <label class="form-label">Título Breve</label>
-      <input type="text" class="form-control" formControlName="title" placeholder="Ej: ¡Increíble gastronomía!">
-    </div>
+      <div class="mb-4">
+        <label class="form-label fw-bold text-secondary small">TU EXPERIENCIA COMPLETA</label>
+        <textarea class="form-control bg-light border-0 rounded-3" 
+                  formControlName="description" 
+                  rows="5" 
+                  placeholder="Contanos los detalles: qué visitaste, qué comiste, qué te sorprendió..."
+                  style="resize: none; padding: 15px;"></textarea>
+      </div>
 
-    <div class="mb-3">
-      <label class="form-label">Tu Experiencia Completa</label>
-      <textarea class="form-control" formControlName="description" rows="5" placeholder="Contanos los detalles..."></textarea>
-    </div>
+      <div class="d-flex gap-2 pt-2">
+        <button type="button" class="btn btn-light flex-grow-1 py-3 fw-bold text-muted" (click)="close()">
+          Cancelar
+        </button>
+        
+        <button type="button" class="btn btn-primary flex-grow-1 py-3 fw-bold shadow-sm" 
+                (click)="save()" 
+                [disabled]="form.invalid || isSaving">
+          <span *ngIf="!isSaving">
+            <i class="fa fa-paper-plane me-2"></i> Publicar
+          </span>
+          <span *ngIf="isSaving">
+            <i class="fas fa-spinner fa-spin"></i> Guardando...
+          </span>
+        </button>
+      </div>
 
-  </form>
-</div>
-
-<div class="modal-footer">
-  <button type="button" class="btn btn-secondary" (click)="close()">Cancelar</button>
-  <button type="button" class="btn btn-primary" (click)="save()" [disabled]="form.invalid || isSaving">
-    <i class="fa fa-paper-plane"></i> Publicar Experiencia
-  </button>
-</div>
+    </form>
+  </div>
+  
+  </div>

@@ -1,72 +1,104 @@
-<div class="container mt-5 mb-5">
+<div class="profile-wrapper mb-5">
   
-  <div class="card border-0 shadow-sm mb-4 bg-white profile-header">
-    <div class="card-body p-4 d-flex align-items-center flex-column flex-md-row text-center text-md-start">
-      
-      <div class="me-md-4 mb-3 mb-md-0 position-relative">
-         <img src="https://ui-avatars.com/api/?name={{ userName }}&background=4e4376&color=fff&size=128" 
-              class="rounded-circle shadow-sm" 
-              alt="Avatar"
-              style="width: 128px; height: 128px;">
-      </div>
+  <div class="profile-hero">
+    <div class="hero-overlay"></div>
+    <a routerLink="/city-search" class="btn btn-light btn-sm rounded-pill back-btn shadow-sm">
+      <i class="fas fa-arrow-left me-1"></i> Volver al mapa
+    </a>
+  </div>
 
-      <div class="flex-grow-1">
-        <h2 class="fw-bold mb-1">{{ userName }}</h2>
-        <p class="text-muted mb-2">
-          <i class="fa fa-map-marker-alt text-danger"></i> Viajero de PibesDelDestino
-        </p>
-        
-        <div class="d-flex flex-row flex-wrap justify-content-center justify-content-md-start align-items-center gap-3 mt-3">
-          
-          <div class="bg-white border rounded-pill px-3 py-2 shadow-sm d-flex align-items-center">
-            <i class="fa fa-pencil-alt text-primary me-2"></i> 
-            <span class="text-dark fw-bold mb-0">{{ totalReviews }} Reseñas</span>
+  <div class="container relative-content">
+    
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card border-0 shadow-lg profile-card animate-up">
+          <div class="card-body text-center p-4 p-md-5">
+            
+            <div class="avatar-container mx-auto mb-3">
+              <div class="avatar-circle shadow" [style.backgroundColor]="getAvatarColor(userName)">
+                {{ userName.charAt(0).toUpperCase() }}
+              </div>
+              <div class="verified-badge" title="Viajero Verificado">
+                <i class="fas fa-check"></i>
+              </div>
+            </div>
+
+            <h1 class="fw-bold mb-1 text-dark">{{ userName }}</h1>
+            <p class="text-muted mb-4">Explorador de PibesDelDestino 🌍</p>
+
+            <div class="d-flex justify-content-center gap-4 stats-container">
+              <div class="stat-item">
+                <div class="stat-value text-primary">{{ totalReviews }}</div>
+                <div class="stat-label">Reseñas</div>
+              </div>
+              <div class="vertical-divider"></div>
+              <div class="stat-item">
+                <div class="stat-value text-warning">
+                  {{ averageRating | number:'1.1-1' }} <i class="fas fa-star fa-xs"></i>
+                </div>
+                <div class="stat-label">Promedio</div>
+              </div>
+            </div>
+
           </div>
-
-          <div class="bg-white border rounded-pill px-3 py-2 shadow-sm d-flex align-items-center" *ngIf="totalReviews > 0">
-            <i class="fa fa-star text-warning me-2"></i> 
-            <span class="text-dark fw-bold mb-0">{{ averageRating | number:'1.1-1' }} Promedio</span>
-          </div>
-
         </div>
-
       </div>
     </div>
-  </div>
 
-  <h4 class="mb-3">Historial de Viajes</h4>
+    <div class="row justify-content-center mt-5">
+      <div class="col-lg-10">
+        
+        <h4 class="fw-bold mb-4 ps-2 border-start border-4 border-primary">
+          Bitácora de Viaje
+        </h4>
 
-  <div *ngIf="isLoading" class="text-center py-5">
-    <div class="spinner-border text-primary"></div>
-  </div>
-
-  <div *ngIf="!isLoading && experiences.length === 0" class="alert alert-light text-center border">
-    Este usuario aún no ha compartido experiencias. 🐢
-  </div>
-
-  <div class="row row-cols-1 row-cols-md-2 g-4" *ngIf="!isLoading && experiences.length > 0">
-    
-    <div class="col" *ngFor="let exp of experiences">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between mb-2">
-            <h5 class="card-title fw-bold mb-0 text-primary">{{ exp.title }}</h5>
-            <span class="text-warning fw-bold">
-              ★ {{ exp.rating }}
-            </span>
-          </div>
-          
-          <p class="card-text text-muted small mb-3">
-            {{ exp.date | date:'mediumDate' }}
-          </p>
-          
-          <p class="card-text">{{ exp.description }}</p>
-
-          <a [routerLink]="['/destination-detail', exp.destinationId]" 
-             class="btn btn-sm btn-outline-secondary mt-2">
-             Ver Destino <i class="fa fa-arrow-right"></i>
-          </a>
+        <div *ngIf="isLoading" class="text-center py-5">
+          <div class="spinner-grow text-primary" role="status"></div>
+          <p class="mt-2 text-muted">Recuperando memorias...</p>
         </div>
+
+        <div *ngIf="!isLoading && experiences.length === 0" class="text-center py-5 bg-light rounded-4 border-dashed">
+          <i class="fas fa-camera-retro fa-3x text-muted mb-3 opacity-50"></i>
+          <h5>Este viajero aún no ha compartido historias.</h5>
+        </div>
+
+        <div class="row g-4" *ngIf="!isLoading && experiences.length > 0">
+          
+          <div *ngFor="let exp of experiences" class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm review-card">
+              <div class="card-body p-4">
+                
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h5 class="fw-bold mb-1 text-dark">{{ exp.title }}</h5>
+                    <small class="text-muted"><i class="far fa-calendar-alt me-1"></i> {{ exp.date | date:'mediumDate' }}</small>
+                  </div>
+                  <div class="rating-badge bg-light text-warning fw-bold px-2 py-1 rounded">
+                    {{ exp.rating }} <i class="fas fa-star"></i>
+                  </div>
+                </div>
+
+                <p class="text-secondary review-text">
+                  {{ exp.description }}
+                </p>
+
+<div class="mt-auto pt-3 border-top d-flex align-items-center justify-content-between">
+   
+   <a [routerLink]="['/destination-detail', exp.destinationId]" 
+      class="text-primary fw-bold text-decoration-none btn-link-hover"
+      style="cursor: pointer;">
+     <i class="fas fa-map-marker-alt me-1"></i> 
+     Ir a {{ exp.destinationName || 'Ver Destino' }}
+   </a>
+
+</div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </div>
 

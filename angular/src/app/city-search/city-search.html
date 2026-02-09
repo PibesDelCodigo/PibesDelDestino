@@ -1,104 +1,106 @@
-<div class="search-container">
-  <h2>Buscar Ciudades y Destinos</h2>
+<div class="search-page-container">
 
-  <form [formGroup]="searchForm" class="filters-grid">
-    
-    <div class="form-group full-width">
-      <label>Nombre de Ciudad:</label>
-      <input 
-        type="text" 
-        formControlName="partialName" 
-        placeholder="Ej: Buenos, Paris..." 
-        class="search-input"
-      />
+  <div class="search-hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content text-center animate-up">
+      <h1>Explorá el Mundo</h1>
+      <p>Encontrá tu próximo destino entre miles de ciudades.</p>
+    </div>
+  </div>
+
+  <div class="container relative-container">
+    <div class="search-card shadow animate-up delay-1">
+      <form [formGroup]="searchForm" class="row g-3 align-items-end">
+        <div class="col-md-5">
+          <label class="form-label fw-bold text-muted small">NOMBRE DE CIUDAD</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-primary"></i></span>
+            <input type="text" formControlName="partialName" class="form-control border-start-0 ps-0" placeholder="Ej: Buenos Aires, París...">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold text-muted small">CÓDIGO PAÍS</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0"><i class="fas fa-globe-americas text-primary"></i></span>
+            <input type="text" formControlName="countryId" class="form-control border-start-0 ps-0" placeholder="Ej: AR, ES, US" maxlength="2">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-bold text-muted small">POBLACIÓN MÍNIMA</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0"><i class="fas fa-users text-primary"></i></span>
+            <input type="number" formControlName="minPopulation" class="form-control border-start-0 ps-0" placeholder="Ej: 100000">
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="container mt-5 mb-5">
+    <div *ngIf="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+      <p class="mt-3 text-muted fw-bold">Rastreando el globo...</p>
     </div>
 
-    <div class="form-group">
-      <label>Código País (ej: AR, US):</label>
-      <input 
-        type="text" 
-        formControlName="countryId" 
-        placeholder="AR" 
-        class="search-input"
-        maxlength="2"
-      />
+    <div *ngIf="errorMessage" class="alert alert-danger shadow-sm d-flex align-items-center justify-content-center">
+      <i class="fas fa-exclamation-triangle me-2"></i> {{ errorMessage }}
     </div>
 
-    <div class="form-group">
-      <label>Población Mínima:</label>
-      <input 
-        type="number" 
-        formControlName="minPopulation" 
-        placeholder="Ej: 100000" 
-        class="search-input"
-      />
+    <div *ngIf="!isLoading && cities.length === 0 && searchForm.get('partialName')?.value?.length! > 2" class="text-center empty-state py-5">
+      <div class="empty-icon mb-3"><i class="fas fa-map-marked-alt"></i></div>
+      <h3>No encontramos esa ciudad</h3>
+      <p class="text-muted">Probá ajustando los filtros o buscando en otro país.</p>
     </div>
 
-  </form>
-
-  <div *ngIf="isLoading" class="loading-message">⏳ Buscando...</div>
-  <div *ngIf="errorMessage" class="error-message">❌ {{ errorMessage }}</div>
-
-  <ul *ngIf="cities.length > 0" class="results-list">
-<li *ngFor="let city of cities" class="result-item">
-      
-      <div class="city-header">
-        <span class="city-name">{{ city.name }}</span>
-        <span class="city-region" *ngIf="city.region">{{ city.region }}</span>
-      </div>
-      
-      <div class="city-country">{{ city.country }}</div>
-
-      <div class="city-rating my-2">
-        <span class="text-warning" style="font-size: 1.1rem;">
-          <i class="fa fa-star" *ngIf="(city.averageRating || 0) >= 1"></i>
-          <i class="fa fa-star" *ngIf="(city.averageRating || 0) >= 2"></i>
-          <i class="fa fa-star" *ngIf="(city.averageRating || 0) >= 3"></i>
-          <i class="fa fa-star" *ngIf="(city.averageRating || 0) >= 4"></i>
-          <i class="fa fa-star" *ngIf="(city.averageRating || 0) >= 5"></i>
+    <div class="row g-4" *ngIf="cities.length > 0">
+      <div class="col-lg-4 col-md-6" *ngFor="let city of cities">
+        <div class="card city-result-card h-100 border-0 shadow-sm">
           
-          <i class="far fa-star" *ngIf="(city.averageRating || 0) < 1"></i>
-          <i class="far fa-star" *ngIf="(city.averageRating || 0) < 2"></i>
-          <i class="far fa-star" *ngIf="(city.averageRating || 0) < 3"></i>
-          <i class="far fa-star" *ngIf="(city.averageRating || 0) < 4"></i>
-          <i class="far fa-star" *ngIf="(city.averageRating || 0) < 5"></i>
-        </span>
-        
-        <span class="ms-2 text-muted fw-bold small">
-           {{ (city.averageRating || 0) | number:'1.1-1' }}
-        </span>
+          <div class="card-header-visual">
+            <div class="country-badge shadow-sm">{{ city.country }}</div>
+            <button class="btn-like shadow-sm" (click)="likeCity(city); $event.stopPropagation()">
+              <i [ngClass]="isLiked(city) ? 'fas fa-heart text-danger' : 'far fa-heart text-muted'"></i>
+            </button>
+          </div>
+
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h5 class="card-title fw-bold mb-0 text-dark">{{ city.name }}</h5>
+                <small class="text-muted d-block mt-1">
+                  <i class="fas fa-map-pin text-danger me-1"></i> {{ city.region || 'Región desconocida' }}
+                </small>
+              </div>
+              <div class="rating-badge" *ngIf="(city.averageRating || 0) > 0">
+                <i class="fas fa-star text-warning me-1"></i>
+                <strong>{{ (city.averageRating || 0) | number:'1.1-1' }}</strong>
+              </div>
+            </div>
+
+            <div class="city-stats my-3 p-3 bg-light rounded-3">
+              <div class="d-flex align-items-center mb-2">
+                <i class="fas fa-user-friends text-primary me-2"></i>
+                <span>{{ city.population | number }} hab.</span>
+              </div>
+              <div class="d-flex align-items-center small text-muted">
+                <i class="fas fa-compass me-2"></i>
+                <span>{{ city.latitude | number:'1.2-2' }}, {{ city.longitude | number:'1.2-2' }}</span>
+              </div>
+            </div>
+
+            <div class="action-buttons d-flex gap-2 mt-auto">
+              <button class="btn btn-primary flex-grow-1 rounded-pill" (click)="goToDetails(city)">
+                Ver Reseñas
+              </button>
+              
+              <button class="btn btn-outline-warning rounded-circle btn-icon-only" (click)="rateCity(city)" title="Calificar">
+                <i class="fas fa-star"></i>
+              </button>
+            </div>
+
+          </div>
+        </div>
       </div>
-      <div class="city-stats">
-        👥 Población: {{ city.population | number }}
-      </div>
-      
-      <small>Lat: {{ city.latitude }} | Lon: {{ city.longitude }}</small>
-
-      <div class="d-flex gap-2 mt-2">
-        
-        <button class="btn btn-success flex-grow-1" (click)="saveCity(city)">
-          💾 Guardar
-        </button>
-
-        <button class="btn btn-warning flex-grow-1" (click)="rateCity(city)">
-          ⭐ Calificar
-        </button>
-
-        <button class="btn btn-info flex-grow-1 text-white" (click)="goToDetails(city)">
-            👁️ Ver Reseñas
-        </button>
-
-        <button class="btn btn-outline-danger" (click)="likeCity(city)" title="Me gusta">
-          <i class="fa-heart" 
-             [ngClass]="likedCities.has(city.name) ? 'fas' : 'far'">
-          </i>
-        </button>
-
-      </div>
-      </li>
-  </ul>
-
-  <div *ngIf="!isLoading && cities.length === 0 && searchForm.get('partialName')?.value?.length! > 2" class="no-results">
-    No se encontraron ciudades con esos filtros.
+    </div> 
   </div>
 </div>

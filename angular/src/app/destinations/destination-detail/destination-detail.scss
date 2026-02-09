@@ -1,0 +1,93 @@
+/* PORTADA TIPO AIRBNB */
+.destination-hero {
+  position: relative;
+  height: 450px; /* Altura de la portada */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: -60px; /* Truco para que la tarjeta blanca se meta adentro */
+}
+
+.hero-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));
+  z-index: 2;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 3;
+}
+
+/* BADGES Y TEXTOS */
+.country-pill {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+}
+
+.rating-pill {
+  background: white;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 50px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  
+  .score {
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #333;
+    margin-left: 5px;
+  }
+}
+
+/* CONTENEDOR BLANCO DONDE VAN LAS RESEÑAS */
+.main-content {
+  position: relative;
+  z-index: 10;
+  padding-bottom: 50px;
+}
+
+.content-card {
+  background: white;
+  border-radius: 20px;
+  padding: 30px; /* Espacio interno */
+  min-height: 400px;
+}
+
+/* ANIMACIONES */
+.animate-up {
+  animation: fadeInUp 0.8s ease forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+.delay-1 { animation-delay: 0.2s; }
+.delay-2 { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.loading-screen {
+  height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

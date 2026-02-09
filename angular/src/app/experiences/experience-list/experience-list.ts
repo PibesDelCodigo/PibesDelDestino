@@ -95,6 +95,38 @@ export class ExperienceListComponent implements OnInit {
     this.router.navigate(['/profile', userId]);
   }
 
+// Genera un color consistente basado en el nombre del usuario
+getAvatarColor(name: string | undefined): string {
+  if (!name) return '#ccc';
+  const colors = ['#F28C28', '#18427D', '#E74C3C', '#2ECC71', '#9B59B6', '#F39C12', '#1ABC9C'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash % colors.length);
+  return colors[index];
+}
+
+createExperience() {
+  // Verificamos si hay usuario logueado (opcional, según tu lógica)
+  // this.authService... 
+
+  const modalRef = this.modalService.open(ExperienceModalComponent, { size: 'lg', centered: true });
+  
+  // Pasamos el ID del destino para que sepa a quién calificar
+  modalRef.componentInstance.destinationId = this.destinationId;
+  
+  // Opcional: Pasamos el nombre para que el título del modal quede lindo
+  // (Si tenés el nombre del destino disponible en este componente)
+  // modalRef.componentInstance.destinationName = "NombreDelDestino"; 
+
+  modalRef.result.then((result) => {
+    if (result === 'success') {
+      this.loadExperiences(); // Recargamos la lista si publicó
+    }
+  }, () => {});
+}
+
   // --- FUNCIÓN DE TRADUCCIÓN (API EXTERNA + MÉTRICAS) ---
   translate(id: string, text: string) {
     // Si ya está traducido, no hacemos nada para no gastar API

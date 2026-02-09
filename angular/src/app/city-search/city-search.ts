@@ -4,7 +4,6 @@ import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { CityDto } from '../proxy/cities';
 import { DestinationService } from '../proxy/destinations';
-import { DestinationDto } from '../proxy/application/contracts/destinations';
 import { CreateUpdateDestinationDto } from '../proxy/application/contracts/destinations';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExperienceModalComponent } from '../experiences/experience-modal/experience-modal';
@@ -31,9 +30,9 @@ export class CitySearch implements OnInit {
   isLoading = false;
   errorMessage = '';
 
+  // Set para guardar las ciudades favoritas (Clave: "Nombre_Pais")
   likedCities = new Set<string>();
   
-  // Clave: Nombre + País -> Valor: ID y Rating
   destinationCache = new Map<string, { id: string, rating: number }>(); 
 
   constructor(
@@ -43,7 +42,6 @@ export class CitySearch implements OnInit {
     private authService: AuthService,
     private favoriteService: FavoriteService,
     private router: Router,
-    // 👇 2. INYECTAMOS EL SERVICIO DE ESTADO
     private stateService: CitySearchStateService
   ) {
     this.searchForm = this.fb.group({
@@ -55,29 +53,23 @@ export class CitySearch implements OnInit {
 
   ngOnInit(): void {
     
-    // 👇 3. LÓGICA DE RECUPERACIÓN (SI VOLVEMOS DE DETALLES)
+    // 1. RECUPERAR ESTADO
     if (this.stateService.hasData()) {
-        console.log('♻️ Recuperando estado anterior...');
-        
-        // A. Recuperamos resultados y caché
         this.cities = this.stateService.lastResults;
         this.destinationCache = this.stateService.lastCache;
-
-        // B. Recuperamos el formulario (sin disparar evento para no buscar de nuevo)
         this.searchForm.patchValue(this.stateService.lastFormValues, { emitEvent: false });
     } else {
-        // Si no hay datos guardados, cargamos lo local normalmente
         this.preloadLocalDestinations();
     }
 
-    // CONFIGURACIÓN DEL BUSCADOR
+    // 2. CONFIGURACIÓN DEL BUSCADOR
     this.searchForm.valueChanges.pipe(
       debounceTime(800),
       distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
       filter(val => {
         const text = val.partialName;
         if (!text || text.length < 3) {
-          this.cities = [];
+          if (!text) this.cities = []; 
           return false;
         }
         return true;
@@ -105,24 +97,24 @@ export class CitySearch implements OnInit {
           };
         });
 
-        // 👇 4. GUARDAR ESTADO CADA VEZ QUE BUSCAMOS
         this.stateService.lastResults = this.cities;
         this.stateService.lastFormValues = this.searchForm.value;
         this.stateService.lastCache = this.destinationCache;
-
         this.isLoading = false;
       },
       error: (err) => {
         console.error('Error:', err);
-        this.errorMessage = 'Error al buscar ciudades.';
+        this.errorMessage = 'Ocurrió un problema al buscar ciudades.';
         this.isLoading = false;
       }
     });
 
+    // 3. CARGAR LIKES
     if (this.authService.isAuthenticated) {
       this.favoriteService.getMyFavorites().subscribe(favs => {
         favs.forEach(f => {
-          this.likedCities.add(f.name); 
+          const key = this.getUniqueKey(f.name, f.country);
+          this.likedCities.add(key); 
         });
       });
     }
@@ -130,6 +122,11 @@ export class CitySearch implements OnInit {
 
   private getUniqueKey(name: string, country: string): string {
     return `${name.toLowerCase().trim()}_${country.toLowerCase().trim()}`;
+  }
+
+  isLiked(city: CityWithRating): boolean {
+    const key = this.getUniqueKey(city.name, city.country);
+    return this.likedCities.has(key);
   }
 
   private preloadLocalDestinations() {
@@ -141,7 +138,6 @@ export class CitySearch implements OnInit {
           rating: dest.averageRating || 0 
         });
       });
-      // Actualizamos el estado también aquí por si acaso
       this.stateService.lastCache = this.destinationCache;
     });
   }
@@ -159,7 +155,7 @@ export class CitySearch implements OnInit {
       country: city.country,
       city: city.region || city.name,
       population: city.population || 0,
-      photo: '',
+      photo: '', 
       updateDate: new Date().toISOString(),
       coordinates: { latitude: city.latitude, longitude: city.longitude }
     };
@@ -167,14 +163,12 @@ export class CitySearch implements OnInit {
     this.destinationService.create(newDestination).subscribe({
         next: (created) => {
             this.destinationCache.set(key, { id: created.id, rating: 0 });
-            // Guardamos el caché actualizado en el servicio
             this.stateService.lastCache = this.destinationCache;
-            
             callback(created.id);
         },
         error: (err) => {
             console.error('Error creando destino', err);
-            this.isLoading = false;
+            this.isLoading = false; 
             alert('Ocurrió un error al procesar el destino.');
         }
     });
@@ -185,15 +179,15 @@ export class CitySearch implements OnInit {
       this.authService.navigateToLogin();
       return;
     }
-    this.isLoading = true;
+    
+    const key = this.getUniqueKey(city.name, city.country);
 
     this.ensureDestinationExists(city, (id) => {
         this.favoriteService.toggle({ destinationId: id }).subscribe(() => {
-            this.isLoading = false;
-            if (this.likedCities.has(city.name)) {
-                this.likedCities.delete(city.name);
+            if (this.likedCities.has(key)) {
+                this.likedCities.delete(key);
             } else {
-                this.likedCities.add(city.name);
+                this.likedCities.add(key);
             }
         });
     });
@@ -210,13 +204,7 @@ export class CitySearch implements OnInit {
     });
   }
 
-  saveCity(city: CityWithRating) {
-    if (!confirm(`¿Guardar ${city.name}?`)) return;
-    this.ensureDestinationExists(city, (id) => {
-        alert('✅ Destino asegurado en la base de datos.');
-    });
-  }
-
+  // 👇 ESTA ES LA FUNCIÓN QUE FALTABA 👇
   private openRatingModal(id: string, name: string) {
     const modalRef = this.modalService.open(ExperienceModalComponent, { size: 'lg' });
     modalRef.componentInstance.destinationId = id;
@@ -228,9 +216,9 @@ export class CitySearch implements OnInit {
   }
 
   goToDetails(city: CityWithRating) {
-      this.isLoading = true;
+      this.isLoading = true; 
       this.ensureDestinationExists(city, (id) => {
-          this.isLoading = false;
+          this.isLoading = false; 
           this.router.navigate(['/destination-detail', id]);
       });
   }

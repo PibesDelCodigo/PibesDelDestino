@@ -1,25 +1,36 @@
-<div class="container mt-4" *ngIf="destination">
-  
-  <div class="card mb-4 shadow-sm">
-    <div class="card-body d-flex justify-content-between align-items-center">
-      <div>
-        <h1 class="display-6 mb-0">{{ destination.name }}</h1>
-        <p class="text-muted mb-0">
-            <i class="fa fa-map-marker-alt"></i> {{ destination.country }}
-            <span class="ms-3 text-warning fw-bold">
-               ⭐ {{ (destination.averageRating || 0) | number:'1.1-1' }}
-            </span>
-        </p>
-      </div>
-      
-      </div>
-  </div>
-
-  <app-experience-list [destinationId]="destinationId"></app-experience-list>
-
+<div *ngIf="!destination" class="loading-screen">
+  <div class="spinner-grow text-primary" role="status"></div>
 </div>
 
-<div *ngIf="!destination" class="text-center mt-5">
-    <div class="spinner-border text-primary"></div>
-    <p>Cargando destino...</p>
+<div class="destination-hero" *ngIf="destination">
+  
+  <div class="hero-bg" 
+       [style.backgroundImage]="'url(' + (destination.photo || 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1920&auto=format&fit=crop') + ')'">
+  </div>
+  
+  <div class="hero-overlay"></div>
+
+  <div class="hero-content container text-center">
+    <span class="country-pill animate-up">
+      <i class="fas fa-map-marker-alt"></i> {{ destination.country }}
+    </span>
+
+    <h1 class="display-3 fw-bold text-white mt-3 mb-2 animate-up delay-1">
+      {{ destination.name }}
+    </h1>
+
+    <div class="hero-rating animate-up delay-2">
+      <div class="rating-pill">
+        <i class="fas fa-star text-warning"></i> 
+        <span class="score">{{ (destination.averageRating || 0) | number:'1.1-1' }}</span>
+        <span class="text-muted small ms-1">/ 5.0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container main-content">
+  <div class="content-card shadow-lg">
+    <app-experience-list [destinationId]="destinationId"></app-experience-list>
+  </div>
 </div>

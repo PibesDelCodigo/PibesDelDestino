@@ -1,108 +1,95 @@
-<div class="reviews-container">
+<div class="reviews-section">
   
-  <h5 class="mb-3">Opiniones de la Comunidad ({{ experiences.length }})</h5>
-
-  <div class="card p-3 mb-3 bg-light border-0">
-    <div class="row g-2">
-      <div class="col-md-7">
-        <input type="text" 
-               class="form-control" 
-               placeholder="Buscar..." 
-               [(ngModel)]="searchText" 
-               (keyup.enter)="loadExperiences()">
-      </div>
-      <div class="col-md-3">
-        <select class="form-select" [(ngModel)]="filterType" (change)="loadExperiences()">
-          <option [ngValue]="null">Todas</option>
-          <option [ngValue]="0">Positivas</option>
-          <option [ngValue]="1">Neutrales</option>
-          <option [ngValue]="2">Negativas</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <button type="button" class="btn btn-primary w-100" (click)="loadExperiences()">
-          Filtrar
-        </button>
-      </div>
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+      <h3 class="fw-bold mb-0 text-dark">Opiniones de la Comunidad</h3>
+      <span class="badge bg-light text-dark rounded-pill border ms-3 px-3">{{ experiences.length }}</span>
     </div>
+
+    <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2 animate-bounce" 
+            (click)="createExperience()">
+      <i class="fas fa-pen-nib"></i> 
+      <span>Escribir mi Reseña</span>
+    </button>
   </div>
 
-  <div *ngIf="isLoading" class="text-center p-3">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p>Cargando opiniones...</p>
-  </div>
-
-  <div *ngIf="!isLoading && experiences.length === 0" class="alert alert-info text-center">
-    No se encontraron opiniones con estos filtros.
-  </div>
-
-  <div class="list-group" [hidden]="isLoading || experiences.length === 0">
-    
-    <div *ngFor="let exp of experiences" class="list-group-item position-relative mb-2 shadow-sm border rounded">
-      
-      <div *ngIf="exp.userId === currentUserId" class="position-absolute top-0 end-0 m-2">
-        <button class="btn btn-outline-primary btn-sm me-1" 
-                (click)="editExperience(exp)" 
-                title="Editar mi reseña">
-            <i class="fa fa-pencil"></i>
-        </button>
-
-        <button class="btn btn-outline-danger btn-sm"
-                (click)="delete(exp)"
-                title="Eliminar mi reseña">
-            <i class="fa fa-trash"></i>
-        </button>
+  <div class="filter-bar d-flex gap-3 mb-4 p-3 bg-white rounded-3 shadow-sm border">
+      <div class="input-group search-box flex-grow-1">
+        <span class="input-group-text bg-transparent border-end-0"><i class="fas fa-search text-muted"></i></span>
+        <input type="text" class="form-control border-start-0 ps-0 bg-transparent" placeholder="Buscar palabras clave..." 
+               [(ngModel)]="searchText" (keyup.enter)="loadExperiences()">
       </div>
-
-      <div class="d-flex justify-content-between align-items-center me-5"> 
-        <div class="text-warning">
-          <span *ngFor="let s of stars">
-            <i [class]="s <= exp.rating ? 'fas fa-star' : 'far fa-star'"></i>
-          </span>
-          <span class="text-dark ms-2 fw-bold">({{ exp.rating }}/5)</span>
-        </div>
-        <small class="text-muted">{{ exp.date | date:'shortDate' }}</small>
-      </div>
-
-      <h6 class="fw-bold mt-2">{{ exp.title }}</h6>
-      <p class="mb-1">{{ exp.description }}</p>
       
-      <div class="mb-2 mt-1">
+      <select class="form-select w-auto border-0 bg-light fw-bold text-secondary" [(ngModel)]="filterType" (change)="loadExperiences()">
+        <option [ngValue]="null">Todas las calificaciones</option>
+        <option [ngValue]="5">⭐⭐⭐⭐⭐ Excelentes</option>
+        <option [ngValue]="0">👍 Positivas</option>
+        <option [ngValue]="2">👎 Negativas</option>
+      </select>
+  </div>
+
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-grow text-primary" role="status"></div>
+    <p class="mt-2 text-muted small">Cargando opiniones...</p>
+  </div>
+
+  <div *ngIf="!isLoading && experiences.length === 0" class="text-center py-5 bg-light rounded-3 border-dashed">
+    <div class="mb-3 text-muted opacity-50"><i class="far fa-comment-dots fa-4x"></i></div>
+    <h5 class="fw-bold text-dark">Aún no hay opiniones</h5>
+    <p class="text-muted">Sé el primero en contar tu experiencia sobre este destino.</p>
+    <button class="btn btn-outline-primary btn-sm rounded-pill mt-2" (click)="createExperience()">Escribir ahora</button>
+  </div>
+
+  <div class="reviews-grid" *ngIf="!isLoading && experiences.length > 0">
+    <div *ngFor="let exp of experiences" class="review-card card border-0 shadow-sm mb-3">
+      <div class="card-body p-4">
         
-        <button *ngIf="!translatedTexts[exp.id]" 
-                class="btn btn-link p-0 text-decoration-none small"
-                style="font-size: 0.85rem;"
-                (click)="translate(exp.id, exp.description)"
-                [disabled]="isTranslating[exp.id]">
-          
-          <span *ngIf="!isTranslating[exp.id]">
-             <i class="fa fa-language text-primary"></i> Traducir al Inglés
-          </span>
-          
-          <span *ngIf="isTranslating[exp.id]">
-             <i class="fa fa-spinner fa-spin text-secondary"></i> Traduciendo...
-          </span>
-        </button>
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div class="d-flex align-items-center cursor-pointer" (click)="goToUserProfile(exp.userId, exp.userName)">
+            <div class="user-avatar shadow-sm" [style.backgroundColor]="getAvatarColor(exp.userName)">
+              {{ (exp.userName || 'A').charAt(0).toUpperCase() }}
+            </div>
+            <div class="ms-3">
+              <h6 class="fw-bold mb-0 text-dark">{{ exp.userName || 'Viajero Anónimo' }}</h6>
+              <small class="text-muted">{{ exp.date | date:'mediumDate' }}</small>
+            </div>
+          </div>
 
-        <div *ngIf="translatedTexts[exp.id]" class="p-2 bg-light rounded border mt-1">
-          <small class="text-muted d-block fw-bold mb-1" style="font-size: 0.75rem;">
-            <i class="fa fa-check-circle text-success"></i> Traducción (API Externa):
-          </small>
-          <p class="mb-0 fst-italic text-dark small">{{ translatedTexts[exp.id] }}</p>
+          <div *ngIf="exp.userId === currentUserId" class="dropdown">
+            <button class="btn btn-light btn-sm rounded-circle" type="button" data-bs-toggle="dropdown">
+              <i class="fas fa-ellipsis-v text-muted"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+              <li><button class="dropdown-item" (click)="editExperience(exp)"><i class="fas fa-pencil-alt text-primary me-2"></i>Editar</button></li>
+              <li><button class="dropdown-item text-danger" (click)="delete(exp)"><i class="fas fa-trash-alt me-2"></i>Eliminar</button></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="review-rating mb-2">
+          <i *ngFor="let s of [1,2,3,4,5]" [class]="s <= exp.rating ? 'fas fa-star text-warning' : 'far fa-star text-muted star-placeholder'"></i>
+        </div>
+
+        <h5 class="fw-bold text-dark mb-2">{{ exp.title }}</h5>
+        <p class="text-secondary review-text">{{ exp.description }}</p>
+
+        <div class="translation-area mt-3">
+          <button *ngIf="!translatedTexts[exp.id]" class="btn-translate"
+                  (click)="translate(exp.id, exp.description)" [disabled]="isTranslating[exp.id]">
+            <i class="fas fa-globe-americas me-1"></i>
+            <span *ngIf="!isTranslating[exp.id]">Traducir reseña</span>
+            <span *ngIf="isTranslating[exp.id]">Traduciendo...</span>
+          </button>
+          <div *ngIf="translatedTexts[exp.id]" class="translated-box animate-fade-in">
+            <div class="d-flex align-items-center mb-1">
+              <i class="fas fa-language text-primary me-2"></i>
+              <small class="fw-bold text-primary">Traducido del Español</small>
+            </div>
+            <p class="mb-0 text-dark">{{ translatedTexts[exp.id] }}</p>
+          </div>
         </div>
 
       </div>
-      <small class="text-muted">
-        <i class="fa fa-user-circle"></i> 
-        
-        <span class="text-primary fw-bold ms-1" 
-              style="cursor: pointer; text-decoration: underline;"
-              (click)="goToUserProfile(exp.userId, exp.userName)">
-           {{ exp.userName || 'Usuario Anónimo' }}
-        </span>
-      </small>
-
     </div>
-
   </div>
 </div>
