@@ -49,7 +49,7 @@ namespace PibesDelDestino.Notifications
     {
         public NotificationAppServiceTestProxy(
             IRepository<AppNotification, Guid> repository,
-            IServiceProvider serviceProvider) : base(repository, null)
+            IServiceProvider serviceProvider) : base(repository)
         {
             // Resolvemos el LazyServiceProvider para que CurrentUser y ObjectMapper funcionen
             LazyServiceProvider = serviceProvider.GetRequiredService<IAbpLazyServiceProvider>();

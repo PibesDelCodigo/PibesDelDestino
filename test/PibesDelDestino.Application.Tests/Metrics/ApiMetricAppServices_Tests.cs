@@ -37,7 +37,8 @@ namespace PibesDelDestino.Metrics
                 "TestService",
                 "/test",
                 true,
-                150
+                150,
+                null
             );
 
             // Creamos la lista y la convertimos a Queryable
