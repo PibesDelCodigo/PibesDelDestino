@@ -50,5 +50,22 @@ namespace PibesDelDestino.Notifications
         {
             return await _repository.CountAsync(x => x.UserId == CurrentUser.Id && !x.IsRead);
         }
+
+        public async Task MarkAllAsReadAsync()
+        {
+            var userId = CurrentUser.Id.Value;
+
+            // 1. Buscamos todas las que NO están leídas de este usuario
+            var unreadNotifications = await _repository.GetListAsync(n => n.UserId == userId && !n.IsRead);
+
+            // 2. Las recorremos y marcamos como leídas
+            foreach (var notification in unreadNotifications)
+            {
+                notification.IsRead = true;
+                // No hace falta llamar a UpdateAsync explícitamente si usas UnitOfWork (ABP lo hace solo al final),
+                // pero si quieres asegurar, puedes descomentar la siguiente línea:
+                await _repository.UpdateAsync(notification);
+            }
+        }
     }
 }

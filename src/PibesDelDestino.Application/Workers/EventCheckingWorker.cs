@@ -119,10 +119,10 @@ namespace PibesDelDestino.Workers
                                             }
                                             body += "</ul>";
 
-                                            var preferencia = user.GetProperty<string>("NotifPref") ?? "Ambas";
+                                            var preferencia = user.GetProperty<int?>("NotificationType") ?? 2;
 
-                                            bool enviarMail = preferencia == "Mail" || preferencia == "Ambas";
-                                            bool enviarPantalla = preferencia == "Pantalla" || preferencia == "Ambas";
+                                            bool enviarMail = preferencia == 1 || preferencia == 2;
+                                            bool enviarPantalla = preferencia == 0 || preferencia == 2;
 
                                             if (enviarMail && !string.IsNullOrWhiteSpace(user.Email))
                                             {
