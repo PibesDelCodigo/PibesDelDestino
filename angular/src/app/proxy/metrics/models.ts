@@ -8,15 +8,15 @@ export interface ApiMetricDto extends AuditedEntityDto<string> {
   errorMessage?: string;
 }
 
-export interface GetApiMetricsInput extends PagedAndSortedResultRequestDto {
-  serviceName?: string;
-  startDate?: string;
-  endDate?: string;
-}
-
 export interface DashboardDto {
   totalApiCalls: number;
   successRate: number;
   avgResponseTime: number;
   topSearches: Record<string, number>;
+}
+
+export interface GetApiMetricsInput extends PagedAndSortedResultRequestDto {
+  serviceName?: string;
+  startDate?: string;
+  endDate?: string;
 }

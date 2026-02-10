@@ -55,4 +55,4 @@ export class NotificationListComponent implements OnInit {
     if (type === 'DestinationUpdate') return 'text-warning'; 
     return 'text-secondary';
   }
-}
+} 

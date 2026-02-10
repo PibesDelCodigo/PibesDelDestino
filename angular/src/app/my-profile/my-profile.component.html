@@ -1,0 +1,110 @@
+<div class="profile-container">
+  
+  <div class="global-card">
+    <div class="card-header bg-white p-0">
+      <ul class="nav-tabs">
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="selectedTab === 0" (click)="setTab(0)">
+            <i class="fa fa-id-card me-2"></i> Datos Personales
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" [class.active]="selectedTab === 1" (click)="setTab(1)">
+            <i class="fa fa-key me-2"></i> Contraseña
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <div class="card-body">
+
+      <div *ngIf="selectedTab === 0">
+        
+        <div class="text-center mb-4">
+           <div class="d-inline-block rounded-circle overflow-hidden border shadow-sm" 
+                style="width: 100px; height: 100px; background-color: #eee;">
+               
+               <img *ngIf="personalForm.get('profilePictureUrl')?.value" 
+                    [src]="personalForm.get('profilePictureUrl')?.value" 
+                    class="w-100 h-100" style="object-fit: cover;"
+                    onerror="this.style.display='none'">
+               
+               <div *ngIf="!personalForm.get('profilePictureUrl')?.value" 
+                    class="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
+                   <i class="fa fa-user fa-2x"></i>
+               </div>
+           </div>
+        </div>
+
+        <form [formGroup]="personalForm" (ngSubmit)="savePersonalData()">
+          <div class="profile-grid">
+            
+            <div class="mb-3 col-span-2">
+              <label class="form-label fw-bold">Foto de Perfil (URL)</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fa fa-link"></i></span>
+                <input type="text" class="form-control" formControlName="profilePictureUrl" 
+                       placeholder="Ej: https://i.imgur.com/mi-foto.jpg">
+              </div>
+              <small class="text-muted">Pegá aquí el link de tu foto de internet.</small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Usuario</label>
+              <input type="text" class="form-control bg-light" formControlName="userName" readonly>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" formControlName="email">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-control" formControlName="name">
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Apellido</label>
+              <input type="text" class="form-control" formControlName="surname">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Teléfono</label>
+              <input type="text" class="form-control" formControlName="phoneNumber">
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mt-4">
+            <button type="submit" class="btn btn-primary px-4" [disabled]="loading || personalForm.invalid">
+              <i class="fa fa-save me-2"></i> Guardar Cambios
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div *ngIf="selectedTab === 1">
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+          <div class="mb-3">
+            <label class="form-label">Contraseña Actual</label>
+            <input type="password" class="form-control" formControlName="currentPassword">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nueva Contraseña</label>
+            <input type="password" class="form-control" formControlName="newPassword">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Confirmar Nueva Contraseña</label>
+            <input type="password" class="form-control" formControlName="confirmNewPassword">
+          </div>
+          <div class="d-flex justify-content-end mt-4">
+            <button type="submit" class="btn btn-primary px-4" [disabled]="loading || passwordForm.invalid">
+              <i class="fa fa-lock me-2"></i> Cambiar Contraseña
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>

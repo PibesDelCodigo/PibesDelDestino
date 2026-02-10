@@ -1894,6 +1894,14 @@
               "name": "IApiMetricAppService",
               "methods": [
                 {
+                  "name": "GetDashboardStatsAsync",
+                  "parametersOnMethod": [],
+                  "returnValue": {
+                    "type": "PibesDelDestino.Metrics.DashboardDto",
+                    "typeSimple": "PibesDelDestino.Metrics.DashboardDto"
+                  }
+                },
+                {
                   "name": "GetAsync",
                   "parametersOnMethod": [
                     {
@@ -1931,6 +1939,21 @@
             }
           ],
           "actions": {
+            "GetDashboardStatsAsync": {
+              "uniqueName": "GetDashboardStatsAsync",
+              "name": "GetDashboardStatsAsync",
+              "httpMethod": "GET",
+              "url": "api/app/api-metric/dashboard-stats",
+              "supportedVersions": [],
+              "parametersOnMethod": [],
+              "parameters": [],
+              "returnValue": {
+                "type": "PibesDelDestino.Metrics.DashboardDto",
+                "typeSimple": "PibesDelDestino.Metrics.DashboardDto"
+              },
+              "allowAnonymous": null,
+              "implementFrom": "PibesDelDestino.Metrics.IApiMetricAppService"
+            },
             "GetAsyncById": {
               "uniqueName": "GetAsyncById",
               "name": "GetAsync",
@@ -2128,31 +2151,6 @@
                     "type": "System.Int32",
                     "typeSimple": "number"
                   }
-                },
-                {
-                  "name": "SetNotificationPreferenceAsync",
-                  "parametersOnMethod": [
-                    {
-                      "name": "preference",
-                      "typeAsString": "System.String, System.Private.CoreLib",
-                      "type": "System.String",
-                      "typeSimple": "string",
-                      "isOptional": false,
-                      "defaultValue": null
-                    }
-                  ],
-                  "returnValue": {
-                    "type": "System.Void",
-                    "typeSimple": "System.Void"
-                  }
-                },
-                {
-                  "name": "GetNotificationPreferenceAsync",
-                  "parametersOnMethod": [],
-                  "returnValue": {
-                    "type": "System.String",
-                    "typeSimple": "string"
-                  }
                 }
               ]
             }
@@ -2258,58 +2256,6 @@
               "returnValue": {
                 "type": "System.Int32",
                 "typeSimple": "number"
-              },
-              "allowAnonymous": false,
-              "implementFrom": "PibesDelDestino.Notifications.INotificationAppService"
-            },
-            "SetNotificationPreferenceAsyncByPreference": {
-              "uniqueName": "SetNotificationPreferenceAsyncByPreference",
-              "name": "SetNotificationPreferenceAsync",
-              "httpMethod": "POST",
-              "url": "api/app/notification/set-notification-preference",
-              "supportedVersions": [],
-              "parametersOnMethod": [
-                {
-                  "name": "preference",
-                  "typeAsString": "System.String, System.Private.CoreLib",
-                  "type": "System.String",
-                  "typeSimple": "string",
-                  "isOptional": false,
-                  "defaultValue": null
-                }
-              ],
-              "parameters": [
-                {
-                  "nameOnMethod": "preference",
-                  "name": "preference",
-                  "jsonName": null,
-                  "type": "System.String",
-                  "typeSimple": "string",
-                  "isOptional": false,
-                  "defaultValue": null,
-                  "constraintTypes": null,
-                  "bindingSourceId": "ModelBinding",
-                  "descriptorName": ""
-                }
-              ],
-              "returnValue": {
-                "type": "System.Void",
-                "typeSimple": "System.Void"
-              },
-              "allowAnonymous": false,
-              "implementFrom": "PibesDelDestino.Notifications.INotificationAppService"
-            },
-            "GetNotificationPreferenceAsync": {
-              "uniqueName": "GetNotificationPreferenceAsync",
-              "name": "GetNotificationPreferenceAsync",
-              "httpMethod": "GET",
-              "url": "api/app/notification/notification-preference",
-              "supportedVersions": [],
-              "parametersOnMethod": [],
-              "parameters": [],
-              "returnValue": {
-                "type": "System.String",
-                "typeSimple": "string"
               },
               "allowAnonymous": false,
               "implementFrom": "PibesDelDestino.Notifications.INotificationAppService"
@@ -2598,7 +2544,7 @@
                 "type": "PibesDelDestino.Users.PublicUserDto",
                 "typeSimple": "PibesDelDestino.Users.PublicUserDto"
               },
-              "allowAnonymous": false,
+              "allowAnonymous": true,
               "implementFrom": "PibesDelDestino.Users.IAppUserAppService"
             },
             "DeleteSelfAsync": {
@@ -5528,6 +5474,63 @@
         }
       ]
     },
+    "PibesDelDestino.Metrics.DashboardDto": {
+      "baseType": null,
+      "isEnum": false,
+      "enumNames": null,
+      "enumValues": null,
+      "genericArguments": null,
+      "properties": [
+        {
+          "name": "TotalApiCalls",
+          "jsonName": null,
+          "type": "System.Int32",
+          "typeSimple": "number",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "SuccessRate",
+          "jsonName": null,
+          "type": "System.Double",
+          "typeSimple": "number",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "AvgResponseTime",
+          "jsonName": null,
+          "type": "System.Double",
+          "typeSimple": "number",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "TopSearches",
+          "jsonName": null,
+          "type": "{System.String:System.Int32}",
+          "typeSimple": "{string:number}",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        }
+      ]
+    },
     "PibesDelDestino.Metrics.GetApiMetricsInput": {
       "baseType": "Volo.Abp.Application.Dtos.PagedAndSortedResultRequestDto",
       "isEnum": false,
@@ -5819,6 +5822,18 @@
         },
         {
           "name": "Surname",
+          "jsonName": null,
+          "type": "System.String",
+          "typeSimple": "string",
+          "isRequired": false,
+          "minLength": null,
+          "maxLength": null,
+          "minimum": null,
+          "maximum": null,
+          "regex": null
+        },
+        {
+          "name": "ProfilePictureUrl",
           "jsonName": null,
           "type": "System.String",
           "typeSimple": "string",

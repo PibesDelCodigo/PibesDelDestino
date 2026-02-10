@@ -1,36 +1,94 @@
-<div class="container mt-5">
+<div class="profile-wrapper mb-5" *ngIf="user || isLoading">
   
-  <div *ngIf="isLoading" class="text-center">
-    <div class="spinner-border text-primary" role="status"></div>
-    <p>Cargando perfil...</p>
+  <div class="profile-hero">
+    <div class="hero-overlay"></div>
+    <a routerLink="/city-search" class="btn btn-light btn-sm rounded-pill back-btn shadow-sm">
+      <i class="fas fa-arrow-left me-1"></i> Volver
+    </a>
   </div>
 
-  <div *ngIf="errorMessage" class="alert alert-danger">
-    {{ errorMessage }}
-  </div>
+  <div class="container relative-content">
+    
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card border-0 shadow-lg profile-card animate-up">
+          <div class="card-body text-center p-4 p-md-5">
+            
+            <div class="avatar-container mx-auto mb-3">
+              <div class="avatar-circle shadow overflow-hidden rounded-circle position-relative bg-light" 
+                   style="width: 130px; height: 130px; margin: 0 auto; display: flex; align-items: center; justify-content: center; border: 4px solid white;">
+                
+                <img *ngIf="user?.profilePictureUrl" 
+                     [src]="user?.profilePictureUrl" 
+                     alt="Foto" 
+                     class="w-100 h-100"
+                     style="object-fit: cover;"
+                     onerror="this.style.display='none'">
 
-  <div *ngIf="user" class="card shadow-sm mx-auto" style="max-width: 500px;">
-    <div class="card-body text-center">
-      <div class="avatar-circle mb-3 mx-auto">
-        {{ user.name?.charAt(0) }}{{ user.surname?.charAt(0) }}
-      </div>
+                <div *ngIf="!user?.profilePictureUrl" class="text-secondary display-4 fw-bold">
+                    {{ userInitial }}
+                </div>
 
-      <h2 class="card-title">{{ user.name }} {{ user.surname }}</h2>
-      
-      <p class="text-muted">&#64;{{ user.userName }}</p>
-      
-      <hr>
-      
-      <div class="stats d-flex justify-content-around">
-        <div>
-          <strong>0</strong>
-          <div class="text-muted small">Reseñas</div>
-        </div>
-        <div>
-          <strong>0</strong>
-          <div class="text-muted small">Favoritos</div>
+              </div>
+            </div>
+
+            <h1 class="fw-bold mb-1 text-dark">{{ fullName }}</h1>
+            <p class="text-muted mb-4">{{ user?.userName }}</p>
+
+            <div class="d-flex justify-content-center gap-5 border-top pt-4 w-75 mx-auto">
+               
+               <div class="text-center">
+                 <h4 class="fw-bold text-primary m-0">{{ stats.reviews }}</h4>
+                 <small class="text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Reseñas</small>
+               </div>
+               
+               <div class="vr"></div>
+
+               <div class="text-center">
+                 <h4 class="fw-bold text-warning m-0">
+                    {{ stats.average | number:'1.1-1' }} <i class="fas fa-star fa-xs"></i>
+                 </h4>
+                 <small class="text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Promedio</small>
+               </div>
+
+            </div>
+
+          </div>
         </div>
       </div>
     </div>
+
+    <div class="row justify-content-center mt-5 animate-up" style="animation-delay: 0.2s;">
+      <div class="col-lg-10">
+        <h4 class="fw-bold mb-4 ps-3 border-start border-4 border-primary">Bitácora de Viaje</h4>
+        
+        <div *ngIf="experiences.length === 0" class="alert alert-light text-center py-5 text-muted border border-dashed rounded-3">
+           <i class="fas fa-camera-retro fa-2x mb-3 opacity-50"></i><br>
+           Este viajero aún no ha compartido experiencias.
+        </div>
+
+        <div class="row g-4" *ngIf="experiences.length > 0">
+          <div *ngFor="let exp of experiences" class="col-md-6">
+            <div class="card h-100 shadow-sm border-0 review-card hover-effect">
+              <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                   <h5 class="fw-bold m-0 text-truncate text-dark">{{ exp.title }}</h5>
+                   <span class="badge bg-warning text-dark rounded-pill">{{ exp.rating }} ★</span>
+                </div>
+                <p class="text-muted small line-clamp-3 mb-3">{{ exp.description }}</p>
+                
+                <div class="border-top pt-3">
+                    <a [routerLink]="['/destination-detail', exp.destinationId]" class="text-primary text-decoration-none fw-bold small stretched-link">
+                    <i class="fas fa-map-marker-alt me-1"></i> Ver Destino
+                    </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </div>

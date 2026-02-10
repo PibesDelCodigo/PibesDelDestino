@@ -18,6 +18,14 @@ export class ApiMetricService {
     { apiName: this.apiName,...config });
   
 
+  getDashboardStats = (config?: Partial<Rest.Config>) =>
+    this.restService.request<any, DashboardDto>({
+      method: 'GET',
+      url: '/api/app/api-metric/dashboard-stats',
+    },
+    { apiName: this.apiName,...config });
+  
+
   getList = (input: GetApiMetricsInput, config?: Partial<Rest.Config>) =>
     this.restService.request<any, PagedResultDto<ApiMetricDto>>({
       method: 'GET',
@@ -25,13 +33,6 @@ export class ApiMetricService {
       params: { serviceName: input.serviceName, startDate: input.startDate, endDate: input.endDate, sorting: input.sorting, skipCount: input.skipCount, maxResultCount: input.maxResultCount },
     },
     { apiName: this.apiName,...config });
-
-  getDashboardStats = () =>
-    this.restService.request<any, DashboardDto>({
-      method: 'GET',
-      url: '/api/app/api-metric/dashboard-stats',
-    },
-      { apiName: this.apiName });
 
   constructor(private restService: RestService) {}
 }

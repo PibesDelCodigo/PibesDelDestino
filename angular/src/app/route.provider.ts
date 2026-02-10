@@ -50,6 +50,15 @@ function configureRoutes(routesService: RoutesService) {
         order: 1,                          // Para que salga arriba del todo
         requiredPolicy: 'AbpIdentity.Users', // Solo visible si tienes permisos (Admin)
       },
+
+      {
+        path: '/my-profile',       // La ruta a donde querés ir
+        name: 'Mi Perfil',         // Lo que va a decir el botón
+        iconClass: 'fas fa-user-circle', // Un ícono lindo de usuario
+        order: 2,                  // El orden (2 para que salga abajo del Home)
+        layout: eLayoutType.application,
+      },
+
     ]);
   };
 }

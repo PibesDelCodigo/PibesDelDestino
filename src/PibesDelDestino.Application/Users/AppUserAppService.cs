@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Data;
 using Volo.Abp.Identity;
 using Volo.Abp.Users;
 
@@ -22,7 +23,7 @@ namespace PibesDelDestino.Users
             _userManager = userManager;
             _userRepository = userRepository;
         }
-
+        [AllowAnonymous]
         public async Task<PublicUserDto> GetPublicProfileAsync(Guid userId)
         {
             // Buscamos al usuario por ID
@@ -34,8 +35,10 @@ namespace PibesDelDestino.Users
                 Id = user.Id,
                 UserName = user.UserName,
                 Name = user.Name,
-                Surname = user.Surname
+                Surname = user.Surname,
+                ProfilePictureUrl = user.GetProperty<string>("ProfilePictureUrl")
             };
+
         }
 
         public async Task DeleteSelfAsync()

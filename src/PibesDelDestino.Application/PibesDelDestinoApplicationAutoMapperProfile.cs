@@ -8,6 +8,7 @@ using PibesDelDestino.Ratings;
 using PibesDelDestino.Users;
 using Volo.Abp.Identity;
 
+
 namespace PibesDelDestino;
 
 public class PibesDelDestinoApplicationAutoMapperProfile : Profile
@@ -29,5 +30,11 @@ public class PibesDelDestinoApplicationAutoMapperProfile : Profile
         CreateMap<CreateUpdateTravelExperienceDto, TravelExperience>();
         CreateMap<AppNotification, AppNotificationDto>();
         CreateMap<ApiMetric, ApiMetricDto>();
+        CreateMap<IdentityUser, PublicUserDto>()
+            .ForMember(dest => dest.ProfilePictureUrl,
+                opt => opt.MapFrom(src =>
+                    src.ExtraProperties.ContainsKey("ProfilePictureUrl")
+                    ? (string)src.ExtraProperties["ProfilePictureUrl"]
+                    : null));
     }
 }

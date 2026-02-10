@@ -1,50 +1,80 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router'; // Para leer la URL
-import { AppUserService } from 'src/app/proxy/users';
-import { PublicUserDto } from 'src/app/proxy/users';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { AppUserService } from 'src/app/proxy/users'; // Tu servicio Guid
+import { PublicUserDto } from 'src/app/proxy/users/models';
+import { TravelExperienceService, TravelExperienceDto } from 'src/app/proxy/experiences';
 
 @Component({
   selector: 'app-public-profile',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './public-profile.html',
   styleUrls: ['./public-profile.scss']
 })
-export class PublicProfile implements OnInit {
-  
+export class PublicProfileComponent implements OnInit {
+
+  private route = inject(ActivatedRoute);
+  private userService = inject(AppUserService);
+  private experienceService = inject(TravelExperienceService);
+
+  userId = '';
   user: PublicUserDto | null = null;
+  experiences: TravelExperienceDto[] = [];
   isLoading = true;
-  errorMessage = '';
 
-  constructor(
-    private route: ActivatedRoute,
-    private userService: AppUserService
-  ) {}
+  // Datos para la Vista
+  userInitial = '?';
+  fullName = '';
+  
+  // Estadísticas (Reseñas y Promedio)
+  stats = {
+    reviews: 0,
+    average: 0
+  };
 
-  ngOnInit(): void {
-    // 1. Leemos el ID de la URL
-    const userId = this.route.snapshot.paramMap.get('id');
+  ngOnInit() {
+    this.userId = this.route.snapshot.paramMap.get('id') || '';
 
-    if (userId) {
-      this.loadProfile(userId);
-    } else {
-      this.errorMessage = 'ID de usuario no válido.';
-      this.isLoading = false;
+    if (this.userId) {
+      this.loadUser();
+      this.loadExperiences();
     }
   }
 
-  loadProfile(id: string) {
-    // 2. Llamamos al backend
-    this.userService.getPublicProfile(id).subscribe({
-      next: (data) => {
-        this.user = data;
+  loadUser() {
+    this.userService.getPublicProfile(this.userId).subscribe({
+      next: (res) => {
+        this.user = res;
+        
+        // Inicial
+        const nameSource = res.name || res.userName || '?';
+        this.userInitial = nameSource.charAt(0).toUpperCase();
+
+        // Nombre Completo
+        this.fullName = `${res.name || ''} ${res.surname || ''}`.trim() || res.userName;
+
         this.isLoading = false;
       },
-      error: (err) => {
-        console.error(err);
-        this.errorMessage = 'No se pudo cargar el perfil. ¿El usuario existe?';
-        this.isLoading = false;
+      error: () => this.isLoading = false
+    });
+  }
+
+  loadExperiences() {
+    this.experienceService.getList({ userId: this.userId } as any).subscribe({
+      next: (res) => {
+        this.experiences = res.items;
+        
+        // CALCULAR ESTADÍSTICAS
+        this.stats.reviews = res.totalCount;
+        
+        if (this.experiences.length > 0) {
+          // Sumar estrellas y dividir por cantidad
+          const sum = this.experiences.reduce((acc, curr) => acc + (curr.rating || 0), 0);
+          this.stats.average = sum / this.experiences.length;
+        } else {
+          this.stats.average = 0;
+        }
       }
     });
   }

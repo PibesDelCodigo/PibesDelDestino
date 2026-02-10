@@ -12,6 +12,7 @@ using Volo.Abp.SettingManagement;
 using Volo.Abp.VirtualFileSystem;
 using Volo.Abp.OpenIddict;
 using Volo.Abp.BlobStoring.Database;
+using Volo.Abp.ObjectExtending;
 
 namespace PibesDelDestino;
 
@@ -76,5 +77,14 @@ public class PibesDelDestinoDomainSharedModule : AbpModule
         {
             options.MapCodeNamespace("PibesDelDestino", typeof(PibesDelDestinoResource));
         });
+
+        ObjectExtensionManager.Instance.Modules()
+            .ConfigureIdentity(identity =>
+            {
+                identity.ConfigureUser(user =>
+                {
+                    user.AddOrUpdateProperty<string>("ProfilePictureUrl");
+                });
+            });
     }
 }

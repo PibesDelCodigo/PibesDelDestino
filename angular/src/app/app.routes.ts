@@ -1,7 +1,9 @@
 import { authGuard, permissionGuard } from '@abp/ng.core'; // Usamos este que ya trajiste
 import { Routes } from '@angular/router';
 import { DestinationDetailComponent } from './destinations/destination-detail/destination-detail';
-import { PublicProfile } from './users/public-profile/public-profile';
+import { PublicProfileComponent } from './users/public-profile/public-profile';
+import { MyProfileComponent } from './my-profile/my-profile.component';
+
 
 export const APP_ROUTES: Routes = [
   {
@@ -12,12 +14,6 @@ export const APP_ROUTES: Routes = [
   {
     path: 'city-search',
     loadComponent: () => import('./city-search/city-search').then(c => c.CitySearch),
-  },
-{
-    path: 'profile/:id',
-    loadComponent: () => 
-      import('./profiles/public-profile/public-profile')
-      .then(m => m.PublicProfileComponent)
   },
 
 {
@@ -53,7 +49,7 @@ export const APP_ROUTES: Routes = [
 
 {
     path: 'profile/:id', // 👈 Recibimos el ID del usuario
-    component: PublicProfile,
+    component: PublicProfileComponent, // 👈 Mostramos el componente de perfil público
   },
 
   {
@@ -73,7 +69,7 @@ export const APP_ROUTES: Routes = [
 
   {
     path: 'users/:id', 
-    loadComponent: () => import('./users/public-profile/public-profile').then(c => c.PublicProfile),
+    loadComponent: () => import('./users/public-profile/public-profile').then(c => c.PublicProfileComponent),
   },
 
   {
@@ -82,4 +78,7 @@ export const APP_ROUTES: Routes = [
       import('./users/my-account/my-account') 
       .then(c => c.MyAccount),  
   },
+
+  { path: 'my-profile', component: MyProfileComponent },
+
 ];
