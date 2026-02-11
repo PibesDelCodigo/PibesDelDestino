@@ -3,9 +3,19 @@ import { Routes } from '@angular/router';
 import { DestinationDetailComponent } from './destinations/destination-detail/destination-detail';
 import { PublicProfileComponent } from './users/public-profile/public-profile';
 import { MyProfileComponent } from './my-profile/my-profile.component';
-
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { ConfigStateService } from '@abp/ng.core';
 
 export const APP_ROUTES: Routes = [
+
+  {
+    // Esta es la ruta que usa ABP por defecto para "Mi Cuenta"
+    path: 'account/my-profile', 
+    redirectTo: 'my-profile', 
+    pathMatch: 'full'
+  },
+
   {
     path: '',
     pathMatch: 'full',
@@ -80,5 +90,29 @@ export const APP_ROUTES: Routes = [
   },
 
   { path: 'my-profile', component: MyProfileComponent },
+
+  {
+  path: 'experiences',
+  loadComponent: () => import('./experiences/experience-list/experience-list').then(m => m.ExperienceListComponent)
+},
+  
+{
+  path: 'profile-redirect',
+  children: [],
+  canActivate: [
+    () => {
+      const configState = inject(ConfigStateService);
+      const router = inject(Router);
+      const user = configState.getOne("currentUser");
+
+      if (user && user.id) {
+        router.navigate(['/profile', user.id]);
+      } else {
+        router.navigate(['/']);
+      }
+      return false;
+    }
+  ],
+},
 
 ];

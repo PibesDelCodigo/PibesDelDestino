@@ -1,5 +1,6 @@
 import { RoutesService, eLayoutType } from '@abp/ng.core';
 import { APP_INITIALIZER } from '@angular/core';
+import { eThemeSharedRouteNames } from '@abp/ng.theme.shared';
 
 export const APP_ROUTE_PROVIDER = [
   { provide: APP_INITIALIZER, useFactory: configureRoutes, deps: [RoutesService], multi: true },
@@ -31,15 +32,6 @@ function configureRoutes(routesService: RoutesService) {
         order: 3, // Tercer lugar (Corregido para que no se pise con el anterior)
         layout: eLayoutType.application,
       },
-      // --- Mi Cuenta ---
-      {
-        path: '/my-account',
-        name: 'Eliminar Cuenta', // ¿Seguro que querés que el menú diga "Eliminar Cuenta"? Quizás "Mi Cuenta" suena menos peligroso jaja
-        iconClass: 'fas fa-user-cog',
-        order: 4, // Cuarto lugar
-        layout: eLayoutType.application,
-        requiredPolicy: '', 
-      },
       // --- Dashboard de Métricas ---
       {
         path: '/metrics',
@@ -58,6 +50,14 @@ function configureRoutes(routesService: RoutesService) {
         order: 2,                  // El orden (2 para que salga abajo del Home)
         layout: eLayoutType.application,
       },
+
+      {
+    path: '/profile-redirect', // Usamos una ruta "puente"
+    name: 'Perfil Público',
+    order: 2,
+    iconClass: 'fa fa-external-link-alt', // Un ícono que indique "ver"
+    layout: eLayoutType.application,
+  },
 
     ]);
   };

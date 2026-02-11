@@ -9,36 +9,33 @@ using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
-using PibesDelDestino.Favorites;
-using PibesDelDestino.Notifications;
 using PibesDelDestino.Experiences;
+using PibesDelDestino.Notifications;
+using Microsoft.AspNetCore.Authorization; // Importante para el Manager
 
 namespace PibesDelDestino.Destinations
 {
     public class DestinationAppService :
         CrudAppService<Destination, DestinationDto, Guid, PagedAndSortedResultRequestDto, CreateUpdateDestinationDto>,
-    IDestinationAppService
+        IDestinationAppService
     {
         private readonly ICitySearchService _citySearchService;
         private readonly IGuidGenerator _guidGenerator;
-        private readonly IRepository<FavoriteDestination, Guid> _favoriteRepository;
-        private readonly IRepository<AppNotification, Guid> _notificationRepository;
         private readonly IRepository<TravelExperience, Guid> _experienceRepository;
+        private readonly NotificationManager _notificationManager; // Inyectamos el Manager
 
         public DestinationAppService(
             IRepository<Destination, Guid> repository,
             ICitySearchService citySearchService,
             IGuidGenerator guidGenerator,
-            IRepository<FavoriteDestination, Guid> favoriteRepository,
-            IRepository<AppNotification, Guid> notificationRepository,
-            IRepository<TravelExperience, Guid> experienceRepository)
+            IRepository<TravelExperience, Guid> experienceRepository,
+            NotificationManager notificationManager)
             : base(repository)
         {
             _citySearchService = citySearchService;
             _guidGenerator = guidGenerator;
-            _favoriteRepository = favoriteRepository;
-            _notificationRepository = notificationRepository;
             _experienceRepository = experienceRepository;
+            _notificationManager = notificationManager;
         }
 
         protected override async Task<List<DestinationDto>> MapToGetListOutputDtosAsync(List<Destination> entities)
@@ -126,46 +123,34 @@ namespace PibesDelDestino.Destinations
 
         public override async Task<DestinationDto> UpdateAsync(Guid id, CreateUpdateDestinationDto input)
         {
-            var updatedDestination = await base.UpdateAsync(id, input);
+            // 1. Actualizamos el destino
+            var updatedDestinationDto = await base.UpdateAsync(id, input);
 
-            var followers = await _favoriteRepository.GetListAsync(x => x.DestinationId == id);
-            var notifications = new List<AppNotification>();
+            // 2. Recuperamos la entidad para pasarla al Manager
+            var destinationEntity = await Repository.GetAsync(id);
 
-            foreach (var follow in followers)
-            {
-                notifications.Add(new AppNotification(
-                    _guidGenerator.Create(),
-                    follow.UserId,
-                    "Actualización de Destino 📢",
-                    $"Hubo cambios recientes en la información de {input.Name}. ¡Revisa los detalles!",
-                    "DestinationUpdate"
-                ));
-            }
+            // 3. Usamos el Manager para notificar
+            await _notificationManager.NotifyDestinationUpdateAsync(
+                destinationEntity,
+                "información actualizada"
+            );
 
-            if (notifications.Any())
-            {
-                await _notificationRepository.InsertManyAsync(notifications);
-            }
-
-            return updatedDestination;
+            return updatedDestinationDto;
         }
-
+        [AllowAnonymous]
         public async Task<CityResultDto> SearchCitiesAsync(CityRequestDTO request)
         {
             return await _citySearchService.SearchCitiesAsync(request);
         }
 
-        // 👇 NUEVO MÉTODO AGREGADO: TOP DESTINOS POPULARES 🏆
         public async Task<List<DestinationDto>> GetTopDestinationsAsync()
         {
-            // 1. Obtenemos las consultas base
             var destinationsQuery = await Repository.GetQueryableAsync();
             var experiencesQuery = await _experienceRepository.GetQueryableAsync();
 
-            // 2. LINQ: Unimos, agrupamos, promediamos y ordenamos
             var query = from dest in destinationsQuery
                         join exp in experiencesQuery on dest.Id equals exp.DestinationId into ratings
-                        where ratings.Any() // Solo destinos con al menos 1 voto
+                        where ratings.Any()
                         let avg = ratings.Average(r => r.Rating)
                         orderby avg descending
                         select new
@@ -174,10 +159,8 @@ namespace PibesDelDestino.Destinations
                             AverageRating = avg
                         };
 
-            // 3. Ejecutamos (Top 10)
             var topList = await AsyncExecuter.ToListAsync(query.Take(10));
 
-            // 4. Mapeamos a DTO para devolver al Frontend
             return topList.Select(item => new DestinationDto
             {
                 Id = item.Destination.Id,
@@ -192,7 +175,7 @@ namespace PibesDelDestino.Destinations
                     Latitude = item.Destination.Coordinates.Latitude,
                     Longitude = item.Destination.Coordinates.Longitude
                 },
-                AverageRating = item.AverageRating // ¡El promedio real calculado!
+                AverageRating = item.AverageRating
             }).ToList();
         }
     }

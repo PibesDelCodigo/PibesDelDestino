@@ -52,6 +52,15 @@ export class TravelExperienceService {
     { apiName: this.apiName,...config });
   
 
+  getRecentExperiences = (count: number = 5, config?: Partial<Rest.Config>) =>
+    this.restService.request<any, TravelExperienceDto[]>({
+      method: 'GET',
+      url: '/api/app/travel-experience/recent-experiences',
+      params: { count },
+    },
+    { apiName: this.apiName,...config });
+  
+
   update = (id: string, input: CreateUpdateTravelExperienceDto, config?: Partial<Rest.Config>) =>
     this.restService.request<any, TravelExperienceDto>({
       method: 'PUT',

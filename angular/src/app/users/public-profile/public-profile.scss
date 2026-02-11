@@ -2,54 +2,74 @@
 .profile-wrapper {
   background-color: #f8f9fa;
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Poppins', 'Segoe UI', sans-serif; // Usamos Poppins como en el resto de la app
 }
 
-/* 1. HERO SECTION (Fondo oscuro o imagen) */
+/* 1. HERO SECTION */
 .profile-hero {
   position: relative;
   height: 350px;
-  background-color: #2c3e50; /* Color de fondo si no hay imagen */
-  background-image: url('/assets/images/hero-travel.jpg'); /* Si tenés una imagen genérica, ponela acá */
+  background-color: #18427D; 
+  background-image: url('/assets/images/hero-travel.jpg'), 
+                    url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1920&auto=format&fit=crop');
   background-size: cover;
   background-position: center;
+  background-attachment: fixed; 
 }
 
 .hero-overlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8));
+  background: linear-gradient(to bottom, rgba(24, 66, 125, 0.2), rgba(0,0,0,0.7));
 }
 
-/* Botón de volver flotante */
+/* Ajuste para los botones superiores (Volver y Editar) */
 .back-btn {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 10;
+  /* Eliminamos el position absolute para que el d-flex del HTML lo maneje */
   padding: 8px 20px;
   font-weight: 600;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.05);
+  }
 }
 
-/* 2. CONTENIDO RELATIVO (Para morder el Hero) */
+.btn-warning {
+  background-color: #F28C28 !important; // Tu naranja de Pibes del Destino
+  border-color: #F28C28 !important;
+  color: white !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 10px rgba(242, 140, 40, 0.3);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: #d97706 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(242, 140, 40, 0.4);
+  }
+}
+
+/* 2. CONTENIDO RELATIVO */
 .relative-content {
   position: relative;
   z-index: 2;
-  margin-top: -80px; /* Esto hace que la tarjeta suba sobre el hero */
+  margin-top: -100px; /* Ajustado para que la tarjeta suba un poco más */
 }
 
-/* Tarjeta de Perfil */
 .profile-card {
-  border-radius: 1rem;
+  border-radius: 1.5rem; /* Bordes un poco más redondeados */
   overflow: hidden;
   background: white;
+  border: none;
 }
 
 /* 3. ANIMACIONES */
 .animate-up {
-  animation: slideUp 0.6s ease-out forwards;
+  animation: slideUp 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(40px);
 }
 
 @keyframes slideUp {
@@ -58,13 +78,14 @@
 
 /* 4. ESTILOS DE RESEÑAS */
 .review-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  border-radius: 1rem;
+  background: #ffffff;
 }
 
 .hover-effect:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+  transform: translateY(-8px);
+  box-shadow: 0 1rem 2rem rgba(0,0,0,0.1) !important;
 }
 
 .line-clamp-3 {
@@ -72,4 +93,13 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Estilo para las estadísticas */
+.text-primary {
+    color: #18427D !important;
+}
+
+.text-warning {
+    color: #F28C28 !important;
 }

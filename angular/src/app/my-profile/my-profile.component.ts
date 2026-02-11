@@ -1,9 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ToasterService } from '@abp/ng.theme.shared';
-import { RestService, AuthService, CoreModule } from '@abp/ng.core';
+import { ToasterService, ConfirmationService, Confirmation } from '@abp/ng.theme.shared'; // Importamos ConfirmationService
+import { RestService, AuthService, CoreModule, ConfigStateService } from '@abp/ng.core';
+import { Router } from '@angular/router'; // Importamos Router
 import { UserProfileDto, NotificationChannel, NotificationFrequency } from '../account/models/user-profile.dto';
+
 
 @Component({
   selector: 'app-my-profile',
@@ -25,6 +27,10 @@ export class MyProfileComponent implements OnInit {
   private fb = inject(FormBuilder);
   private rest = inject(RestService);
   private toaster = inject(ToasterService);
+  private confirmation = inject(ConfirmationService); // Inyectamos confirmación
+  private authService = inject(AuthService); // Inyectamos para el Logout
+  private router = inject(Router);
+  private configState = inject(ConfigStateService); // Para obtener info del usuario actual
 
   constructor() {
     this.buildForms();
@@ -41,7 +47,6 @@ export class MyProfileComponent implements OnInit {
       name: ['', Validators.required],
       surname: ['', Validators.required],
       phoneNumber: [''],
-      // EL CAMPO CLAVE: TEXTO SIMPLE PARA LA URL
       profilePictureUrl: [''], 
       notificationChannel: [null], 
       notificationFrequency: [null],
@@ -55,17 +60,16 @@ export class MyProfileComponent implements OnInit {
     });
   }
 
+  // ... (Mantenemos loadProfile, savePersonalData y changePassword igual) ...
+
   loadProfile() {
     this.loading = true;
-    // GET al backend estándar de ABP
     this.rest.request<void, UserProfileDto>({
       method: 'GET',
       url: '/api/account/my-profile'
     }).subscribe({
       next: (user) => {
         this.personalForm.patchValue(user);
-        
-        // RECUPERAR URL: Si existe en extraProperties, la ponemos en el form
         if (user.extraProperties) {
           this.personalForm.patchValue({
             profilePictureUrl: user.extraProperties.ProfilePictureUrl || '',
@@ -85,10 +89,7 @@ export class MyProfileComponent implements OnInit {
   savePersonalData() {
     if (this.personalForm.invalid) return;
     this.loading = true;
-    
     const formValues = this.personalForm.getRawValue();
-    
-    // Armamos el objeto para guardar
     const body = {
       userName: formValues.userName,
       email: formValues.email,
@@ -96,8 +97,6 @@ export class MyProfileComponent implements OnInit {
       surname: formValues.surname,
       phoneNumber: formValues.phoneNumber,
       concurrencyStamp: formValues.concurrencyStamp,
-      
-      // GUARDAR URL: La metemos en extraProperties como texto
       extraProperties: {
         ProfilePictureUrl: formValues.profilePictureUrl,
         NotificationChannel: Number(formValues.notificationChannel),
@@ -113,7 +112,6 @@ export class MyProfileComponent implements OnInit {
       next: (res) => {
         this.toaster.success('Datos actualizados correctamente');
         this.personalForm.patchValue(res);
-        // Actualizamos valores por si cambiaron
         if (res.extraProperties) {
              this.personalForm.patchValue({
                 profilePictureUrl: res.extraProperties.ProfilePictureUrl,
@@ -130,15 +128,22 @@ export class MyProfileComponent implements OnInit {
     });
   }
 
+goToPublicProfile() {
+  const user = this.configState.getOne("currentUser");
+  if (user && user.id) {
+    this.router.navigate(['/profile', user.id]);
+  } else {
+    this.toaster.warn('No se pudo encontrar el ID de usuario.');
+  }
+}
+
   changePassword() {
     if (this.passwordForm.invalid) return;
     const { currentPassword, newPassword, confirmNewPassword } = this.passwordForm.value;
-
     if (newPassword !== confirmNewPassword) {
       this.toaster.error('Las contraseñas no coinciden');
       return;
     }
-
     this.loading = true;
     this.rest.request({
       method: 'POST',
@@ -159,5 +164,34 @@ export class MyProfileComponent implements OnInit {
 
   setTab(index: number) {
     this.selectedTab = index;
+  }
+
+  // --- NUEVA FUNCIÓN: ELIMINAR CUENTA ---
+  confirmDeleteAccount() {
+    this.confirmation.warn(
+      '¿Verdaderamente querés eliminar tu cuenta? Esta acción borrará tus favoritos y reseñas de forma permanente.',
+      'Confirmar eliminación',
+      { messageLocalizationParams: [] }
+    ).subscribe((status: Confirmation.Status) => {
+      if (status === Confirmation.Status.confirm) {
+        this.loading = true;
+        // Llamada al endpoint de borrado (ajustar URL según tu backend)
+        this.rest.request({
+          method: 'DELETE',
+          url: '/api/app/user-profile/my-account' 
+        }).subscribe({
+          next: () => {
+            this.toaster.success('Tu cuenta ha sido eliminada. ¡Esperamos verte pronto!');
+            this.authService.logout().subscribe(() => {
+              this.router.navigate(['/']);
+            });
+          },
+          error: (err) => {
+            this.toaster.error(err.error?.message || 'Hubo un error al eliminar la cuenta');
+            this.loading = false;
+          }
+        });
+      }
+    });
   }
 }

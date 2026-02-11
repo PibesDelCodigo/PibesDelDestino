@@ -1,7 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { AppUserService } from 'src/app/proxy/users'; // Tu servicio Guid
+import { ActivatedRoute, RouterModule, Router } from '@angular/router'; // Importamos Router
+import { ConfigStateService } from '@abp/ng.core'; // Importamos para saber quién es el usuario actual
+import { AppUserService } from 'src/app/proxy/users'; 
 import { PublicUserDto } from 'src/app/proxy/users/models';
 import { TravelExperienceService, TravelExperienceDto } from 'src/app/proxy/experiences';
 
@@ -15,13 +16,16 @@ import { TravelExperienceService, TravelExperienceDto } from 'src/app/proxy/expe
 export class PublicProfileComponent implements OnInit {
 
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private userService = inject(AppUserService);
   private experienceService = inject(TravelExperienceService);
+  private configState = inject(ConfigStateService); // Inyectado para comparar IDs
 
   userId = '';
   user: PublicUserDto | null = null;
   experiences: TravelExperienceDto[] = [];
   isLoading = true;
+  isOwnProfile = false; // Flag para mostrar/ocultar el botón de editar
 
   // Datos para la Vista
   userInitial = '?';
@@ -37,9 +41,25 @@ export class PublicProfileComponent implements OnInit {
     this.userId = this.route.snapshot.paramMap.get('id') || '';
 
     if (this.userId) {
+      this.checkIfIsOwnProfile(); // Verificamos propiedad
       this.loadUser();
       this.loadExperiences();
     }
+  }
+
+  checkIfIsOwnProfile() {
+    // Obtenemos el ID del usuario que tiene la sesión iniciada
+    const currentUserId = this.configState.getOne("currentUser")?.id;
+    // Si coinciden, activamos el botón de edición
+    this.isOwnProfile = currentUserId === this.userId;
+  }
+
+  goToEdit() {
+    this.router.navigate(['/my-profile']);
+  }
+
+  goBack() {
+    this.router.navigate(['/']);
   }
 
   loadUser() {
@@ -69,7 +89,6 @@ export class PublicProfileComponent implements OnInit {
         this.stats.reviews = res.totalCount;
         
         if (this.experiences.length > 0) {
-          // Sumar estrellas y dividir por cantidad
           const sum = this.experiences.reduce((acc, curr) => acc + (curr.rating || 0), 0);
           this.stats.average = sum / this.experiences.length;
         } else {

@@ -13,13 +13,17 @@
             <i class="fa fa-key me-2"></i> Contraseña
           </button>
         </li>
+        <li class="nav-item">
+          <button class="nav-link text-danger" [class.active]="selectedTab === 2" (click)="setTab(2)">
+            <i class="fa fa-exclamation-triangle me-2"></i> Eliminar Cuenta
+          </button>
+        </li>
       </ul>
     </div>
 
     <div class="card-body">
 
-      <div *ngIf="selectedTab === 0">
-        
+      <div *ngIf="selectedTab === 0" class="animate-up">
         <div class="text-center mb-4">
            <div class="d-inline-block rounded-circle overflow-hidden border shadow-sm" 
                 style="width: 100px; height: 100px; background-color: #eee;">
@@ -38,7 +42,6 @@
 
         <form [formGroup]="personalForm" (ngSubmit)="savePersonalData()">
           <div class="profile-grid">
-            
             <div class="mb-3 col-span-2">
               <label class="form-label fw-bold">Foto de Perfil (URL)</label>
               <div class="input-group">
@@ -46,7 +49,6 @@
                 <input type="text" class="form-control" formControlName="profilePictureUrl" 
                        placeholder="Ej: https://i.imgur.com/mi-foto.jpg">
               </div>
-              <small class="text-muted">Pegá aquí el link de tu foto de internet.</small>
             </div>
 
             <div class="mb-3">
@@ -75,15 +77,16 @@
             </div>
           </div>
 
-          <div class="d-flex justify-content-end mt-4">
+          <div class="d-flex justify-content-end mt-4 gap-2">
+            <button type="button" class="btn btn-outline-primary px-4" (click)="goToPublicProfile()">
+              <i class="fa fa-external-link-alt me-2"></i> Ver Perfil Público
+            </button>
             <button type="submit" class="btn btn-primary px-4" [disabled]="loading || personalForm.invalid">
               <i class="fa fa-save me-2"></i> Guardar Cambios
             </button>
           </div>
         </form>
-      </div>
-
-      <div *ngIf="selectedTab === 1">
+      </div> <div *ngIf="selectedTab === 1" class="animate-up">
         <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
           <div class="mb-3">
             <label class="form-label">Contraseña Actual</label>
@@ -103,8 +106,22 @@
             </button>
           </div>
         </form>
-      </div>
+      </div> <div *ngIf="selectedTab === 2" class="animate-up">
+        <div class="alert alert-danger d-flex align-items-center mb-4">
+          <i class="fa fa-exclamation-triangle fa-2x me-3"></i>
+          <div>
+            <h5 class="alert-heading fw-bold mb-1">Zona de Peligro</h5>
+            <p class="mb-0">Esta acción borrará tus datos permanentemente.</p>
+          </div>
+        </div>
 
-    </div>
-  </div>
-</div>
+        <div class="card shadow-none border p-4">
+          <h6 class="fw-bold">¿Deseas eliminar tu cuenta?</h6>
+          <p class="text-muted small">Perderás tus favoritos y reseñas guardadas.</p>
+          <div class="mt-3">
+            <button type="button" class="btn btn-danger" (click)="confirmDeleteAccount()">
+              <i class="fa fa-trash-alt me-2"></i> Eliminar definitivamente
+            </button>
+          </div>
+        </div>
+      </div> </div> </div> </div>

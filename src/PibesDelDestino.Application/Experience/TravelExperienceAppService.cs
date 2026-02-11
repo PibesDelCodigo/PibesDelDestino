@@ -8,8 +8,7 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Authorization;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
-using Volo.Abp.Data; // 👈 IMPORTANTE: Necesario para leer .GetProperty
-using PibesDelDestino.Favorites;
+using Volo.Abp.Data; // Necesario para GetProperty
 using PibesDelDestino.Notifications;
 
 namespace PibesDelDestino.Experiences
@@ -24,22 +23,18 @@ namespace PibesDelDestino.Experiences
         ITravelExperienceAppService
     {
         private readonly IRepository<IdentityUser, Guid> _userRepository;
-        private readonly IRepository<FavoriteDestination, Guid> _favoriteRepository;
-        private readonly IRepository<AppNotification, Guid> _notificationRepository;
+        private readonly NotificationManager _notificationManager;
 
         public TravelExperienceAppService(
             IRepository<TravelExperience, Guid> repository,
             IRepository<IdentityUser, Guid> userRepository,
-            IRepository<FavoriteDestination, Guid> favoriteRepository,
-            IRepository<AppNotification, Guid> notificationRepository)
+            NotificationManager notificationManager)
             : base(repository)
         {
             _userRepository = userRepository;
-            _favoriteRepository = favoriteRepository;
-            _notificationRepository = notificationRepository;
+            _notificationManager = notificationManager;
         }
 
-        // --- 1. PROMEDIO DE ESTRELLAS ⭐ ---
         [AllowAnonymous]
         public async Task<double> GetAverageRatingAsync(Guid destinationId)
         {
@@ -54,7 +49,6 @@ namespace PibesDelDestino.Experiences
             return await AsyncExecuter.AverageAsync(ratings, x => x.Rating);
         }
 
-        // --- 2. UPDATE SEGURO ✅ ---
         public override async Task<TravelExperienceDto> UpdateAsync(Guid id, CreateUpdateTravelExperienceDto input)
         {
             var existingExperience = await Repository.GetAsync(id);
@@ -76,7 +70,6 @@ namespace PibesDelDestino.Experiences
             return ObjectMapper.Map<TravelExperience, TravelExperienceDto>(existingExperience);
         }
 
-        // --- 3. DELETE SEGURO 🗑️ ---
         public override async Task DeleteAsync(Guid id)
         {
             var existingExperience = await Repository.GetAsync(id);
@@ -89,7 +82,6 @@ namespace PibesDelDestino.Experiences
             await base.DeleteAsync(id);
         }
 
-        // --- 4. CREATE CON NOTIFICACIONES INTELIGENTES 🔔 ---
         public override async Task<TravelExperienceDto> CreateAsync(CreateUpdateTravelExperienceDto input)
         {
             if (CurrentUser.Id == null)
@@ -109,73 +101,35 @@ namespace PibesDelDestino.Experiences
 
             await Repository.InsertAsync(newExperience);
 
-            // --- LÓGICA DE NOTIFICACIONES FILTRADA ---
-
-            // 1. Buscar seguidores del destino
-            var followers = await _favoriteRepository.GetListAsync(x => x.DestinationId == input.DestinationId);
-
-            // 2. Obtener los IDs de usuario únicos
-            var followerUserIds = followers.Select(f => f.UserId).Distinct().ToList();
-
-            // 3. Traer los usuarios de la base de datos para chequear sus preferencias
-            var usersToNotify = await _userRepository.GetListAsync(u => followerUserIds.Contains(u.Id));
-
-            var notifications = new List<AppNotification>();
-
-            foreach (var user in usersToNotify)
-            {
-                // A. No notificarse a uno mismo
-                if (user.Id == CurrentUser.Id.Value) continue;
-
-                // B. Verificar el Switch de Configuración
-                // Si es nulo (nunca tocó la config), asumimos true. Si es false, no enviamos.
-                var wantsNotifications = user.GetProperty<bool?>("ReceiveNotifications") ?? true;
-
-                if (wantsNotifications)
-                {
-                    notifications.Add(new AppNotification(
-                        GuidGenerator.Create(),
-                        user.Id,
-                        "Nuevo Comentario 💬",
-                        $"Alguien comentó sobre un destino que sigues: '{input.Title}'",
-                        "Comment"
-                    ));
-                }
-            }
-
-            if (notifications.Any())
-            {
-                await _notificationRepository.InsertManyAsync(notifications);
-            }
+            await _notificationManager.NotifyNewCommentAsync(
+                input.DestinationId,
+                "un destino que seguís",
+                CurrentUser.Id.Value
+            );
 
             return ObjectMapper.Map<TravelExperience, TravelExperienceDto>(newExperience);
         }
 
-        // --- 5. FILTROS AVANZADOS 🔍 ---
         protected override async Task<IQueryable<TravelExperience>> CreateFilteredQueryAsync(GetTravelExperiencesInput input)
         {
             var query = await base.CreateFilteredQueryAsync(input);
 
-            // Filtro por Destino
             if (input.DestinationId.HasValue)
             {
                 query = query.Where(x => x.DestinationId == input.DestinationId);
             }
 
-            // Filtro por Usuario (Perfil Público)
             if (input.UserId.HasValue)
             {
                 query = query.Where(x => x.UserId == input.UserId);
             }
 
-            // Filtro por Texto
             if (!string.IsNullOrWhiteSpace(input.FilterText))
             {
                 query = query.Where(x => x.Title.Contains(input.FilterText) ||
                                          x.Description.Contains(input.FilterText));
             }
 
-            // Filtro por Tipo (Positiva/Negativa)
             if (input.Type.HasValue)
             {
                 switch (input.Type.Value)
@@ -195,7 +149,7 @@ namespace PibesDelDestino.Experiences
             return query;
         }
 
-        // --- 6. MAPEO LISTA 👤 ---
+        // --- 6. MAPEO LISTA CON FOTO 👤 ---
         protected override async Task<List<TravelExperienceDto>> MapToGetListOutputDtosAsync(List<TravelExperience> entities)
         {
             var dtos = await base.MapToGetListOutputDtosAsync(entities);
@@ -208,13 +162,15 @@ namespace PibesDelDestino.Experiences
                 if (user != null)
                 {
                     dto.UserName = user.UserName;
+                    // Mapeamos la URL de la foto desde las ExtraProperties
+                    dto.UserProfilePicture = user.GetProperty<string>("ProfilePictureUrl");
                 }
             }
 
             return dtos;
         }
 
-        // --- 7. MAPEO INDIVIDUAL ---
+        // --- 7. MAPEO INDIVIDUAL CON FOTO ---
         protected override async Task<TravelExperienceDto> MapToGetOutputDtoAsync(TravelExperience entity)
         {
             var dto = await base.MapToGetOutputDtoAsync(entity);
@@ -222,6 +178,7 @@ namespace PibesDelDestino.Experiences
             if (user != null)
             {
                 dto.UserName = user.UserName;
+                dto.UserProfilePicture = user.GetProperty<string>("ProfilePictureUrl");
             }
             return dto;
         }
@@ -230,6 +187,14 @@ namespace PibesDelDestino.Experiences
         public override async Task<PagedResultDto<TravelExperienceDto>> GetListAsync(GetTravelExperiencesInput input)
         {
             return await base.GetListAsync(input);
+        }
+
+        [AllowAnonymous]
+        public async Task<List<TravelExperienceDto>> GetRecentExperiencesAsync(int count = 5)
+        {
+            var query = await Repository.GetQueryableAsync();
+            var recent = query.OrderByDescending(x => x.CreationTime).Take(count).ToList();
+            return await MapToGetListOutputDtosAsync(recent);
         }
     }
 }

@@ -2,9 +2,18 @@
   
   <div class="profile-hero">
     <div class="hero-overlay"></div>
-    <a routerLink="/city-search" class="btn btn-light btn-sm rounded-pill back-btn shadow-sm">
-      <i class="fas fa-arrow-left me-1"></i> Volver
-    </a>
+    
+    <div class="d-flex justify-content-between align-items-center w-100 px-3 py-3 position-relative" style="z-index: 10;">
+      <a routerLink="/city-search" class="btn btn-light btn-sm rounded-pill shadow-sm">
+        <i class="fas fa-arrow-left me-1"></i> Volver
+      </a>
+
+      <button *ngIf="isOwnProfile" 
+              (click)="goToEdit()" 
+              class="btn btn-warning btn-sm rounded-pill shadow-sm fw-bold px-3">
+        <i class="fas fa-edit me-1"></i> Editar Perfil
+      </button>
+    </div>
   </div>
 
   <div class="container relative-content">
@@ -33,7 +42,7 @@
             </div>
 
             <h1 class="fw-bold mb-1 text-dark">{{ fullName }}</h1>
-            <p class="text-muted mb-4">{{ user?.userName }}</p>
+            <h5 class="text-muted mb-4">{{ user?.userName }}</h5>
 
             <div class="d-flex justify-content-center gap-5 border-top pt-4 w-75 mx-auto">
                

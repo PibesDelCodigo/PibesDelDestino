@@ -16,6 +16,7 @@ using PibesDelDestino.Favorites;
 using PibesDelDestino.Notifications;
 using Volo.Abp.Identity;
 using Volo.Abp.Users;
+using PibesDelDestino.Destinations; // Necesario si el Manager usa DestinationRepo
 
 namespace PibesDelDestino.Experiences
 {
@@ -23,26 +24,36 @@ namespace PibesDelDestino.Experiences
     {
         private readonly ITravelExperienceAppService _experienceService;
 
-        // Mocks de los 4 repositorios requeridos por el constructor
+        // Mocks de los repositorios
         private readonly IRepository<TravelExperience, Guid> _experienceRepoMock;
         private readonly IRepository<IdentityUser, Guid> _userRepoMock;
+
+        // Mocks para el Manager
         private readonly IRepository<FavoriteDestination, Guid> _favoriteRepoMock;
         private readonly IRepository<AppNotification, Guid> _notificationRepoMock;
+        private readonly IRepository<Destination, Guid> _destinationRepoMock; // El Manager lo necesita
 
         public TravelExperienceAppService_Tests()
         {
-            // 1. Inicialización de los Mocks con NSubstitute
+            // 1. Inicialización de los Mocks
             _experienceRepoMock = Substitute.For<IRepository<TravelExperience, Guid>>();
             _userRepoMock = Substitute.For<IRepository<IdentityUser, Guid>>();
             _favoriteRepoMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
             _notificationRepoMock = Substitute.For<IRepository<AppNotification, Guid>>();
+            _destinationRepoMock = Substitute.For<IRepository<Destination, Guid>>();
 
-            // 2. Uso del Proxy para inyectar los Mocks y resolver dependencias de la clase base
+            // 2. CREAMOS EL NOTIFICATION MANAGER
+            var notificationManager = new NotificationManager(
+                _notificationRepoMock,
+                _favoriteRepoMock,
+                _destinationRepoMock
+            );
+
+            // 3. Instanciamos el Proxy del Servicio con la nueva estructura
             _experienceService = new TravelExperienceAppServiceTestProxy(
                 _experienceRepoMock,
                 _userRepoMock,
-                _favoriteRepoMock,
-                _notificationRepoMock,
+                notificationManager, // <--- Pasamos el Manager
                 GetRequiredService<IServiceProvider>()
             );
         }
@@ -53,24 +64,16 @@ namespace PibesDelDestino.Experiences
             // --- ARRANGE ---
             var destinationId = Guid.NewGuid();
 
-            // Listas vacías para evitar errores de referencia nula (ArgumentNullException en .Select)
             var emptyExperiences = new List<TravelExperience>();
-            var emptyFavorites = new List<FavoriteDestination>();
-            var emptyNotifications = new List<AppNotification>();
+            var emptyFavorites = new List<FavoriteDestination>(); // Lista vacía = nadie recibe noti (está bien para el test)
             var emptyUsers = new List<IdentityUser>();
 
-            // Configuración de GetQueryableAsync para todos los repositorios
+            // Configuración de GetQueryableAsync
             _experienceRepoMock.GetQueryableAsync().Returns(Task.FromResult(emptyExperiences.AsQueryable()));
-            _favoriteRepoMock.GetQueryableAsync().Returns(Task.FromResult(emptyFavorites.AsQueryable()));
-            _notificationRepoMock.GetQueryableAsync().Returns(Task.FromResult(emptyNotifications.AsQueryable()));
-            _userRepoMock.GetQueryableAsync().Returns(Task.FromResult(emptyUsers.AsQueryable()));
 
-            // Configuración de GetListAsync con predicado (Vital para evitar el error en la línea 118)
-            _favoriteRepoMock.GetListAsync(Arg.Any<Expression<Func<FavoriteDestination, bool>>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            // Configuración para el Manager (evitar nulls)
+            _favoriteRepoMock.GetListAsync(Arg.Any<Expression<Func<FavoriteDestination, bool>>>())
                 .Returns(Task.FromResult(emptyFavorites));
-
-            _userRepoMock.GetListAsync(Arg.Any<Expression<Func<IdentityUser, bool>>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(emptyUsers));
 
             // --- ACT ---
             var input = new CreateUpdateTravelExperienceDto
@@ -90,21 +93,22 @@ namespace PibesDelDestino.Experiences
 
             // Verificamos que se llamó al Insert del repositorio principal
             await _experienceRepoMock.Received(1).InsertAsync(Arg.Any<TravelExperience>());
+
+            // Opcional: Verificar que el Manager intentó buscar favoritos (indirectamente prueba que se llamó)
+            await _favoriteRepoMock.Received().GetListAsync(Arg.Any<Expression<Func<FavoriteDestination, bool>>>());
         }
     }
 
-    // Proxy para exponer el LazyServiceProvider de la clase base ApplicationService
+    // Proxy Actualizado
     public class TravelExperienceAppServiceTestProxy : TravelExperienceAppService
     {
         public TravelExperienceAppServiceTestProxy(
             IRepository<TravelExperience, Guid> repository,
             IRepository<IdentityUser, Guid> userRepository,
-            IRepository<FavoriteDestination, Guid> favoriteRepository,
-            IRepository<AppNotification, Guid> notificationRepository,
+            NotificationManager notificationManager, // <--- Recibimos Manager
             IServiceProvider serviceProvider)
-            : base(repository, userRepository, favoriteRepository, notificationRepository)
+            : base(repository, userRepository, notificationManager) // <--- Pasamos Manager al base
         {
-            // Inyectamos el LazyServiceProvider para que ObjectMapper y CurrentUser funcionen correctamente
             LazyServiceProvider = serviceProvider.GetRequiredService<Volo.Abp.DependencyInjection.IAbpLazyServiceProvider>();
         }
     }

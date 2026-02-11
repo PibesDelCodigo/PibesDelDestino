@@ -25,6 +25,14 @@ export class NotificationService {
     { apiName: this.apiName,...config });
   
 
+  markAllAsRead = (config?: Partial<Rest.Config>) =>
+    this.restService.request<any, void>({
+      method: 'POST',
+      url: '/api/app/notification/mark-all-as-read',
+    },
+    { apiName: this.apiName,...config });
+  
+
   markAsRead = (id: string, config?: Partial<Rest.Config>) =>
     this.restService.request<any, void>({
       method: 'POST',

@@ -24,4 +24,5 @@ export interface TravelExperienceDto extends AuditedEntityDto<string> {
   description?: string;
   date?: string;
   rating: number;
+  userProfilePicture?: string;
 }

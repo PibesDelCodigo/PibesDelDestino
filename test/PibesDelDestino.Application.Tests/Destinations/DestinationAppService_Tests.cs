@@ -24,45 +24,53 @@ namespace PibesDelDestino.Destinations
 {
     public class DestinationAppService_Tests : PibesDelDestinoApplicationTestBase<PibesDelDestinoApplicationTestModule>
     {
-        private readonly IDestinationAppService _destinationService;
+        private readonly DestinationAppService _destinationService;
 
-        // Definición de Mocks para las 6 dependencias
+        // Mocks
         private readonly IRepository<Destination, Guid> _destinationRepoMock;
         private readonly ICitySearchService _citySearchServiceMock;
-        private readonly IRepository<FavoriteDestination, Guid> _favoriteRepoMock;
-        private readonly IRepository<AppNotification, Guid> _notificationRepoMock;
-        private readonly IRepository<TravelExperience, Guid> _experienceRepoMock;
-        private readonly IGuidGenerator _guidGenerator;
+        private readonly IGuidGenerator _guidGeneratorMock;
+        private readonly IRepository<TravelExperience, Guid> _experienceRepositoryMock;
+
+        // Estos mocks los necesitamos PARA el Manager
+        private readonly IRepository<FavoriteDestination, Guid> _favoriteRepositoryMock;
+        private readonly IRepository<AppNotification, Guid> _notificationRepositoryMock;
 
         public DestinationAppService_Tests()
         {
-            // 1. Inicialización de Mocks
+            // 1. Inicializar Mocks
             _destinationRepoMock = Substitute.For<IRepository<Destination, Guid>>();
             _citySearchServiceMock = Substitute.For<ICitySearchService>();
-            _favoriteRepoMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
-            _notificationRepoMock = Substitute.For<IRepository<AppNotification, Guid>>();
-            _experienceRepoMock = Substitute.For<IRepository<TravelExperience, Guid>>();
+            _guidGeneratorMock = Substitute.For<IGuidGenerator>();
+            _experienceRepositoryMock = Substitute.For<IRepository<TravelExperience, Guid>>();
 
-            // Usamos el servicio real de GuidGenerator de ABP
-            _guidGenerator = GetRequiredService<IGuidGenerator>();
+            // Inicializamos estos aunque el AppService no los use directo, el Manager sí
+            _favoriteRepositoryMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
+            _notificationRepositoryMock = Substitute.For<IRepository<AppNotification, Guid>>();
 
-            // 2. Blindaje de Repositorios
-            // Configuramos una lista vacía para evitar errores de 'null' en los cálculos de promedios (LINQ)
-            var emptyExperiences = new List<TravelExperience>().AsQueryable();
-            _experienceRepoMock.GetQueryableAsync().Returns(Task.FromResult(emptyExperiences));
+            // 2. Configurar GuidGenerator
+            _guidGeneratorMock.Create().Returns(Guid.NewGuid());
 
-            var emptyDestinations = new List<Destination>().AsQueryable();
-            _destinationRepoMock.GetQueryableAsync().Returns(Task.FromResult(emptyDestinations));
+            // 3. Crear el ServiceProvider Mock (para el Lazy)
+            var serviceProvider = Substitute.For<IServiceProvider>();
+            serviceProvider.GetService(typeof(IAbpLazyServiceProvider))
+                           .Returns(Substitute.For<IAbpLazyServiceProvider>());
 
-            // 3. Instancia manual del Proxy (Inyección Manual para evitar error de Autofac)
+            // 4. CREAR EL NOTIFICATION MANAGER (Con los mocks inyectados)
+            var notificationManager = new NotificationManager(
+                _notificationRepositoryMock,
+                _favoriteRepositoryMock,
+                _destinationRepoMock
+            );
+
+            // 5. Instanciar el Servicio (Usando el nuevo constructor)
             _destinationService = new DestinationAppServiceTestProxy(
                 _destinationRepoMock,
                 _citySearchServiceMock,
-                _guidGenerator,
-                _favoriteRepoMock,
-                _notificationRepoMock,
-                _experienceRepoMock,
-                GetRequiredService<IServiceProvider>()
+                _guidGeneratorMock,
+                _experienceRepositoryMock,
+                notificationManager, // <--- Pasamos el Manager real (con mocks adentro)
+                serviceProvider
             );
         }
 
@@ -135,17 +143,15 @@ namespace PibesDelDestino.Destinations
             IRepository<Destination, Guid> repository,
             ICitySearchService citySearchService,
             IGuidGenerator guidGenerator,
-            IRepository<FavoriteDestination, Guid> favoriteRepository,
-            IRepository<AppNotification, Guid> notificationRepository,
             IRepository<TravelExperience, Guid> experienceRepository,
+            NotificationManager notificationManager, // <--- AGREGADO
             IServiceProvider serviceProvider)
             : base(
                 repository,
                 citySearchService,
                 guidGenerator,
-                favoriteRepository,
-                notificationRepository,
-                experienceRepository)
+                experienceRepository,
+                notificationManager) // <--- PASAMOS EL MANAGER
         {
             // Fundamental para que el CrudAppService pueda usar ObjectMapper, CurrentUser, etc.
             LazyServiceProvider = serviceProvider.GetRequiredService<IAbpLazyServiceProvider>();
