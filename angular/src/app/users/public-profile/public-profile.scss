@@ -1,11 +1,9 @@
-/* Wrapper general */
 .profile-wrapper {
   background-color: #f8f9fa;
   min-height: 100vh;
-  font-family: 'Poppins', 'Segoe UI', sans-serif; // Usamos Poppins como en el resto de la app
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
 }
 
-/* 1. HERO SECTION */
 .profile-hero {
   position: relative;
   height: 350px;
@@ -23,9 +21,7 @@
   background: linear-gradient(to bottom, rgba(24, 66, 125, 0.2), rgba(0,0,0,0.7));
 }
 
-/* Ajuste para los botones superiores (Volver y Editar) */
 .back-btn {
-  /* Eliminamos el position absolute para que el d-flex del HTML lo maneje */
   padding: 8px 20px;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -37,7 +33,7 @@
 }
 
 .btn-warning {
-  background-color: #F28C28 !important; // Tu naranja de Pibes del Destino
+  background-color: #F28C28 !important;
   border-color: #F28C28 !important;
   color: white !important;
   font-weight: 700 !important;
@@ -51,21 +47,19 @@
   }
 }
 
-/* 2. CONTENIDO RELATIVO */
 .relative-content {
   position: relative;
   z-index: 2;
-  margin-top: -100px; /* Ajustado para que la tarjeta suba un poco más */
+  margin-top: -100px;
 }
 
 .profile-card {
-  border-radius: 1.5rem; /* Bordes un poco más redondeados */
+  border-radius: 1.5rem; 
   overflow: hidden;
   background: white;
   border: none;
 }
 
-/* 3. ANIMACIONES */
 .animate-up {
   animation: slideUp 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
   opacity: 0;
@@ -76,7 +70,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* 4. ESTILOS DE RESEÑAS */
 .review-card {
   transition: all 0.3s ease;
   border-radius: 1rem;
@@ -95,7 +88,6 @@
   overflow: hidden;
 }
 
-/* Estilo para las estadísticas */
 .text-primary {
     color: #18427D !important;
 }

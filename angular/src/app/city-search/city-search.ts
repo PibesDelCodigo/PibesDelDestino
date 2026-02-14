@@ -30,7 +30,6 @@ export class CitySearch implements OnInit {
   isLoading = false;
   errorMessage = '';
 
-  // Set para guardar las ciudades favoritas (Clave: "Nombre_Pais")
   likedCities = new Set<string>();
   
   destinationCache = new Map<string, { id: string, rating: number }>(); 
@@ -53,7 +52,6 @@ export class CitySearch implements OnInit {
 
   ngOnInit(): void {
     
-    // 1. RECUPERAR ESTADO
     if (this.stateService.hasData()) {
         this.cities = this.stateService.lastResults;
         this.destinationCache = this.stateService.lastCache;
@@ -62,7 +60,6 @@ export class CitySearch implements OnInit {
         this.preloadLocalDestinations();
     }
 
-    // 2. CONFIGURACIÓN DEL BUSCADOR
     this.searchForm.valueChanges.pipe(
       debounceTime(800),
       distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
@@ -109,7 +106,6 @@ export class CitySearch implements OnInit {
       }
     });
 
-    // 3. CARGAR LIKES
     if (this.authService.isAuthenticated) {
       this.favoriteService.getMyFavorites().subscribe(favs => {
         favs.forEach(f => {
@@ -204,7 +200,6 @@ export class CitySearch implements OnInit {
     });
   }
 
-  // 👇 ESTA ES LA FUNCIÓN QUE FALTABA 👇
   private openRatingModal(id: string, name: string) {
     const modalRef = this.modalService.open(ExperienceModalComponent, { size: 'lg' });
     modalRef.componentInstance.destinationId = id;

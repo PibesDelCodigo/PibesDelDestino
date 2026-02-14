@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
+// Este modelo representa la estructura de la respuesta que recibimos de la API de GeoDB cuando buscamos ciudades.
+
 namespace PibesDelDestino.GeoDb
 {
     public class GeoDbApiResponse

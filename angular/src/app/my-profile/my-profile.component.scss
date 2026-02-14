@@ -1,24 +1,21 @@
-/* CONTENEDOR PRINCIPAL */
 .profile-container {
   max-width: 850px;
   margin: 2rem auto;
   padding: 0 1rem;
 }
 
-/* TARJETAS FLOTANTES (Estilo Material Design) */
 .global-card {
   background: white;
   border-radius: 12px;
   border: none;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.05); /* Sombra suave */
-  overflow: hidden; /* Para que la cabecera no se salga de las curvas */
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+  overflow: hidden; 
   transition: transform 0.2s ease;
 
-  /* Encabezado de la tarjeta */
   .card-header {
     background-color: #fff;
     border-bottom: 1px solid #f0f0f0;
-    padding: 0; /* El padding lo manejan los links */
+    padding: 0; 
   }
 
   .card-body {
@@ -26,13 +23,12 @@
   }
 }
 
-/* NAVEGACIÓN POR PESTAÑAS (Tabs) */
 .nav-tabs {
   border-bottom: none;
   display: flex;
   
   .nav-item {
-    flex: 1; /* Para que ocupen el mismo ancho en móvil */
+    flex: 1;
     text-align: center;
     
     @media (min-width: 768px) {
@@ -50,7 +46,6 @@
     transition: all 0.3s;
     border-radius: 0;
 
-    /* Iconos dentro de las pestañas */
     i {
       color: #adb5bd;
       transition: color 0.3s;
@@ -58,7 +53,7 @@
 
     &:hover {
       background-color: #f8f9fa;
-      color: #18427D; /* Azul principal */
+      color: #18427D; 
       
       i { color: #18427D; }
     }
@@ -66,30 +61,27 @@
     &.active {
       color: #18427D;
       background-color: transparent;
-      border-bottom-color: #18427D; /* Línea azul abajo */
+      border-bottom-color: #18427D; 
       
       i { color: #18427D; }
     }
   }
 }
 
-/* GRILLA RESPONSIVA DEL FORMULARIO */
 .profile-grid {
   display: grid;
-  grid-template-columns: 1fr; /* 1 columna en celular */
+  grid-template-columns: 1fr; 
   gap: 1.5rem;
 
   @media (min-width: 768px) {
-    grid-template-columns: 1fr 1fr; /* 2 columnas en PC */
+    grid-template-columns: 1fr 1fr;
     
-    /* Hacemos que la URL de la foto ocupe todo el ancho */
     .col-span-2 {
       grid-column: span 2;
     }
   }
 }
 
-/* INPUTS Y GRUPOS */
 .form-label {
   font-weight: 500;
   font-size: 0.9rem;
@@ -109,7 +101,6 @@
   }
 }
 
-/* Icono al lado del input */
 .input-group-text {
   background-color: #f8f9fa;
   border: 1px solid #dee2e6;
@@ -119,13 +110,11 @@
   border-bottom-left-radius: 8px;
 }
 
-/* Ajuste para input dentro de grupo */
 .input-group > .form-control {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
 
-/* BOTONES */
 .btn-primary {
   background-color: #18427D;
   border-color: #18427D;

@@ -14,7 +14,7 @@ using System.Diagnostics;
 namespace PibesDelDestino.TicketMaster
 {
     public class TicketMasterService : ITicketMasterService
-    {
+    { 
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
         private readonly ILogger<TicketMasterService> _logger;
@@ -37,9 +37,9 @@ namespace PibesDelDestino.TicketMaster
             _apiMetricRepo = apiMetricRepo;
         }
 
+        // Este método se encarga de buscar eventos en TicketMaster para una ciudad específica.
         public async Task<List<EventoDTO>> SearchEventsAsync(string cityName)
         {
-            // 1. Leemos la clave de la configuración (appsettings.json)
             var apiKey = _configuration["TicketMaster:ApiKey"];
 
             if (string.IsNullOrEmpty(apiKey))
@@ -55,6 +55,7 @@ namespace PibesDelDestino.TicketMaster
             var isSuccess = false;
             string errorMessage = null;
 
+            // Intentamos hacer la solicitud a TicketMaster y procesar la respuesta.
             try
             {
                 var response = await client.GetAsync(url);
@@ -62,11 +63,13 @@ namespace PibesDelDestino.TicketMaster
 
                 if (!isSuccess)
                 {
+                    // Si la respuesta no es exitosa, registramos el error y devolvemos una lista vacía.
                     errorMessage = $"Error {response.StatusCode}";
                     _logger.LogWarning($"⚠️ TicketMaster respondió con error: {response.StatusCode}");
                     return new List<EventoDTO>();
                 }
 
+                // Si la respuesta es exitosa, intentamos deserializar el contenido.
                 var root = await response.Content.ReadFromJsonAsync<TicketMasterRoot>();
 
                 if (root?.Embedded?.Events == null)
@@ -75,6 +78,8 @@ namespace PibesDelDestino.TicketMaster
                     return new List<EventoDTO>();
                 }
 
+                // Mapeamos los eventos obtenidos a una lista de EventoDTO,
+                // asegurándonos de manejar posibles valores nulos.
                 var cleanList = root.Embedded.Events.Select(e => new EventoDTO
                 {
                     Name = e.Name,
@@ -96,18 +101,18 @@ namespace PibesDelDestino.TicketMaster
                 return new List<EventoDTO>();
             }
 
+            //Al finalizar la operación, guardamos una métrica con el resultado de la llamada a la API,
+            //incluyendo el tiempo de respuesta y cualquier error ocurrido.
             finally
             {
                 stopwatch.Stop();
-
-                // ✅ CORRECCIÓN: Usamos el constructor
                 var metric = new ApiMetric(
-                    _guidGenerator.Create(),           // 1. ID
-                    "TicketMasterApi",                 // 2. ServiceName
-                    "/discovery/v2/events",            // 3. Endpoint
-                    isSuccess,                         // 4. IsSuccess
-                    (int)stopwatch.ElapsedMilliseconds,// 5. ResponseTimeMs
-                    errorMessage ?? ""                      // 6. ErrorMessage (puede ser null)
+                    _guidGenerator.Create(),           
+                    "TicketMasterApi",                 
+                    "/discovery/v2/events",            
+                    isSuccess,                         
+                    (int)stopwatch.ElapsedMilliseconds,
+                    errorMessage ?? ""                  
                 );
 
                 await _apiMetricRepo.InsertAsync(metric, autoSave: true);
@@ -116,15 +121,17 @@ namespace PibesDelDestino.TicketMaster
             }    
         }
 
+        // Este método privado se encarga de guardar el término de búsqueda y
+        // la cantidad de resultados obtenidos en el historial de búsquedas.
         private async Task SaveSearchHistoryAsync(string term, int count)
         {
             if (!string.IsNullOrWhiteSpace(term))
             {
                 await _searchHistoryRepo.InsertAsync(new SearchHistory(
                     _guidGenerator.Create(),
-                    term.Trim().ToLower(), // Guardamos "madrid"
+                    term.Trim().ToLower(), 
                     count
-                ), autoSave: true); // 👈 ¡CLAVE PARA QUE GUARDE AL INSTANTE!
+                ), autoSave: true);
             }
         }
     }

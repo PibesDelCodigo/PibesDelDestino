@@ -8,7 +8,7 @@ import { RestService } from '@abp/ng.core';
   selector: 'app-settings',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './settings.html', // Asegúrate de que este archivo exista
+  templateUrl: './settings.html',
 })
 export class SettingsComponent implements OnInit {
 
@@ -17,7 +17,7 @@ export class SettingsComponent implements OnInit {
 
   isLoading = true;
   notificationsEnabled = true;
-  currentPreference: string = 'Ambas'; // Valores posibles: 'Pantalla', 'Email', 'Ambas'
+  currentPreference: string = 'Ambas';
   saved = false;
 
   ngOnInit() {
@@ -26,20 +26,13 @@ export class SettingsComponent implements OnInit {
 
   loadSettings() {
     this.isLoading = true;
-
-    // 1. LLAMADA AL NUEVO SERVICIO (GET)
-    // ABP genera la ruta basada en el nombre del AppService
     this.rest.request<void, any>({
       method: 'GET',
       url: '/api/app/settings/preferences' 
     }).subscribe({
       next: (res) => {
-        // 2. RECIBIMOS EL DTO LIMPIO
         this.notificationsEnabled = res.receiveNotifications;
-        
-        // Convertimos el número del backend (0,1,2) a tu string del frontend
         this.currentPreference = this.mapIntToString(res.notificationType);
-        
         this.isLoading = false;
       },
       error: () => {
@@ -52,14 +45,11 @@ export class SettingsComponent implements OnInit {
   saveSettings() {
     this.isLoading = true;
     this.saved = false;
-
-    // 3. PREPARAMOS EL DTO PARA ENVIAR
     const payload = {
       receiveNotifications: this.notificationsEnabled,
       notificationType: this.mapStringToInt(this.currentPreference)
     };
 
-    // 4. LLAMADA AL NUEVO SERVICIO (PUT)
     this.rest.request({
       method: 'PUT',
       url: '/api/app/settings/preferences',
@@ -79,9 +69,6 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  // --- HELPERS PARA CONVERTIR DATOS ---
-
-  // Convierte Frontend (String) -> Backend (Int)
   private mapStringToInt(pref: string): number {
     const valor = (pref || '').toLowerCase().trim();
     if (valor === 'pantalla') return 0;
@@ -89,7 +76,6 @@ export class SettingsComponent implements OnInit {
     return 2;
   }
 
-  // Convierte Backend (Int) -> Frontend (String)
   private mapIntToString(type: number): string {
     switch (type) {
       case 0: return 'Pantalla';

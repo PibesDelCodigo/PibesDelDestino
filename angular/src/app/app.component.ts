@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NavItemsService, eThemeSharedRouteNames, LoaderBarComponent } from '@abp/ng.theme.shared'; // <--- 1. Importar Servicio
+import { NavItemsService, eThemeSharedRouteNames, LoaderBarComponent } from '@abp/ng.theme.shared';
 import { NotificationBellComponent } from './notifications/notification-bell/notification-bell';
 import { DynamicLayoutComponent } from "@abp/ng.core";
 
@@ -11,17 +11,16 @@ import { DynamicLayoutComponent } from "@abp/ng.core";
   `,
   imports: [LoaderBarComponent, DynamicLayoutComponent],
 })
-export class AppComponent implements OnInit { // <--- 3. Implementar OnInit
+export class AppComponent implements OnInit {
 
-  constructor(private navItems: NavItemsService) {} // <--- 4. Inyectar
+  constructor(private navItems: NavItemsService) {}
 
   ngOnInit(): void {
-    // 5. Agregar el ítem al Navbar
     this.navItems.addItems([
       {
         id: 'NotificationBell',
-        order: 1, // El orden decide dónde aparece (jugá con este número si queda mal ubicado)
-        component: NotificationBellComponent, // <--- Nuestro componente
+        order: 1, 
+        component: NotificationBellComponent, 
       },
     ]);
   }

@@ -3,9 +3,9 @@ import { AuthService } from '@abp/ng.core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { DestinationService } from '../proxy/destinations';
-import { TravelExperienceService } from '../proxy/experiences'; // 👈 Agregado
+import { TravelExperienceService } from '../proxy/experiences';
 import { DestinationDto } from '../proxy/application/contracts/destinations';
-import { TravelExperienceDto } from '../proxy/experiences'; // 👈 Agregado
+import { TravelExperienceDto } from '../proxy/experiences'; 
 
 @Component({
   selector: 'app-home',
@@ -18,12 +18,11 @@ export class HomeComponent implements OnInit {
   
   private authService = inject(AuthService);
   private destinationService = inject(DestinationService);
-  private experienceService = inject(TravelExperienceService); // 👈 Inyectado
+  private experienceService = inject(TravelExperienceService); 
   private router = inject(Router);
 
-  // Variables para la vista
   topDestinations: DestinationDto[] = [];
-  recentExperiences: TravelExperienceDto[] = []; // 👈 Para la sección Comunidad
+  recentExperiences: TravelExperienceDto[] = []; 
   isLoadingTop = true;
   isLoadingCommunity = true;
 
@@ -36,7 +35,6 @@ export class HomeComponent implements OnInit {
     this.loadCommunityFeed();
   }
 
-  // 1. Cargar Destinos Top
   loadTopDestinations() {
     this.destinationService.getTopDestinations().subscribe({
       next: (list) => {
@@ -50,9 +48,7 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  // 2. Cargar Comunidad (Recientes)
   loadCommunityFeed() {
-    // Usamos el GetList normal de ABP o el nuevo que creamos
     this.experienceService.getList({ maxResultCount: 3 }).subscribe({
       next: (response) => {
         this.recentExperiences = response.items;
@@ -65,8 +61,6 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  // --- NAVEGACIÓN ---
-
   login() {
     this.authService.navigateToLogin();
   }
@@ -76,7 +70,6 @@ export class HomeComponent implements OnInit {
   }
 
 goToExplore() {
-  // Este es el que mandamos a la búsqueda general
   this.router.navigate(['/city-search']);
 }
 
@@ -87,7 +80,6 @@ goToTopDestinations() {
     }
   }
 
-  // 2. Tus Favoritos -> A la ruta que ya existe
   goToMyFavorites() {
     if (this.hasLoggedIn) {
       this.router.navigate(['/favorites']); 
@@ -96,7 +88,6 @@ goToTopDestinations() {
     }
   }
 
-  // 3. Comunidad -> Te mando a buscar un destino para que veas sus experiencias
   goToCommunity() {
     this.router.navigate(['/city-search']);
   }

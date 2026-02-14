@@ -1,11 +1,10 @@
-/* PORTADA TIPO AIRBNB */
 .destination-hero {
   position: relative;
-  height: 450px; /* Altura de la portada */
+  height: 450px; 
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: -60px; /* Truco para que la tarjeta blanca se meta adentro */
+  margin-bottom: -60px; 
 }
 
 .hero-bg {
@@ -28,7 +27,6 @@
   z-index: 3;
 }
 
-/* BADGES Y TEXTOS */
 .country-pill {
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(5px);
@@ -58,7 +56,6 @@
   }
 }
 
-/* CONTENEDOR BLANCO DONDE VAN LAS RESEÑAS */
 .main-content {
   position: relative;
   z-index: 10;
@@ -68,11 +65,10 @@
 .content-card {
   background: white;
   border-radius: 20px;
-  padding: 30px; /* Espacio interno */
+  padding: 30px;
   min-height: 400px;
 }
 
-/* ANIMACIONES */
 .animate-up {
   animation: fadeInUp 0.8s ease forwards;
   opacity: 0;

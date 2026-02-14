@@ -20,15 +20,12 @@ namespace PibesDelDestino.Ratings
 
         public RatingAppService_Tests()
         {
-            // Creamos un Mock del repositorio que fallaba
             _ratingRepositoryMock = Substitute.For<IRepository<Rating, Guid>>();
 
-            // Obtenemos los servicios reales que SÍ funcionan
             var guidGenerator = GetRequiredService<IGuidGenerator>();
             var objectMapper = GetRequiredService<IObjectMapper>();
             var currentUser = GetRequiredService<ICurrentUser>();
 
-            // Instanciamos el servicio manualmente pasándole el Mock que faltaba
             _ratingAppService = new RatingAppService(
                 _ratingRepositoryMock,
                 guidGenerator,
@@ -50,7 +47,6 @@ namespace PibesDelDestino.Ratings
             var result = await _ratingAppService.CreateAsync(input);
 
             result.ShouldNotBeNull();
-            // Verificamos que el repositorio recibió la orden de insertar
             await _ratingRepositoryMock.Received(1).InsertAsync(Arg.Any<Rating>());
         }
     }

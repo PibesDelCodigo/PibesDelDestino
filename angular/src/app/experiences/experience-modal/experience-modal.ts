@@ -16,8 +16,6 @@ export class ExperienceModalComponent implements OnInit {
   
   @Input() destinationId: string = '';
   @Input() destinationName: string = '';
-
-  // 👇 1. NUEVO: Recibimos la experiencia para editar (si viene vacía, es creación)
   @Input() selectedExperience: any = null; 
 
   form: FormGroup;
@@ -34,7 +32,6 @@ export class ExperienceModalComponent implements OnInit {
   ngOnInit(): void {
     this.buildForm();
 
-    // 👇 2. LOGICA DE RELLENADO: Si es edición, cargamos los datos
     if (this.selectedExperience) {
       this.form.patchValue({
         title: this.selectedExperience.title,
@@ -65,10 +62,8 @@ export class ExperienceModalComponent implements OnInit {
     this.isSaving = true;
     const formData = this.form.value;
 
-    // 👇 3. DECISIÓN: ¿CREAR O ACTUALIZAR?
     if (this.selectedExperience) {
       
-      // --- MODO EDICIÓN (UPDATE) ---
       this.experienceService.update(this.selectedExperience.id, formData).subscribe({
         next: () => {
           this.toaster.success('¡Experiencia actualizada con éxito!', 'Guardado');
@@ -83,7 +78,6 @@ export class ExperienceModalComponent implements OnInit {
 
     } else {
 
-      // --- MODO CREACIÓN (CREATE) ---
       this.experienceService.create(formData).subscribe({
         next: () => {
           this.toaster.success('¡Gracias por compartir tu experiencia!', 'Éxito');

@@ -16,46 +16,46 @@ function configureRoutes(routesService: RoutesService) {
         order: 1,
         layout: eLayoutType.application,
       },
-      // --- Buscador de Ciudades ---
+
       {
         path: '/city-search',
         name: 'Buscar Ciudades',
         iconClass: 'fas fa-search',
-        order: 2, // Segundo lugar
+        order: 2,
         layout: eLayoutType.application,
       },
-      // --- NUEVO: Mis Favoritos ---
+      
       {
         path: '/favorites',
         name: 'Mis Favoritos',
         iconClass: 'fas fa-heart',
-        order: 3, // Tercer lugar (Corregido para que no se pise con el anterior)
+        order: 3, 
         layout: eLayoutType.application,
       },
-      // --- Dashboard de Métricas ---
+      
       {
         path: '/metrics',
-        name: 'Dashboard de Métricas',     // El texto que se verá
-        parentName: 'AbpUiNavigation::Menu:Administration', // 👈 ESTO LO METE EN "ADMINISTRACIÓN"
+        name: 'Dashboard de Métricas',     
+        parentName: 'AbpUiNavigation::Menu:Administration', 
         layout: eLayoutType.application,
-        iconClass: 'fa fa-bar-chart',      // Icono de gráfico
-        order: 1,                          // Para que salga arriba del todo
-        requiredPolicy: 'AbpIdentity.Users', // Solo visible si tienes permisos (Admin)
+        iconClass: 'fa fa-bar-chart',      
+        order: 1,                          
+        requiredPolicy: 'AbpIdentity.Users', 
       },
 
       {
-        path: '/my-profile',       // La ruta a donde querés ir
-        name: 'Mi Perfil',         // Lo que va a decir el botón
-        iconClass: 'fas fa-user-circle', // Un ícono lindo de usuario
-        order: 2,                  // El orden (2 para que salga abajo del Home)
+        path: '/my-profile',       
+        name: 'Mi Perfil',         
+        iconClass: 'fas fa-user-circle', 
+        order: 2,                  
         layout: eLayoutType.application,
       },
 
       {
-    path: '/profile-redirect', // Usamos una ruta "puente"
+    path: '/profile-redirect', 
     name: 'Perfil Público',
     order: 2,
-    iconClass: 'fa fa-external-link-alt', // Un ícono que indique "ver"
+    iconClass: 'fa fa-external-link-alt', 
     layout: eLayoutType.application,
   },
 

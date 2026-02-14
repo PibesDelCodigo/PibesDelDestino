@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq; // Fundamental para .AsQueryable()
+using System.Linq;
 using Shouldly;
 using Xunit;
 using PibesDelDestino;
@@ -31,7 +31,6 @@ namespace PibesDelDestino.Metrics
         [Fact]
         public async Task Should_Get_Metrics_List()
         {
-            // ARRANGE
             var metric = new ApiMetric(
                 Guid.NewGuid(),
                 "TestService",
@@ -41,17 +40,11 @@ namespace PibesDelDestino.Metrics
                 null
             );
 
-            // Creamos la lista y la convertimos a Queryable
-            // Esto permite que el repositorio responda a cualquier filtro (Where, Skip, Take)
             var fakeList = new List<ApiMetric> { metric }.AsQueryable();
-
-            // Configuramos el ÚNICO método que NSubstitute puede interceptar de forma segura
             _metricRepositoryMock.GetQueryableAsync().Returns(Task.FromResult(fakeList));
 
-            // ACT
             var result = await _apiMetricAppService.GetListAsync(new GetApiMetricsInput());
 
-            // ASSERT
             result.ShouldNotBeNull();
             result.Items.Count.ShouldBeGreaterThan(0);
             result.Items[0].ServiceName.ShouldBe("TestService");

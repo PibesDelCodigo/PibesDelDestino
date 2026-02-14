@@ -1,21 +1,15 @@
-/* Limita la altura de la tabla y permite hacer scroll */
 .scroll-container {
     max-height: 400px;
-    /* Ajusta este valor a tu gusto */
     overflow-y: auto;
 }
 
-/* Opcional: Hace que los títulos de la tabla se queden fijos al bajar */
 .sticky-top {
     position: sticky;
     top: 0;
     z-index: 1;
-    /* Para que quede por encima de las filas */
     box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-    /* Sombra sutil */
 }
 
-/* Elimina el triángulo por defecto del details en algunos navegadores */
 summary::-webkit-details-marker {
     display: none;
 }

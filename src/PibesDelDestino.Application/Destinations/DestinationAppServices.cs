@@ -11,19 +11,22 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
 using PibesDelDestino.Experiences;
 using PibesDelDestino.Notifications;
-using Microsoft.AspNetCore.Authorization; // Importante para el Manager
+using Microsoft.AspNetCore.Authorization;
 
 namespace PibesDelDestino.Destinations
 {
+    //Heredamos de CrudAppService, ya que nos da las operaciones basicas de CRUD
     public class DestinationAppService :
         CrudAppService<Destination, DestinationDto, Guid, PagedAndSortedResultRequestDto, CreateUpdateDestinationDto>,
         IDestinationAppService
     {
+        // Inyectamos los servicios necesarios
         private readonly ICitySearchService _citySearchService;
         private readonly IGuidGenerator _guidGenerator;
         private readonly IRepository<TravelExperience, Guid> _experienceRepository;
-        private readonly NotificationManager _notificationManager; // Inyectamos el Manager
+        private readonly NotificationManager _notificationManager;
 
+        // Constructor para inyectar dependencias
         public DestinationAppService(
             IRepository<Destination, Guid> repository,
             ICitySearchService citySearchService,
@@ -32,22 +35,30 @@ namespace PibesDelDestino.Destinations
             NotificationManager notificationManager)
             : base(repository)
         {
+            // Asignamos los servicios inyectados a campos privados para su uso posterior
             _citySearchService = citySearchService;
             _guidGenerator = guidGenerator;
             _experienceRepository = experienceRepository;
             _notificationManager = notificationManager;
         }
 
+        // Sobrescribimos el método para mapear la lista de entidades a DTOs, incluyendo el cálculo del rating promedio
+        //Una vez ya tenemos la lista de destinos, llamamos a este método para mapear cada destino a su DTO correspondiente.
         protected override async Task<List<DestinationDto>> MapToGetListOutputDtosAsync(List<Destination> entities)
         {
             var dtos = await base.MapToGetListOutputDtosAsync(entities);
             var destinationIds = entities.Select(x => x.Id).ToList();
 
+            // Para evitar hacer una consulta por cada destino, obtenemos todas las experiencias relacionadas con los destinos en una sola consulta
             var query = await _experienceRepository.GetQueryableAsync();
+
+            // Obtenemos todas las calificaciones de experiencias para los destinos que estamos mapeando
             var allRatings = query
                 .Where(x => destinationIds.Contains(x.DestinationId))
                 .Select(x => new { x.DestinationId, x.Rating })
                 .ToList();
+
+            // Luego, para cada DTO, calculamos el rating promedio utilizando las calificaciones obtenidas
 
             foreach (var dto in dtos)
             {
@@ -56,6 +67,7 @@ namespace PibesDelDestino.Destinations
                     .Select(x => x.Rating)
                     .ToList();
 
+                // Si hay calificaciones para ese destino, calculamos el promedio; de lo contrario, asignamos 0
                 if (specificRatings.Any())
                 {
                     dto.AverageRating = specificRatings.Average();
@@ -69,13 +81,15 @@ namespace PibesDelDestino.Destinations
             return dtos;
         }
 
+        // Sobrescribimos el método para mapear una sola entidad a su DTO, incluyendo el cálculo del rating promedio
         protected override async Task<DestinationDto> MapToGetOutputDtoAsync(Destination entity)
         {
+            // Primero, llamamos al método base para obtener el DTO básico
             var dto = await base.MapToGetOutputDtoAsync(entity);
-
             var query = await _experienceRepository.GetQueryableAsync();
             var ratings = query.Where(x => x.DestinationId == entity.Id);
 
+            //Verificamos si hay calificaciones para este destino y calculamos el promedio
             if (await AsyncExecuter.AnyAsync(ratings))
             {
                 dto.AverageRating = await AsyncExecuter.AverageAsync(ratings, x => x.Rating);
@@ -88,6 +102,7 @@ namespace PibesDelDestino.Destinations
             return dto;
         }
 
+        // Sobrescribimos el método de creación para manejar la lógica personalizada al crear un destino
         public override async Task<DestinationDto> CreateAsync(CreateUpdateDestinationDto input)
         {
             var destination = new Destination(
@@ -101,6 +116,7 @@ namespace PibesDelDestino.Destinations
                 new Coordinates(input.Coordinates.Latitude, input.Coordinates.Longitude)
             );
 
+            // Insertamos el nuevo destino en el repositorio
             await Repository.InsertAsync(destination);
 
             return new DestinationDto
@@ -117,34 +133,44 @@ namespace PibesDelDestino.Destinations
                     Latitude = destination.Coordinates.Latitude,
                     Longitude = destination.Coordinates.Longitude
                 },
+                //Como es un destino nuevo, el rating promedio es 0
                 AverageRating = 0
             };
         }
 
+        // Sobrescribimos el método de actualización para manejar la lógica personalizada al actualizar un destino
+
         public override async Task<DestinationDto> UpdateAsync(Guid id, CreateUpdateDestinationDto input)
         {
-            // 1. Actualizamos el destino
+            //Actualizamos el destino
             var updatedDestinationDto = await base.UpdateAsync(id, input);
 
-            // 2. Recuperamos la entidad para pasarla al Manager
+            //Recuperamos la entidad para pasarla al Manager
             var destinationEntity = await Repository.GetAsync(id);
 
-            // 3. Usamos el Manager para notificar
+            //Usamos el Manager para notificar
             await _notificationManager.NotifyDestinationUpdateAsync(
                 destinationEntity,
                 "información actualizada"
             );
 
+            //Devolvemos el DTO actualizado
             return updatedDestinationDto;
         }
+
+        //Agregamos un nuevo método para buscar ciudades utilizando el servicio de búsqueda de ciudades, y lo marcamos con [AllowAnonymous] para permitir el acceso sin autenticación
         [AllowAnonymous]
         public async Task<CityResultDto> SearchCitiesAsync(CityRequestDTO request)
         {
+            //Llamamos al servicio de búsqueda de ciudades (El que esta en geodb) para 
+            //obtener los resultados basados en el request proporcionado
             return await _citySearchService.SearchCitiesAsync(request);
         }
 
+        //Agregamos un nuevo método para obtener los destinos mejor calificados, ordenados por su rating promedio de mayor a menor, y limitados a los 10 mejores
         public async Task<List<DestinationDto>> GetTopDestinationsAsync()
         {
+            
             var destinationsQuery = await Repository.GetQueryableAsync();
             var experiencesQuery = await _experienceRepository.GetQueryableAsync();
 
@@ -159,8 +185,10 @@ namespace PibesDelDestino.Destinations
                             AverageRating = avg
                         };
 
+            // Tomamos los 10 destinos mejor calificados y los convertimos a una lista
             var topList = await AsyncExecuter.ToListAsync(query.Take(10));
 
+            // Mapeamos cada destino a su DTO correspondiente, incluyendo el rating promedio calculado
             return topList.Select(item => new DestinationDto
             {
                 Id = item.Destination.Id,

@@ -1,9 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ToasterService, ConfirmationService, Confirmation } from '@abp/ng.theme.shared'; // Importamos ConfirmationService
+import { ToasterService, ConfirmationService, Confirmation } from '@abp/ng.theme.shared';
 import { RestService, AuthService, CoreModule, ConfigStateService } from '@abp/ng.core';
-import { Router } from '@angular/router'; // Importamos Router
+import { Router } from '@angular/router';
 import { UserProfileDto, NotificationChannel, NotificationFrequency } from '../account/models/user-profile.dto';
 
 
@@ -20,17 +20,16 @@ export class MyProfileComponent implements OnInit {
   passwordForm: FormGroup;
   loading = false;
 
-  // Enums para el HTML
   eNotificationChannel = NotificationChannel;
   eNotificationFrequency = NotificationFrequency;
    
   private fb = inject(FormBuilder);
   private rest = inject(RestService);
   private toaster = inject(ToasterService);
-  private confirmation = inject(ConfirmationService); // Inyectamos confirmación
-  private authService = inject(AuthService); // Inyectamos para el Logout
+  private confirmation = inject(ConfirmationService);
+  private authService = inject(AuthService);
   private router = inject(Router);
-  private configState = inject(ConfigStateService); // Para obtener info del usuario actual
+  private configState = inject(ConfigStateService);
 
   constructor() {
     this.buildForms();
@@ -59,8 +58,6 @@ export class MyProfileComponent implements OnInit {
       confirmNewPassword: ['', Validators.required]
     });
   }
-
-  // ... (Mantenemos loadProfile, savePersonalData y changePassword igual) ...
 
   loadProfile() {
     this.loading = true;
@@ -166,7 +163,6 @@ goToPublicProfile() {
     this.selectedTab = index;
   }
 
-  // --- NUEVA FUNCIÓN: ELIMINAR CUENTA ---
   confirmDeleteAccount() {
     this.confirmation.warn(
       '¿Verdaderamente querés eliminar tu cuenta? Esta acción borrará tus favoritos y reseñas de forma permanente.',
@@ -175,7 +171,6 @@ goToPublicProfile() {
     ).subscribe((status: Confirmation.Status) => {
       if (status === Confirmation.Status.confirm) {
         this.loading = true;
-        // Llamada al endpoint de borrado (ajustar URL según tu backend)
         this.rest.request({
           method: 'DELETE',
           url: '/api/app/user-profile/my-account' 

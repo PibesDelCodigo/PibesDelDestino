@@ -9,8 +9,8 @@ namespace PibesDelDestino.Metrics
 {
     public class SearchHistory : CreationAuditedEntity<Guid>
     {
-        public string Term { get; set; }      // Ej: "Paris", "Playa"
-        public int ResultCount { get; set; }  // Cuántos resultados devolvió la API
+        public string Term { get; set; }      
+        public int ResultCount { get; set; } 
 
         protected SearchHistory() { }
 

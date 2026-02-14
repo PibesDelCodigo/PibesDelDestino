@@ -305,6 +305,6 @@ public class PibesDelDestinoHttpApiHostModule : AbpModule
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints();
 
-        await context.AddBackgroundWorkerAsync<PibesDelDestino.Workers.EventCheckingWorker>();
+        await context.AddBackgroundWorkerAsync<Workers.EventCheckingWorker>();
     }
 }

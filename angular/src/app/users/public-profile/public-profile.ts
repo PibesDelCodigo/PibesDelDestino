@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule, Router } from '@angular/router'; // Importamos Router
-import { ConfigStateService } from '@abp/ng.core'; // Importamos para saber quién es el usuario actual
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import { ConfigStateService } from '@abp/ng.core';
 import { AppUserService } from 'src/app/proxy/users'; 
 import { PublicUserDto } from 'src/app/proxy/users/models';
 import { TravelExperienceService, TravelExperienceDto } from 'src/app/proxy/experiences';
@@ -19,19 +19,15 @@ export class PublicProfileComponent implements OnInit {
   private router = inject(Router);
   private userService = inject(AppUserService);
   private experienceService = inject(TravelExperienceService);
-  private configState = inject(ConfigStateService); // Inyectado para comparar IDs
+  private configState = inject(ConfigStateService);
 
   userId = '';
   user: PublicUserDto | null = null;
   experiences: TravelExperienceDto[] = [];
   isLoading = true;
-  isOwnProfile = false; // Flag para mostrar/ocultar el botón de editar
-
-  // Datos para la Vista
+  isOwnProfile = false;
   userInitial = '?';
   fullName = '';
-  
-  // Estadísticas (Reseñas y Promedio)
   stats = {
     reviews: 0,
     average: 0
@@ -41,16 +37,14 @@ export class PublicProfileComponent implements OnInit {
     this.userId = this.route.snapshot.paramMap.get('id') || '';
 
     if (this.userId) {
-      this.checkIfIsOwnProfile(); // Verificamos propiedad
+      this.checkIfIsOwnProfile();
       this.loadUser();
       this.loadExperiences();
     }
   }
 
   checkIfIsOwnProfile() {
-    // Obtenemos el ID del usuario que tiene la sesión iniciada
     const currentUserId = this.configState.getOne("currentUser")?.id;
-    // Si coinciden, activamos el botón de edición
     this.isOwnProfile = currentUserId === this.userId;
   }
 
@@ -66,14 +60,10 @@ export class PublicProfileComponent implements OnInit {
     this.userService.getPublicProfile(this.userId).subscribe({
       next: (res) => {
         this.user = res;
-        
-        // Inicial
+
         const nameSource = res.name || res.userName || '?';
         this.userInitial = nameSource.charAt(0).toUpperCase();
-
-        // Nombre Completo
         this.fullName = `${res.name || ''} ${res.surname || ''}`.trim() || res.userName;
-
         this.isLoading = false;
       },
       error: () => this.isLoading = false
@@ -84,8 +74,6 @@ export class PublicProfileComponent implements OnInit {
     this.experienceService.getList({ userId: this.userId } as any).subscribe({
       next: (res) => {
         this.experiences = res.items;
-        
-        // CALCULAR ESTADÍSTICAS
         this.stats.reviews = res.totalCount;
         
         if (this.experiences.length > 0) {

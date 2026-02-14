@@ -8,11 +8,10 @@ using Volo.Abp.Users;
 
 namespace PibesDelDestino.Settings
 {
-    // 1. DTO para transportar los datos (Lo ponemos aquí para simplificar)
     public class UserPreferencesDto
     {
         public bool ReceiveNotifications { get; set; }
-        public int NotificationType { get; set; } // 0: Pantalla, 1: Email, 2: Ambos
+        public int NotificationType { get; set; }
     }
 
     [Authorize]
@@ -24,8 +23,6 @@ namespace PibesDelDestino.Settings
         {
             _userManager = userManager;
         }
-
-        // 1. Obtener TODAS las preferencias
         public async Task<UserPreferencesDto> GetPreferencesAsync()
         {
             var user = await _userManager.GetByIdAsync(CurrentUser.Id.Value);
@@ -40,7 +37,7 @@ namespace PibesDelDestino.Settings
             };
         }
 
-        // 2. Guardar TODOS los cambios
+        // Este metodo guarda las preferencias del usuario
         public async Task UpdatePreferencesAsync(UserPreferencesDto input)
         {
             var user = await _userManager.GetByIdAsync(CurrentUser.Id.Value);

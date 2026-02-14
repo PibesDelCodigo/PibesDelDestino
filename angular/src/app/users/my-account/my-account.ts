@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppUserService } from 'src/app/proxy/users';
-import { AuthService } from '@abp/ng.core'; // Para cerrar sesión después de borrar
+import { AuthService } from '@abp/ng.core';
 import { Router } from '@angular/router';
 
 @Component({

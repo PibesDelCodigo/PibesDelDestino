@@ -18,15 +18,17 @@ namespace PibesDelDestino.Notifications
             _repository = repository;
         }
 
+        // Este método obtiene todas las notificaciones del usuario actual
         public async Task<List<AppNotificationDto>> GetMyNotificationsAsync()
-        {
+
+        {  // Obtenemos todas las notificaciones del usuario actual
             var notifications = await _repository.GetListAsync(x => x.UserId == CurrentUser.Id);
             return ObjectMapper.Map<List<AppNotification>, List<AppNotificationDto>>(
                 notifications.OrderByDescending(x => x.CreationTime).ToList()
             );
         }
 
-        // CUMPLE 6.4: Marcar como leída
+        // Este método marca una notificación específica como leída
         public async Task MarkAsReadAsync(Guid id)
         {
             var notification = await _repository.GetAsync(id);
@@ -36,7 +38,7 @@ namespace PibesDelDestino.Notifications
             await _repository.UpdateAsync(notification);
         }
 
-        // CUMPLE 6.4: Marcar como NO leída
+        // Este método marca una notificación específica como no leída
         public async Task MarkAsUnreadAsync(Guid id)
         {
             var notification = await _repository.GetAsync(id);
@@ -46,24 +48,24 @@ namespace PibesDelDestino.Notifications
             await _repository.UpdateAsync(notification);
         }
 
+        // Este método obtiene el conteo de notificaciones no leídas del usuario actual
         public async Task<int> GetUnreadCountAsync()
         {
             return await _repository.CountAsync(x => x.UserId == CurrentUser.Id && !x.IsRead);
         }
 
+        // Este método marca todas las notificaciones del usuario actual como leídas
         public async Task MarkAllAsReadAsync()
         {
             var userId = CurrentUser.Id.Value;
 
-            // 1. Buscamos todas las que NO están leídas de este usuario
+            // Buscamos todas las que NO están leídas de este usuario
             var unreadNotifications = await _repository.GetListAsync(n => n.UserId == userId && !n.IsRead);
 
-            // 2. Las recorremos y marcamos como leídas
+            // Las recorremos y marcamos como leídas
             foreach (var notification in unreadNotifications)
             {
                 notification.IsRead = true;
-                // No hace falta llamar a UpdateAsync explícitamente si usas UnitOfWork (ABP lo hace solo al final),
-                // pero si quieres asegurar, puedes descomentar la siguiente línea:
                 await _repository.UpdateAsync(notification);
             }
         }

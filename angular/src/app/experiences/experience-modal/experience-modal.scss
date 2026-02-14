@@ -1,28 +1,25 @@
-/* Animación de Estrellas */
 .star-icon {
   transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
   
   &:hover {
-    transform: scale(1.2); /* Crecen al pasar el mouse */
-    color: #F28C28 !important; /* Se ponen naranjas */
+    transform: scale(1.2); 
+    color: #F28C28 !important; 
   }
   
   &:active {
-    transform: scale(0.9); /* Efecto de "click" */
+    transform: scale(0.9); 
   }
 }
 
-/* Inputs Modernos (Sin borde, fondo gris suave) */
 .form-control {
   &:focus {
     background-color: white;
-    box-shadow: 0 0 0 3px rgba(24, 66, 125, 0.1); /* Sombra azul suave */
+    box-shadow: 0 0 0 3px rgba(24, 66, 125, 0.1); 
     border: 1px solid #18427D;
   }
 }
 
-/* Botón Principal (Naranja Marca) */
 .btn-primary {
   background-color: #F28C28 !important;
   border-color: #F28C28 !important;
@@ -44,7 +41,6 @@
   }
 }
 
-/* Botón Cancelar */
 .btn-light {
   background-color: #f8f9fa;
   border: 1px solid #eee;

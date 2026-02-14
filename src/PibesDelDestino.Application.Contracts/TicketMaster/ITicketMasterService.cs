@@ -5,8 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Volo.Abp.DependencyInjection;
 
-//Vamos a definir las interfaces para el servicio de TicketMaster utilizando un Evento Dto
-
 namespace PibesDelDestino.TicketMaster
 {
     public interface ITicketMasterService : ITransientDependency

@@ -22,22 +22,26 @@ namespace PibesDelDestino.Translation
             _metricRepository = metricRepository;
         }
 
+        // Este método se encarga de traducir un texto utilizando la API de MyMemory.
+        // Mide el tiempo de respuesta, maneja errores y registra métricas.
         public async Task<TranslationResultDto> TranslateAsync(TranslateDto input)
         {
             var stopwatch = Stopwatch.StartNew();
             var isSuccess = false;
-            var errorMessage = ""; // Inicializamos vacío
+            var errorMessage = "";
 
+            //Aca se hace la llamada a la API de MyMemory para traducir el texto.
             try
             {
                 var client = _httpClientFactory.CreateClient();
-                // Usamos MyMemory API
                 var url = $"https://api.mymemory.translated.net/get?q={Uri.EscapeDataString(input.TextToTranslate)}&langpair=es|{input.TargetLanguage}";
 
                 var response = await client.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
                 {
+
+                    // Se lee la respuesta JSON y se extrae el texto traducido.
                     var jsonString = await response.Content.ReadAsStringAsync();
 
                     using var doc = JsonDocument.Parse(jsonString);
@@ -67,9 +71,6 @@ namespace PibesDelDestino.Translation
             }
             finally
             {
-                // 👇 ACÁ ESTABA EL ERROR. 
-                // Antes decíamos: isSuccess ? null : errorMessage.
-                // Ahora usamos string.Empty para que la BD no se queje.
 
                 await _metricRepository.InsertAsync(new ApiMetric(
                     GuidGenerator.Create(),
@@ -77,7 +78,7 @@ namespace PibesDelDestino.Translation
                     endpoint: "/get",
                     isSuccess: isSuccess,
                     responseTimeMs: (int)stopwatch.ElapsedMilliseconds,
-                    errorMessage: isSuccess ? string.Empty : errorMessage // ✅ CAMBIO CLAVE
+                    errorMessage: isSuccess ? string.Empty : errorMessage
                 ));
             }
         }

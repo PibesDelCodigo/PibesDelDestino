@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using PibesDelDestino.Application.Contracts.Destinations;
-using PibesDelDestino.Destinations; // <--- Importar esto
+using PibesDelDestino.Destinations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,20 +10,24 @@ using Volo.Abp.Domain.Repositories;
 
 namespace PibesDelDestino.Favorites
 {
+
+    // Este servicio se encarga de manejar las operaciones relacionadas con los destinos favoritos de los usuarios.
     [Authorize]
     public class FavoriteAppService : ApplicationService, IFavoriteAppService
     {
+        // Inyectamos los repositorios necesarios para acceder a los datos de favoritos y destinos.
         private readonly IRepository<FavoriteDestination, Guid> _repository;
-        private readonly IRepository<Destination, Guid> _destinationRepository; // <--- Nuevo Repositorio
+        private readonly IRepository<Destination, Guid> _destinationRepository;
 
         public FavoriteAppService(
             IRepository<FavoriteDestination, Guid> repository,
-            IRepository<Destination, Guid> destinationRepository) // <--- Inyección
+            IRepository<Destination, Guid> destinationRepository) 
         {
             _repository = repository;
             _destinationRepository = destinationRepository;
         }
 
+        // Este método se encarga de alternar el estado de favorito de un destino para el usuario actual.
         public async Task<bool> ToggleAsync(CreateFavoriteDto input)
         {
             var existingFavorite = await _repository.FindAsync(x =>
@@ -47,6 +51,7 @@ namespace PibesDelDestino.Favorites
             }
         }
 
+        // Este método verifica si un destino específico es favorito para el usuario actual.
         public async Task<bool> IsFavoriteAsync(CreateFavoriteDto input)
         {
             return await _repository.AnyAsync(x =>
@@ -55,12 +60,13 @@ namespace PibesDelDestino.Favorites
             );
         }
 
-        // --- NUEVO MÉTODO: Traer mis favoritos ---
+        // Este metodo obtiene la lista completa de destinos favoritos del usuario actual.
         public async Task<List<DestinationDto>> GetMyFavoritesAsync()
         {
-            // 1. Busco mis IDs de favoritos
+            // Busco mis IDs de favoritos
             var myFavorites = await _repository.GetListAsync(x => x.UserId == CurrentUser.Id);
 
+            // Si no tengo favoritos, devuelvo una lista vacía
             if (!myFavorites.Any())
             {
                 return new List<DestinationDto>();
@@ -68,10 +74,10 @@ namespace PibesDelDestino.Favorites
 
             var destIds = myFavorites.Select(x => x.DestinationId).ToArray();
 
-            // 2. Busco los objetos Destino completos usando esos IDs
+            // Busco los objetos Destino completos usando esos IDs
             var destinations = await _destinationRepository.GetListAsync(x => destIds.Contains(x.Id));
 
-            // 3. Mapeo a DTO para devolver al frontend
+            // Mapeo a DTO para devolver al frontend
             return ObjectMapper.Map<List<Destination>, List<DestinationDto>>(destinations);
         }
     }

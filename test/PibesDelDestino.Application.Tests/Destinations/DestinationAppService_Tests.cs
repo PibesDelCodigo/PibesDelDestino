@@ -10,8 +10,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Guids;
-
-// Namespaces de tu proyecto
+using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Emailing;
+using Volo.Abp.Identity;
+using Microsoft.Extensions.Logging;
 using PibesDelDestino;
 using PibesDelDestino.Destinations;
 using PibesDelDestino.Cities;
@@ -35,6 +37,10 @@ namespace PibesDelDestino.Destinations
         // Estos mocks los necesitamos PARA el Manager
         private readonly IRepository<FavoriteDestination, Guid> _favoriteRepositoryMock;
         private readonly IRepository<AppNotification, Guid> _notificationRepositoryMock;
+        private readonly IIdentityUserRepository _identityUserRepoMock;
+        private readonly IEmailSender _emailSenderMock;
+        private readonly ILogger<NotificationManager> _loggerMock;
+
 
         public DestinationAppService_Tests()
         {
@@ -50,6 +56,9 @@ namespace PibesDelDestino.Destinations
 
             // 2. Configurar GuidGenerator
             _guidGeneratorMock.Create().Returns(Guid.NewGuid());
+            _identityUserRepoMock = Substitute.For<IIdentityUserRepository>();
+            _emailSenderMock = Substitute.For<IEmailSender>();
+            _loggerMock = Substitute.For<ILogger<NotificationManager>>();
 
             // 3. Crear el ServiceProvider Mock (para el Lazy)
             var serviceProvider = Substitute.For<IServiceProvider>();
@@ -60,7 +69,10 @@ namespace PibesDelDestino.Destinations
             var notificationManager = new NotificationManager(
                 _notificationRepositoryMock,
                 _favoriteRepositoryMock,
-                _destinationRepoMock
+                _destinationRepoMock,
+                _identityUserRepoMock,
+                _emailSenderMock,
+                _loggerMock
             );
 
             // 5. Instanciar el Servicio (Usando el nuevo constructor)

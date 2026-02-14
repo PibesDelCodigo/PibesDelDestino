@@ -21,11 +21,10 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private config: ConfigStateService,
-    private cdr: ChangeDetectorRef // <--- 2. INYECTAR
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    // Escuchamos el usuario para la carga inicial
     this.config.getOne$('currentUser').subscribe(currentUser => {
       if (currentUser) {
         this.refreshCount();
@@ -48,8 +47,6 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
       this.notificationService.getUnreadCount().subscribe({
         next: (count) => {
           this.unreadCount = count;
-          
-          // 3. OBLIGAR A ANGULAR A ACTUALIZAR LA PANTALLA
           this.cdr.detectChanges(); 
         },
         error: () => {}

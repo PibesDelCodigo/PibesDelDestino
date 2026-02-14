@@ -11,8 +11,6 @@ using System.Threading.Tasks;
 using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Emailing;
-using Volo.Abp.Identity;
 using Volo.Abp.Threading;
 using Volo.Abp.Uow;
 
@@ -22,43 +20,48 @@ namespace PibesDelDestino.Workers
     {
         private readonly IServiceScopeFactory _serviceScopeFactory;
 
+        // Inyectamos el IServiceScopeFactory para poder resolver servicios dentro del DoWorkAsync.
         public EventCheckingWorker(
             AbpAsyncTimer timer,
             IServiceScopeFactory serviceScopeFactory)
             : base(timer, serviceScopeFactory)
         {
             _serviceScopeFactory = serviceScopeFactory;
-            Timer.Period = 86400000; // 24h
+            Timer.Period = 86400000;
         }
 
+        // Sobrescribimos el método DoWorkAsync para implementar la lógica de búsqueda de eventos y notificación a los usuarios.
         protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
         {
-            Logger.LogInformation("🕵️‍♂️ WORKER: Buscando eventos...");
+            Logger.LogInformation($"🕵️‍♂️ WORKER: Iniciando busqueda de eventos a las {DateTime.Now}...");
 
             using (var scope = _serviceScopeFactory.CreateScope())
             {
+                // Iniciamos una Unidad de Trabajo para asegurar que todas las operaciones de base de datos sean atómicas.
+                //Esto significa que si algo falla en el proceso, no se guardará nada en la base de datos, evitando datos inconsistentes.
                 var unitOfWorkManager = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>();
 
                 using (var uow = unitOfWorkManager.Begin())
                 {
                     try
                     {
-                        // 1. Resolver Servicios (Ahora inyectamos el Manager)
+                        // 1. Resolución de servicios (Repositorios, Servicios, etc.)
                         var destinationRepo = scope.ServiceProvider.GetRequiredService<IRepository<Destination, Guid>>();
                         var favoriteRepo = scope.ServiceProvider.GetRequiredService<IRepository<FavoriteDestination, Guid>>();
                         var ticketMasterService = scope.ServiceProvider.GetRequiredService<ITicketMasterService>();
-                        var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
-                        var userRepo = scope.ServiceProvider.GetRequiredService<IIdentityUserRepository>();
-
-                        // ✨ AQUÍ ESTÁ LA MAGIA: El Manager se encarga de todo lo de notificaciones
                         var notificationManager = scope.ServiceProvider.GetRequiredService<NotificationManager>();
 
-                        // 2. Lógica de búsqueda (Idéntica a la tuya)
+                        // Lógica de búsqueda
                         var favoriteQuery = await favoriteRepo.GetQueryableAsync();
                         var activeDestinationIds = favoriteQuery.Select(f => f.DestinationId).Distinct().ToList();
 
-                        if (!activeDestinationIds.Any()) return;
-
+                        if (!activeDestinationIds.Any())
+                        {
+                            Logger.LogDebug("WORKER: Nadie tiene favoritos activos.");
+                            return;
+                        }
+                            
+                        // Búsqueda de eventos para cada destino activo (Solo aquellos que tienen seguidores)
                         var destinationsToCheck = await destinationRepo.GetListAsync(d => activeDestinationIds.Contains(d.Id));
 
                         foreach (var destination in destinationsToCheck)
@@ -69,18 +72,8 @@ namespace PibesDelDestino.Workers
 
                                 if (events.Any())
                                 {
-                                    // 3. Notificación "Masiva" (El Manager sabe a quién avisarle por Ciudad)
-                                    // NOTA: Esto reemplaza todo tu foreach de usuarios para la notificación en pantalla.
-                                    // Aún podés mantener el envío de mails manual si querés personalizarlo mucho,
-                                    // pero el Manager ya inserta la AppNotification por vos.
+                                    Logger.LogInformation($"WORKER: Encontrados {events.Count} eventos en {destination.City}. Delegando al Manager");
 
-                                    // Para no duplicar notificaciones (porque el Manager notifica a TODOS en la ciudad),
-                                    // podés elegir:
-                                    // A) Dejar que el Manager haga todo (Mails + Notis) -> Ideal a futuro.
-                                    // B) Usar el Manager solo para crear la Noti en BD y dejar tu lógica de mail acá.
-
-                                    // Opción B (Híbrida para no romper tus mails):
-                                    // Llamamos al Manager para que genere las alertas en el sistema.
                                     foreach (var evt in events)
                                     {
                                         await notificationManager.NotifyEventInCityAsync(
@@ -89,27 +82,19 @@ namespace PibesDelDestino.Workers
                                             evt.Url
                                         );
                                     }
-
-                                    // Tu lógica de Mails existente (La dejamos intacta para asegurar el mail)
-                                    var followers = await favoriteRepo.GetListAsync(f => f.DestinationId == destination.Id);
-                                    foreach (var follower in followers)
-                                    {
-                                        var user = await userRepo.FindAsync(follower.UserId);
-                                        // ... (Tu lógica de envío de mail sigue acá igual que antes) ...
-                                    }
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Logger.LogError($"❌ Error en {destination.Name}: {ex.Message}");
+                                Logger.LogError($"❌ WORKER: Error buscando en {destination.City}: {ex.Message}");
                             }
                         }
-
+                        // Si todo salió bien, completamos la Unidad de Trabajo para guardar los cambios en la base de datos.
                         await uow.CompleteAsync();
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError($"🔥 Error CRÍTICO: {ex.Message}");
+                        Logger.LogError($"🔥 WORKER CRITICAL: {ex.Message}");
                     }
                 }
             }
