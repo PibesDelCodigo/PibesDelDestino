@@ -10,6 +10,6 @@ namespace PibesDelDestino.Cities
     {
         public string PartialName { get; set; }
         public int? MinPopulation { get; set; }
-        public string? CountryId { get; set; } // Código de país (ej: 'AR', 'US')
+        public string? CountryId { get; set; }
     }
 }

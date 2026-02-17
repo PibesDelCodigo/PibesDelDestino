@@ -66,7 +66,8 @@ public class PibesDelDestinoDbContext :
 
     private readonly ICurrentUser _currentUser;
     #endregion
-   
+    public DbSet<SearchHistory> SearchHistories { get; set; }
+
 
     public PibesDelDestinoDbContext(
             DbContextOptions<PibesDelDestinoDbContext> options,
@@ -123,6 +124,13 @@ public class PibesDelDestinoDbContext :
             // Índices para que las búsquedas sean rápidas
             b.HasIndex(x => x.CreationTime);
             b.HasIndex(x => x.ServiceName);
+        });
+
+        builder.Entity<SearchHistory>(b =>
+        {
+            b.ToTable(PibesDelDestinoConsts.DbTablePrefix + "SearchHistories", PibesDelDestinoConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.HasIndex(x => x.Term); // Índice para hacer los rankings rápido
         });
 
         builder.Entity<AppNotification>(b =>

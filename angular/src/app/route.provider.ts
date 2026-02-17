@@ -1,5 +1,6 @@
 import { RoutesService, eLayoutType } from '@abp/ng.core';
 import { APP_INITIALIZER } from '@angular/core';
+import { eThemeSharedRouteNames } from '@abp/ng.theme.shared';
 
 export const APP_ROUTE_PROVIDER = [
   { provide: APP_INITIALIZER, useFactory: configureRoutes, deps: [RoutesService], multi: true },
@@ -15,31 +16,49 @@ function configureRoutes(routesService: RoutesService) {
         order: 1,
         layout: eLayoutType.application,
       },
-      // --- Buscador de Ciudades ---
+
       {
         path: '/city-search',
         name: 'Buscar Ciudades',
         iconClass: 'fas fa-search',
-        order: 2, // Segundo lugar
+        order: 2,
         layout: eLayoutType.application,
       },
-      // --- NUEVO: Mis Favoritos ---
+      
       {
         path: '/favorites',
         name: 'Mis Favoritos',
         iconClass: 'fas fa-heart',
-        order: 3, // Tercer lugar (Corregido para que no se pise con el anterior)
+        order: 3, 
         layout: eLayoutType.application,
       },
-      // --- Mi Cuenta ---
+      
       {
-        path: '/my-account',
-        name: 'Eliminar Cuenta', // ¿Seguro que querés que el menú diga "Eliminar Cuenta"? Quizás "Mi Cuenta" suena menos peligroso jaja
-        iconClass: 'fas fa-user-cog',
-        order: 4, // Cuarto lugar
+        path: '/metrics',
+        name: 'Dashboard de Métricas',     
+        parentName: 'AbpUiNavigation::Menu:Administration', 
         layout: eLayoutType.application,
-        requiredPolicy: '', 
+        iconClass: 'fa fa-bar-chart',      
+        order: 1,                          
+        requiredPolicy: 'AbpIdentity.Users', 
       },
+
+      {
+        path: '/my-profile',       
+        name: 'Mi Perfil',         
+        iconClass: 'fas fa-user-circle', 
+        order: 2,                  
+        layout: eLayoutType.application,
+      },
+
+      {
+    path: '/profile-redirect', 
+    name: 'Perfil Público',
+    order: 2,
+    iconClass: 'fa fa-external-link-alt', 
+    layout: eLayoutType.application,
+  },
+
     ]);
   };
 }

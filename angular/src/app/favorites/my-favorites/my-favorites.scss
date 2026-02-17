@@ -1,0 +1,85 @@
+.animate-up {
+  animation: fadeInUp 0.6s ease forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes fadeInUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fav-card {
+  transition: transform 0.3s, box-shadow 0.3s;
+  border-radius: 16px;
+  background: white;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+
+    .btn-action {
+      background-color: #18427D; 
+      color: white;
+      border-color: #18427D;
+    }
+  }
+}
+
+.card-header-visual {
+  height: 120px;
+  background-size: cover;
+  background-position: center;
+}
+
+.col:nth-child(1n) .card-header-visual { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%); }
+.col:nth-child(2n) .card-header-visual { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+.col:nth-child(3n) .card-header-visual { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
+.col:nth-child(4n) .card-header-visual { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); }
+.col:nth-child(5n) .card-header-visual { background: linear-gradient(120deg, #f093fb 0%, #f5576c 100%); }
+.col:nth-child(6n) .card-header-visual { background: linear-gradient(120deg, #89f7fe 0%, #66a6ff 100%); }
+
+.btn-remove {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.9;
+  z-index: 2;
+
+  &:hover {
+    transform: scale(1.1);
+    background-color: #fee2e2; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+}
+
+.btn-action {
+  transition: all 0.3s;
+  border-width: 2px;
+}
+
+.empty-state-card {
+  border: 2px dashed #dee2e6;
+  background-color: #f8f9fa;
+}
+
+.border-dashed { border-style: dashed !important; }
+
+.btn-primary {
+  background-color: #F28C28; 
+  border-color: #F28C28;
+  
+  &:hover {
+    background-color: #d97706;
+    transform: translateY(-2px);
+  }
+}

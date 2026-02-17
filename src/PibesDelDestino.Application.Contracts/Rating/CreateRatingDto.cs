@@ -12,7 +12,7 @@ namespace PibesDelDestino.Ratings
         [Range(1, 5, ErrorMessage = "La calificación debe estar entre 1 y 5.")]
         public int Score { get; set; }
 
-        [StringLength(1000)] // Opcional: limitar longitud del comentario
+        [StringLength(1000)] 
         public string Comment { get; set; }
     }
 }

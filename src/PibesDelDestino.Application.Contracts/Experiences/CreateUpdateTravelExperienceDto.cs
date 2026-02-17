@@ -6,7 +6,7 @@ namespace PibesDelDestino.Experiences
     public class CreateUpdateTravelExperienceDto
     {
         [Required]
-        public Guid DestinationId { get; set; } // Sobre qué destino opina
+        public Guid DestinationId { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -20,6 +20,6 @@ namespace PibesDelDestino.Experiences
         public DateTime Date { get; set; } = DateTime.Now;
 
         [Range(1, 5)]
-        public int Rating { get; set; } // Validación automática de rango
+        public int Rating { get; set; } 
     }
 }

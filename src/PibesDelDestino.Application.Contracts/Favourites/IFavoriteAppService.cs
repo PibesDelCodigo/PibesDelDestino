@@ -9,7 +9,7 @@ namespace PibesDelDestino.Favorites
     {
         Task<bool> ToggleAsync(CreateFavoriteDto input);
         Task<List<DestinationDto>> GetMyFavoritesAsync();
-        Task<bool> IsFavoriteAsync(CreateFavoriteDto input); // Para saber de qué color pintar el corazón
+        Task<bool> IsFavoriteAsync(CreateFavoriteDto input);
     }
 
 

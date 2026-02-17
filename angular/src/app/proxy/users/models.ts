@@ -4,4 +4,5 @@ export interface PublicUserDto extends EntityDto<string> {
   userName?: string;
   name?: string;
   surname?: string;
+  profilePictureUrl?: string;
 }

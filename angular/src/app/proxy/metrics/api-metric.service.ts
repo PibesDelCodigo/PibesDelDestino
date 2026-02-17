@@ -1,4 +1,4 @@
-import type { ApiMetricDto, GetApiMetricsInput } from './models';
+import type { ApiMetricDto, DashboardDto, GetApiMetricsInput } from './models';
 import { RestService, Rest } from '@abp/ng.core';
 import type { PagedResultDto } from '@abp/ng.core';
 import { Injectable } from '@angular/core';
@@ -14,6 +14,14 @@ export class ApiMetricService {
     this.restService.request<any, ApiMetricDto>({
       method: 'GET',
       url: `/api/app/api-metric/${id}`,
+    },
+    { apiName: this.apiName,...config });
+  
+
+  getDashboardStats = (config?: Partial<Rest.Config>) =>
+    this.restService.request<any, DashboardDto>({
+      method: 'GET',
+      url: '/api/app/api-metric/dashboard-stats',
     },
     { apiName: this.apiName,...config });
   

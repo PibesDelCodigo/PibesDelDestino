@@ -17,19 +17,18 @@ export class NotificationService {
     { apiName: this.apiName,...config });
   
 
-  getNotificationPreference = (config?: Partial<Rest.Config>) =>
-    this.restService.request<any, string>({
-      method: 'GET',
-      responseType: 'text',
-      url: '/api/app/notification/notification-preference',
-    },
-    { apiName: this.apiName,...config });
-  
-
   getUnreadCount = (config?: Partial<Rest.Config>) =>
     this.restService.request<any, number>({
       method: 'GET',
       url: '/api/app/notification/unread-count',
+    },
+    { apiName: this.apiName,...config });
+  
+
+  markAllAsRead = (config?: Partial<Rest.Config>) =>
+    this.restService.request<any, void>({
+      method: 'POST',
+      url: '/api/app/notification/mark-all-as-read',
     },
     { apiName: this.apiName,...config });
   
@@ -46,15 +45,6 @@ export class NotificationService {
     this.restService.request<any, void>({
       method: 'POST',
       url: `/api/app/notification/${id}/mark-as-unread`,
-    },
-    { apiName: this.apiName,...config });
-  
-
-  setNotificationPreference = (preference: string, config?: Partial<Rest.Config>) =>
-    this.restService.request<any, void>({
-      method: 'POST',
-      url: '/api/app/notification/set-notification-preference',
-      params: { preference },
     },
     { apiName: this.apiName,...config });
 

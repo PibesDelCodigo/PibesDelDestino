@@ -9,7 +9,6 @@ namespace PibesDelDestino.Favorites
         public Guid UserId { get; private set; }
         public Guid DestinationId { get; private set; }
 
-        // Constructor privado para el ORM
         private FavoriteDestination() { }
 
         public FavoriteDestination(Guid id, Guid userId, Guid destinationId)

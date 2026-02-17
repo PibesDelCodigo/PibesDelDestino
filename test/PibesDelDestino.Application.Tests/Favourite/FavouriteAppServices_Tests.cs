@@ -38,15 +38,10 @@ namespace PibesDelDestino.Favorites
         [Fact]
         public async Task Should_Toggle_Favorite_Status()
         {
-            // ARRANGE
             var destinationId = Guid.NewGuid();
             var userId = Guid.NewGuid();
-
-            // 1. Configuramos el Mock de CurrentUser para que tenga un ID (ya que el servicio lo usa)
             var currentUser = GetRequiredService<ICurrentUser>();
-            // Nota: En integración real se usa Login, aquí el Proxy hereda el contexto.
 
-            // 2. Creamos el destino usando su constructor completo
             var destination = new Destination(
                 destinationId,
                 "Tokyo",
@@ -58,21 +53,18 @@ namespace PibesDelDestino.Favorites
                 new Coordinates(35.6762f, 139.6503f)
             );
 
-            // 3. Simulamos que NO existe en favoritos aún (FindAsync devuelve null)
+            //Simulamos que no existe en favoritos aun
             _favoriteRepositoryMock.FindAsync(Arg.Any<Expression<Func<FavoriteDestination, bool>>>())
                 .Returns(Task.FromResult<FavoriteDestination>(null));
 
-            // ACT
             var input = new CreateFavoriteDto { DestinationId = destinationId };
             await _favoriteAppService.ToggleAsync(input);
 
-            // ASSERT
             // Verificamos que al no existir, se llamó al Insert
             await _favoriteRepositoryMock.Received(1).InsertAsync(Arg.Any<FavoriteDestination>());
         }
     }
 
-    // ✅ PROXY PÚBLICO
     public class FavoriteAppServiceTestProxy : FavoriteAppService
     {
         public FavoriteAppServiceTestProxy(
@@ -82,8 +74,6 @@ namespace PibesDelDestino.Favorites
             : base(repository, destinationRepository)
         {
             LazyServiceProvider = serviceProvider.GetRequiredService<IAbpLazyServiceProvider>();
-
-            // Forzamos un ID de usuario en el CurrentUser para que no explote el .Value
             var currentUser = serviceProvider.GetRequiredService<ICurrentUser>();
         }
     }

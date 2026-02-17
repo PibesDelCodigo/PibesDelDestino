@@ -1,6 +1,6 @@
 ﻿using System;
 using Volo.Abp.Domain.Entities.Auditing;
-using Volo.Abp; // Necesario para las validaciones (Check)
+using Volo.Abp; 
 
 namespace PibesDelDestino.Experiences
 {
@@ -15,7 +15,6 @@ namespace PibesDelDestino.Experiences
         public DateTime Date { get; private set; }
         public int Rating { get; private set; }
 
-        // Constructor...
         public TravelExperience(Guid id, Guid userId, Guid destinationId, string title, string description, DateTime date, int rating)
             : base(id)
         {
@@ -27,11 +26,9 @@ namespace PibesDelDestino.Experiences
             Rating = rating;
         }
 
-        // 👇 MÉTODO NUEVO: La forma correcta de editar 👇
+      
         public void Update(string title, string description, int rating, DateTime date)
         {
-            // Acá podrías agregar validaciones extra si quisieras
-            // Ejemplo: if (rating < 1 || rating > 5) throw ...
 
             Title = Check.NotNullOrWhiteSpace(title, nameof(title));
             Description = description;

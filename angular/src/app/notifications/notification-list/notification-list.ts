@@ -1,20 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router'; // 👈 1. Importamos esto
+import { RouterModule } from '@angular/router';
 import { NotificationService } from 'src/app/proxy/notifications';
 import { AppNotificationDto } from 'src/app/proxy/notifications';
+import { ToasterService } from '@abp/ng.theme.shared';
+import { RestService } from '@abp/ng.core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-notification-list',
   standalone: true,
-  imports: [CommonModule, RouterModule], // 👈 2. Lo agregamos acá
+  imports: [CommonModule, RouterModule], 
   templateUrl: './notification-list.html',
   styleUrls: ['./notification-list.scss']
 })
 export class NotificationListComponent implements OnInit {
 
+  private rest = inject(RestService);
+  private toaster = inject(ToasterService);
+  private router = inject(Router);
+
   notifications: AppNotificationDto[] = [];
   isLoading = true;
+  unreadCount = 0;
 
   constructor(private notificationService: NotificationService) {}
 
@@ -27,6 +35,7 @@ export class NotificationListComponent implements OnInit {
     this.notificationService.getMyNotifications().subscribe({
       next: (list) => {
         this.notifications = list;
+        this.unreadCount = list.filter(n => !n.isRead).length;
         this.isLoading = false;
       },
       error: (err) => {
@@ -41,6 +50,7 @@ export class NotificationListComponent implements OnInit {
 
     this.notificationService.markAsRead(item.id).subscribe(() => {
       item.isRead = true; 
+      this.unreadCount--;
     });
   }
 
@@ -55,4 +65,28 @@ export class NotificationListComponent implements OnInit {
     if (type === 'DestinationUpdate') return 'text-warning'; 
     return 'text-secondary';
   }
-}
+
+  openSettings() {
+    this.router.navigate(['/settings']);
+  }
+
+  markAllAsRead() {
+    if (this.unreadCount === 0) return; 
+
+    this.isLoading = true;
+
+    this.rest.request({
+      method: 'POST',
+      url: '/api/app/notification/mark-all-as-read'
+    }).subscribe({
+      next: () => {
+        this.toaster.success('¡Todo limpio! 🧹');
+        this.loadNotifications(); 
+      },
+      error: () => {
+        this.toaster.error('No se pudieron marcar como leídas');
+        this.isLoading = false;
+      }
+    });
+  }
+} 

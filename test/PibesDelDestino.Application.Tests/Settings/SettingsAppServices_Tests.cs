@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using System.Runtime.Serialization; // Vital para el truco de FormatterServices
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Shouldly;
@@ -9,76 +8,68 @@ using Volo.Abp.DependencyInjection;
 using Volo.Abp.Identity;
 using Volo.Abp.Users;
 using Volo.Abp.Data;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace PibesDelDestino.Settings
 {
     public class SettingsAppService_Tests : PibesDelDestinoApplicationTestBase<PibesDelDestinoApplicationTestModule>
     {
         private readonly SettingsAppService _settingsAppService;
-        private readonly MockIdentityUserManager _userManagerManualMock;
+        private readonly IdentityUserManager _realUserManager;
         private readonly ICurrentUser _currentUserMock;
 
         public SettingsAppService_Tests()
         {
-            // 1. Mock del CurrentUser
+            _realUserManager = GetRequiredService<IdentityUserManager>();
             _currentUserMock = Substitute.For<ICurrentUser>();
-            _currentUserMock.Id.Returns(Guid.NewGuid());
-
-            // 2. Mock del ServiceProvider
             var serviceProviderMock = Substitute.For<IServiceProvider>();
             serviceProviderMock.GetService(typeof(ICurrentUser)).Returns(_currentUserMock);
 
-            // 3. LA SOLUCIÓN: Creamos el UserManager saltando el constructor
-            // Esto evita que se ejecute el constructor de abajo que tiene nulls, 
-            // evitando el ArgumentNullException del 'store'.
-            _userManagerManualMock = (MockIdentityUserManager)FormatterServices.GetUninitializedObject(typeof(MockIdentityUserManager));
-
-            // 4. Instancia del Proxy del Servicio
             _settingsAppService = new SettingsAppServiceTestProxy(
-                _userManagerManualMock,
+                _realUserManager,
                 serviceProviderMock
             );
         }
 
         [Fact]
-        public async Task Should_Update_Preference()
+        public async Task Should_Update_Preferences()
         {
-            // ARRANGE
-            var userId = _currentUserMock.Id.Value;
-            var fakeUser = new Volo.Abp.Identity.IdentityUser(userId, "testuser", "test@test.com");
+            var user = new IdentityUser(Guid.NewGuid(), "testuser", "test@test.com");
+            await _realUserManager.CreateAsync(user);
 
-            // Configuramos nuestro Mock manual para que devuelva el usuario
-            _userManagerManualMock.UserToReturn = fakeUser;
+            _currentUserMock.Id.Returns(user.Id);
+            var input = new UserPreferencesDto
+            {
+                ReceiveNotifications = false,
+                NotificationType = 1 // Solo Email
+            };
+            await _settingsAppService.UpdatePreferencesAsync(input);
 
-            // ACT
-            await _settingsAppService.UpdateNotificationPreferenceAsync(false);
+            // Verificamos en la base de datos real
+            var updatedUser = await _realUserManager.GetByIdAsync(user.Id);
 
-            // ASSERT
-            _userManagerManualMock.UpdateCalled.ShouldBeTrue();
-            fakeUser.GetProperty<bool>("ReceiveNotifications").ShouldBe(false);
+            // Verificamos que se hayan guardado las dos propiedades
+            updatedUser.GetProperty<bool>("ReceiveNotifications").ShouldBe(false);
+            updatedUser.GetProperty<int>("NotificationType").ShouldBe(1);
         }
 
         [Fact]
-        public async Task Should_Get_Notification_Preference_Default_True()
+        public async Task Should_Get_Preferences_Default()
         {
-            // ARRANGE
-            var userId = _currentUserMock.Id.Value;
-            var fakeUser = new Volo.Abp.Identity.IdentityUser(userId, "testuser", "test@test.com");
 
-            _userManagerManualMock.UserToReturn = fakeUser;
+            var user = new IdentityUser(Guid.NewGuid(), "testuser2", "test2@test.com");
+            // No seteamos nada, así probamos los defaults
+            await _realUserManager.CreateAsync(user);
 
-            // ACT
-            var result = await _settingsAppService.GetNotificationPreferenceAsync();
+            _currentUserMock.Id.Returns(user.Id);
 
-            // ASSERT
-            result.ShouldBe(true);
+            var result = await _settingsAppService.GetPreferencesAsync();
+
+            result.ReceiveNotifications.ShouldBe(true);
+            result.NotificationType.ShouldBe(2); 
         }
     }
 
-    // --- PROXY PARA INYECTAR LAZYSERVICEPROVIDER ---
     public class SettingsAppServiceTestProxy : SettingsAppService
     {
         public SettingsAppServiceTestProxy(
@@ -87,52 +78,6 @@ namespace PibesDelDestino.Settings
             : base(userManager)
         {
             LazyServiceProvider = new AbpLazyServiceProvider(serviceProvider);
-        }
-    }
-
-    // --- MOCK MANUAL DEL USER MANAGER ---
-    public class MockIdentityUserManager : IdentityUserManager
-    {
-        // Constructor "Dummy" solo para que compile.
-        // NUNCA SE EJECUTA gracias a FormatterServices.GetUninitializedObject
-        public MockIdentityUserManager()
-            : base(
-                null!, // store
-                null!, // roleRepo
-                null!, // userRepo
-                null!, // options
-                null!, // hasher
-                null!, // userValidators
-                null!, // passwordValidators
-                null!, // keyNormalizer
-                null!, // errors
-                null!, // services
-                null!, // logger
-                null!, // cancellationToken
-                null!, // orgUnitRepo
-                null!, // settingProvider
-                null!, // eventBus
-                null!, // linkUserRepo
-                null!  // claimCache
-            )
-        {
-        }
-
-        // Propiedades de control para el Test
-        public Volo.Abp.Identity.IdentityUser UserToReturn { get; set; }
-        public bool UpdateCalled { get; private set; }
-
-        // Sobreescribimos GetByIdAsync
-        public override Task<Volo.Abp.Identity.IdentityUser> GetByIdAsync(Guid id)
-        {
-            return Task.FromResult(UserToReturn);
-        }
-
-        // Sobreescribimos UpdateAsync
-        public override Task<IdentityResult> UpdateAsync(Volo.Abp.Identity.IdentityUser user)
-        {
-            UpdateCalled = true;
-            return Task.FromResult(IdentityResult.Success);
         }
     }
 }

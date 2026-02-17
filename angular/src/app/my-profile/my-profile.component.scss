@@ -1,0 +1,138 @@
+.profile-container {
+  max-width: 850px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.global-card {
+  background: white;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+  overflow: hidden; 
+  transition: transform 0.2s ease;
+
+  .card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 0; 
+  }
+
+  .card-body {
+    padding: 2rem;
+  }
+}
+
+.nav-tabs {
+  border-bottom: none;
+  display: flex;
+  
+  .nav-item {
+    flex: 1;
+    text-align: center;
+    
+    @media (min-width: 768px) {
+      flex: none;
+      text-align: left;
+    }
+  }
+
+  .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6c757d;
+    font-weight: 600;
+    padding: 1.2rem 1.5rem;
+    transition: all 0.3s;
+    border-radius: 0;
+
+    i {
+      color: #adb5bd;
+      transition: color 0.3s;
+    }
+
+    &:hover {
+      background-color: #f8f9fa;
+      color: #18427D; 
+      
+      i { color: #18427D; }
+    }
+
+    &.active {
+      color: #18427D;
+      background-color: transparent;
+      border-bottom-color: #18427D; 
+      
+      i { color: #18427D; }
+    }
+  }
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr; 
+  gap: 1.5rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 1fr;
+    
+    .col-span-2 {
+      grid-column: span 2;
+    }
+  }
+}
+
+.form-label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    border-color: #18427D;
+    box-shadow: 0 0 0 3px rgba(24, 66, 125, 0.1);
+  }
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-right: none;
+  color: #6c757d;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.input-group > .form-control {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.btn-primary {
+  background-color: #18427D;
+  border-color: #18427D;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  box-shadow: 0 4px 6px rgba(24, 66, 125, 0.2);
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #133363;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px rgba(24, 66, 125, 0.3);
+  }
+
+  &:disabled {
+    background-color: #a0b4d1;
+    border-color: #a0b4d1;
+    transform: none;
+  }
+}

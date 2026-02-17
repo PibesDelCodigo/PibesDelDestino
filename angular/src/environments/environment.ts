@@ -16,6 +16,7 @@ export const environment = {
   application: {
     baseUrl,
     name: 'PibesDelDestino',
+    logoUrl: 'assets/images/logo/logo.png',
   },
   oAuthConfig,
   apis: {

@@ -279,6 +279,33 @@ namespace PibesDelDestino.Migrations
                     b.ToTable("AppApiMetrics", (string)null);
                 });
 
+            modelBuilder.Entity("PibesDelDestino.Metrics.SearchHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<int>("ResultCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Term")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Term");
+
+                    b.ToTable("AppSearchHistories", (string)null);
+                });
+
             modelBuilder.Entity("PibesDelDestino.Notifications.AppNotification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -365,7 +392,7 @@ namespace PibesDelDestino.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Ratings");
+                    b.ToTable("Rating");
                 });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLog", b =>

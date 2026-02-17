@@ -9,7 +9,7 @@ namespace PibesDelDestino.Notifications
     {
         Task<List<AppNotificationDto>> GetMyNotificationsAsync();
         Task MarkAsReadAsync(Guid id);
-        Task MarkAsUnreadAsync(Guid id); // Para cumplir el 6.4 completo (toggle)
+        Task MarkAsUnreadAsync(Guid id); 
         Task<int> GetUnreadCountAsync();
     }
 }

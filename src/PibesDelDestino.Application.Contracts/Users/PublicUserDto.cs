@@ -9,6 +9,6 @@ namespace PibesDelDestino.Users
         public string Name { get; set; }
         public string Surname { get; set; }
 
-       // "Photo" si en el futuro la implementamos
+        public string ProfilePictureUrl { get; set; }
     }
 }

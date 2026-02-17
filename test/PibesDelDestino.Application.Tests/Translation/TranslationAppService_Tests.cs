@@ -20,13 +20,13 @@ namespace PibesDelDestino.Translation
 
         public TranslationAppService_Tests()
         {
-            // 1. Mock del repositorio de métricas
+            //Mock del repositorio de métricas
             _metricRepositoryMock = Substitute.For<IRepository<ApiMetric, Guid>>();
 
-            // 2. Obtenemos el IHttpClientFactory real (para que la traducción funcione de verdad)
+            //Obtenemos el IHttpClientFactory real (para que la traducción funcione de verdad)
             var httpClientFactory = GetRequiredService<IHttpClientFactory>();
 
-            // 3. Instanciamos usando el Proxy público
+            //Instanciamos usando el Proxy público
             _translationAppService = new TranslationAppServiceTestProxy(
                 httpClientFactory,
                 _metricRepositoryMock,
@@ -37,17 +37,14 @@ namespace PibesDelDestino.Translation
         [Fact]
         public async Task Should_Translate_Text_Successfully()
         {
-            // ARRANGE
             var input = new TranslateDto
             {
                 TextToTranslate = "Hello",
                 TargetLanguage = "es"
             };
 
-            // ACT
             var result = await _translationAppService.TranslateAsync(input);
 
-            // ASSERT
             result.ShouldNotBeNull();
             result.TranslatedText.ShouldNotBeNullOrEmpty();
 

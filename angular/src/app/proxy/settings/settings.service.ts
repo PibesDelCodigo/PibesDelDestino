@@ -1,3 +1,4 @@
+import type { UserPreferencesDto } from './models';
 import { RestService, Rest } from '@abp/ng.core';
 import { Injectable } from '@angular/core';
 
@@ -8,19 +9,19 @@ export class SettingsService {
   apiName = 'Default';
   
 
-  getNotificationPreference = (config?: Partial<Rest.Config>) =>
-    this.restService.request<any, boolean>({
+  getPreferences = (config?: Partial<Rest.Config>) =>
+    this.restService.request<any, UserPreferencesDto>({
       method: 'GET',
-      url: '/api/app/settings/notification-preference',
+      url: '/api/app/settings/preferences',
     },
     { apiName: this.apiName,...config });
   
 
-  updateNotificationPreference = (enabled: boolean, config?: Partial<Rest.Config>) =>
+  updatePreferences = (input: UserPreferencesDto, config?: Partial<Rest.Config>) =>
     this.restService.request<any, void>({
       method: 'PUT',
-      url: '/api/app/settings/notification-preference',
-      params: { enabled },
+      url: '/api/app/settings/preferences',
+      body: input,
     },
     { apiName: this.apiName,...config });
 

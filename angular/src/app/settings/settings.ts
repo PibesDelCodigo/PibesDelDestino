@@ -2,31 +2,23 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToasterService } from '@abp/ng.theme.shared';
-import { SettingsService } from '../proxy/settings';
-import { NotificationService } from 'src/app/proxy/notifications'; // 👈 Asegúrate que este path sea correcto
+import { RestService } from '@abp/ng.core';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './settings.html' // 👈 Verifica que se llame así tu archivo HTML
+  templateUrl: './settings.html',
 })
 export class SettingsComponent implements OnInit {
 
-  // Inyecciones
-  private settingsService = inject(SettingsService);
-  private notificationService = inject(NotificationService);
+  private rest = inject(RestService);
   private toaster = inject(ToasterService);
 
-  // Variables de Estado
   isLoading = true;
-  notificationsEnabled = true; // Interruptor general
-
-  // 👇 ESTA ES LA VARIABLE QUE TE FALTABA (La que pide el error 1)
+  notificationsEnabled = true;
   currentPreference: string = 'Ambas';
-
-  // 👇 ESTA ES LA VARIABLE PARA EL MENSAJE (La que pide el error 3)
-  saved: boolean = false;
+  saved = false;
 
   ngOnInit() {
     this.loadSettings();
@@ -34,69 +26,62 @@ export class SettingsComponent implements OnInit {
 
   loadSettings() {
     this.isLoading = true;
-
-    // 1. Cargar preferencia General
-    this.settingsService.getNotificationPreference().subscribe({
-      next: (val) => {
-        this.notificationsEnabled = val;
-        this.checkLoadingComplete();
-      },
-      error: () => this.checkLoadingComplete()
-    });
-
-    // 2. Cargar preferencia de Canal
-    this.notificationService.getNotificationPreference().subscribe({
-      next: (pref) => {
-        this.currentPreference = pref || 'Ambas';
-        this.checkLoadingComplete();
-      },
-      error: () => this.checkLoadingComplete()
-    });
-  }
-
-  private loadingCounter = 0;
-  private checkLoadingComplete() {
-    this.loadingCounter++;
-    if (this.loadingCounter >= 2) this.isLoading = false;
-  }
-
-  toggleNotifications() {
-    this.isLoading = true;
-    const newValue = !this.notificationsEnabled;
-
-    this.settingsService.updateNotificationPreference(newValue).subscribe({
-      next: () => {
-        this.notificationsEnabled = newValue;
+    this.rest.request<void, any>({
+      method: 'GET',
+      url: '/api/app/settings/preferences' 
+    }).subscribe({
+      next: (res) => {
+        this.notificationsEnabled = res.receiveNotifications;
+        this.currentPreference = this.mapIntToString(res.notificationType);
         this.isLoading = false;
-        const estado = newValue ? 'ACTIVADAS 🔔' : 'DESACTIVADAS 🔕';
-        this.toaster.success(`Notificaciones generales ${estado}`);
       },
       error: () => {
-        this.toaster.error('Error al guardar configuración');
+        this.toaster.error('Error al cargar configuración');
         this.isLoading = false;
       }
     });
   }
 
-  // 👇 ESTE ES EL MÉTODO QUE TE FALTABA (El que pide el error 2)
-  savePreference() {
+  saveSettings() {
     this.isLoading = true;
-    this.saved = false; // Resetear mensaje
+    this.saved = false;
+    const payload = {
+      receiveNotifications: this.notificationsEnabled,
+      notificationType: this.mapStringToInt(this.currentPreference)
+    };
 
-    this.notificationService.setNotificationPreference(this.currentPreference).subscribe({
+    this.rest.request({
+      method: 'PUT',
+      url: '/api/app/settings/preferences',
+      body: payload
+    }).subscribe({
       next: () => {
         this.isLoading = false;
-        this.saved = true; // Mostrar mensaje "Guardado"
-        this.toaster.success('Preferencia de canal actualizada ✅');
-
-        // Ocultar mensaje a los 3 seg
+        this.saved = true;
+        this.toaster.success('Preferencias guardadas ✅');
         setTimeout(() => this.saved = false, 3000);
       },
       error: (err) => {
         console.error(err);
-        this.toaster.error('Error al guardar el canal');
         this.isLoading = false;
+        this.toaster.error('Error al guardar. Intenta de nuevo.');
       }
     });
+  }
+
+  private mapStringToInt(pref: string): number {
+    const valor = (pref || '').toLowerCase().trim();
+    if (valor === 'pantalla') return 0;
+    if (valor === 'email') return 1;
+    return 2;
+  }
+
+  private mapIntToString(type: number): string {
+    switch (type) {
+      case 0: return 'Pantalla';
+      case 1: return 'Email';
+      case 2: return 'Ambas';
+      default: return 'Ambas';
+    }
   }
 }

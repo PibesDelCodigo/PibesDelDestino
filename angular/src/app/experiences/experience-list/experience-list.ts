@@ -1,24 +1,18 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router'; // Importante para navegar
+import { RouterModule, Router } from '@angular/router'; 
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-
-// Proxies de ABP
 import { TravelExperienceService, TravelExperienceDto } from 'src/app/proxy/experiences';
-import { TranslationService } from 'src/app/proxy/translation'; // Servicio de traducción nuevo
-
-// Servicios de ABP Core/Theme
+import { TranslationService } from 'src/app/proxy/translation';
 import { ConfigStateService } from '@abp/ng.core';
 import { ConfirmationService, Confirmation, ToasterService } from '@abp/ng.theme.shared';
-
-// Componentes
 import { ExperienceModalComponent } from '../experience-modal/experience-modal'; 
 
 @Component({
   selector: 'app-experience-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule], // Agregamos RouterModule acá
+  imports: [CommonModule, FormsModule, RouterModule], 
   templateUrl: './experience-list.html',
   styleUrls: ['./experience-list.scss']
 })
@@ -31,12 +25,9 @@ export class ExperienceListComponent implements OnInit {
   stars = [1, 2, 3, 4, 5];
   searchText: string = '';
   filterType: number = null; 
+  translatedTexts: { [key: string]: string } = {}; 
+  isTranslating: { [key: string]: boolean } = {};  
 
-  // Variables para la Traducción (Req 7.1)
-  translatedTexts: { [key: string]: string } = {}; // Diccionario: ID -> Texto Traducido
-  isTranslating: { [key: string]: boolean } = {};  // Diccionario: ID -> Cargando...
-
-  // Inyecciones
   private router = inject(Router);
   private translationService = inject(TranslationService);
   private toaster = inject(ToasterService);
@@ -48,7 +39,6 @@ export class ExperienceListComponent implements OnInit {
     private modalService: NgbModal
   ) {}
 
-  // Getter para obtener MI ID de usuario actual
   get currentUserId(): string {
     return this.config.getOne('currentUser')?.id;
   }
@@ -80,32 +70,46 @@ export class ExperienceListComponent implements OnInit {
     });
   }
 
-  // --- FUNCIÓN PARA IR AL PERFIL PÚBLICO ---
   goToUserProfile(userId: string | undefined, userName: string | undefined) {
     console.log('👉 Intentando ir al perfil de:', userName);
     console.log('🔑 ID del usuario:', userId);
 
     if (!userId) {
         console.error('❌ ERROR: El userId está vacío o indefinido. No se puede navegar.');
-        // Opcional: mostrar alerta
         return;
     }
-
-    // Navegamos manualmente
     this.router.navigate(['/profile', userId]);
   }
 
-  // --- FUNCIÓN DE TRADUCCIÓN (API EXTERNA + MÉTRICAS) ---
-  translate(id: string, text: string) {
-    // Si ya está traducido, no hacemos nada para no gastar API
-    if (this.translatedTexts[id]) return;
+getAvatarColor(name: string | undefined): string {
+  if (!name) return '#ccc';
+  const colors = ['#F28C28', '#18427D', '#E74C3C', '#2ECC71', '#9B59B6', '#F39C12', '#1ABC9C'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash % colors.length);
+  return colors[index];
+}
 
-    // Activamos spinner solo para esta tarjeta
+createExperience() { 
+  const modalRef = this.modalService.open(ExperienceModalComponent, { size: 'lg', centered: true });
+  
+  modalRef.componentInstance.destinationId = this.destinationId;
+  modalRef.result.then((result) => {
+    if (result === 'success') {
+      this.loadExperiences();
+    }
+  }, () => {});
+}
+
+  translate(id: string, text: string) {
+    if (this.translatedTexts[id]) return;
     this.isTranslating[id] = true;
 
     this.translationService.translate({ 
       textToTranslate: text, 
-      targetLanguage: 'en' // Traducimos al Inglés (o podés parametrizar esto)
+      targetLanguage: 'en' 
     }).subscribe({
       next: (res) => {
         this.translatedTexts[id] = res.translatedText;
@@ -119,7 +123,6 @@ export class ExperienceListComponent implements OnInit {
     });
   }
 
-  // --- FUNCIÓN ELIMINAR ---
   delete(experience: TravelExperienceDto) {
     this.confirmation.warn('¿Seguro que querés borrar esta reseña?', 'Confirmar eliminación')
       .subscribe((status: Confirmation.Status) => {
@@ -132,7 +135,6 @@ export class ExperienceListComponent implements OnInit {
       });
   }
 
-  // --- FUNCIÓN EDITAR ---
   editExperience(experience: TravelExperienceDto) {
     const modalRef = this.modalService.open(ExperienceModalComponent, { size: 'lg' });
 

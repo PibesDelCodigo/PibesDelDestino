@@ -4,13 +4,21 @@
     <h3 class="m-0">🔔 Notificaciones</h3>
     
     <div class="d-flex gap-2">
-      <a routerLink="/settings" class="btn btn-sm btn-outline-secondary d-flex align-items-center" title="Configurar">
-        <i class="fa fa-cog"></i> <span class="d-none d-md-inline ms-1">Configurar</span>
-      </a>
-
-      <button class="btn btn-sm btn-outline-primary" (click)="loadNotifications()" title="Actualizar lista">
-        <i class="fa fa-sync"></i> Actualizar
+    
+      <button class="btn btn-violet" (click)="markAllAsRead()" [disabled]="isLoading || unreadCount === 0"
+        title="Marcar todo como leído">
+        <i class="fa fa-check-double me-1"></i>
+        <span class="d-none d-md-inline">Marcar todo como leído</span>
       </button>
+    
+      <button class="btn btn-outline-primary" (click)="openSettings()">
+        <i class="fa fa-cog me-1"></i> Configurar
+      </button>
+    
+      <button class="btn btn-outline-primary" (click)="loadNotifications()">
+        <i class="fa fa-refresh" [class.fa-spin]="isLoading"></i> Actualizar
+      </button>
+    
     </div>
   </div>
 

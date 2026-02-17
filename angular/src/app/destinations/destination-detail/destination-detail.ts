@@ -8,7 +8,7 @@ import { ExperienceListComponent } from 'src/app/experiences/experience-list/exp
 @Component({
   selector: 'app-destination-detail',
   standalone: true,
-  imports: [CommonModule, ExperienceListComponent], // Agregamos el componente hijo
+  imports: [CommonModule, ExperienceListComponent],
   templateUrl: './destination-detail.html',
   styleUrls: ['./destination-detail.scss']
 })
@@ -23,10 +23,7 @@ export class DestinationDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // 1. Capturamos el ID de la URL
     this.destinationId = this.route.snapshot.params['id'];
-
-    // 2. Cargamos los datos de la ciudad (para mostrar el nombre arriba)
     if (this.destinationId) {
       this.destinationService.get(this.destinationId).subscribe(res => {
         this.destination = res;

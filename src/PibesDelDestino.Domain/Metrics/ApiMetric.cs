@@ -3,14 +3,13 @@ using Volo.Abp.Domain.Entities.Auditing;
 
 namespace PibesDelDestino.Metrics
 {
-    // Usamos AuditedAggregateRoot para que guarde automáticamente quién lo creó y cuándo (CreationTime)
     public class ApiMetric : AuditedAggregateRoot<Guid>
     {
-        public string ServiceName { get; set; } // Ej: "GoogleTranslate", "OpenWeather"
-        public string Endpoint { get; set; }    // Ej: "/translate"
-        public bool IsSuccess { get; set; }     // ¿Falló o funcionó?
-        public int ResponseTimeMs { get; set; } // Cuánto tardó en milisegundos (opcional, pero queda pro)
-        public string ErrorMessage { get; set; } // Si falló, guardamos por qué
+        public string ServiceName { get; set; } 
+        public string Endpoint { get; set; }    
+        public bool IsSuccess { get; set; }   
+        public int ResponseTimeMs { get; set; } 
+        public string ErrorMessage { get; set; } 
 
         protected ApiMetric() { }
 
