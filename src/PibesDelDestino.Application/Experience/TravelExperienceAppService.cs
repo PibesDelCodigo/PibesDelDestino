@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
@@ -11,10 +12,10 @@ using Volo.Abp.Identity;
 using Volo.Abp.Data;
 using PibesDelDestino.Notifications;
 using Microsoft.Extensions.Logging;
+using PibesDelDestino.Destinations;
 
 namespace PibesDelDestino.Experiences
 {
-    //Heredamos de CrudAppService, ya que nos da las operaciones basicas de CRUD
     [Authorize]
     public class TravelExperienceAppService : CrudAppService<
             TravelExperience,
@@ -27,16 +28,19 @@ namespace PibesDelDestino.Experiences
         // Inyectamos los servicios necesarios
         private readonly IRepository<IdentityUser, Guid> _userRepository;
         private readonly NotificationManager _notificationManager;
+        private readonly IRepository<Destination, Guid> _destinationRepository;
 
         // Constructor para inyectar dependencias
         public TravelExperienceAppService(
             IRepository<TravelExperience, Guid> repository,
             IRepository<IdentityUser, Guid> userRepository,
+            IRepository<Destination, Guid> destinationRepository,
             NotificationManager notificationManager)
             : base(repository)
         {
             _userRepository = userRepository;
             _notificationManager = notificationManager;
+            _destinationRepository = destinationRepository;
         }
 
         // Método para obtener el rating promedio de un destino
@@ -61,6 +65,45 @@ namespace PibesDelDestino.Experiences
 
             // Si hay calificaciones, usamos AsyncExecuter para la funcion de agregacion y el AverangeAsync para calcular el promedio de las calificaciones.
             return await AsyncExecuter.AverageAsync(ratings, x => x.Rating);
+        }
+
+        // Método para crear una nueva experiencia de viaje
+        public override async Task<TravelExperienceDto> CreateAsync(CreateUpdateTravelExperienceDto input)
+        {
+            if (CurrentUser.Id == null)
+            {
+                throw new AbpAuthorizationException("Debes estar logueado para crear una experiencia.");
+            }
+
+            var newExperience = new TravelExperience(
+                GuidGenerator.Create(),
+                CurrentUser.Id.Value,
+                input.DestinationId,
+                input.Title,
+                input.Description,
+                input.Date,
+                input.Rating
+            );
+
+            // Insertamos la nueva experiencia en el repositorio
+            await Repository.InsertAsync(newExperience);
+
+            try
+            {
+
+                var destination = await _destinationRepository.GetAsync(input.DestinationId);
+                await _notificationManager.NotifyNewCommentAsync(
+                    input.DestinationId,
+                    destination.Name,
+                    CurrentUser.Id.Value
+                );
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"No se pudo enviar la notificación: {ex.Message}");
+            }
+
+            return ObjectMapper.Map<TravelExperience, TravelExperienceDto>(newExperience);
         }
 
         // Método para actualizar una experiencia de viaje
@@ -101,80 +144,27 @@ namespace PibesDelDestino.Experiences
             await base.DeleteAsync(id);
         }
 
-        // Método para crear una nueva experiencia de viaje
-        public override async Task<TravelExperienceDto> CreateAsync(CreateUpdateTravelExperienceDto input)
-        {
-            if (CurrentUser.Id == null)
-            {
-                throw new AbpAuthorizationException("Debes estar logueado para crear una experiencia.");
-            }
 
-            var newExperience = new TravelExperience(
-                GuidGenerator.Create(),
-                CurrentUser.Id.Value,
-                input.DestinationId,
-                input.Title,
-                input.Description,
-                input.Date,
-                input.Rating
-            );
-
-            // Insertamos la nueva experiencia en el repositorio
-            await Repository.InsertAsync(newExperience);
-
-            try
-            {
-                var destinationRepo = LazyServiceProvider.LazyGetRequiredService<IRepository<PibesDelDestino.Destinations.Destination, Guid>>();
-                var destination = await destinationRepo.GetAsync(input.DestinationId);
-
-                // Notificamos a los seguidores del destino sobre la nueva experiencia
-                await _notificationManager.NotifyNewCommentAsync(
-                    input.DestinationId,
-                    destination.Name,
-                    CurrentUser.Id.Value
-                );
-            }
-            catch (Exception ex)
-            {
-
-                Logger.LogWarning("No se pudo enviar la notificacion del comentario: " + ex.Message);
-            }
-
-            // Devolvemos el DTO de la nueva experiencia creada
-            return ObjectMapper.Map<TravelExperience, TravelExperienceDto>(newExperience);
-        }
-
-        //Este metodo se encarga de construir la consulta para obtener las experiencias de viaje, aplicando los filtros que el usuario haya especificado en el input.
         protected override async Task<IQueryable<TravelExperience>> CreateFilteredQueryAsync(GetTravelExperiencesInput input)
         {
-            // Obtenemos el IQueryable base de la entidad, que nos permite construir la consulta con los filtros necesarios.
             var query = await base.CreateFilteredQueryAsync(input);
-
-
-            // Si el usuario está logueado y NO es Admin, forzamos a que solo vea SUS registros.
-            if (CurrentUser.Id.HasValue && !CurrentUser.IsInRole("admin"))
-            {
-                query = query.Where(x => x.UserId == CurrentUser.Id);
-            }
 
             if (input.DestinationId.HasValue)
             {
                 query = query.Where(x => x.DestinationId == input.DestinationId);
             }
 
-            if (input.UserId.HasValue && CurrentUser.IsInRole("admin"))
+            if (input.UserId.HasValue)
             {
                 query = query.Where(x => x.UserId == input.UserId);
             }
 
-            // Si el usuario ha proporcionado un texto de filtro, aplicamos un filtro que busque ese texto en el título o la descripción de las experiencias.
             if (!string.IsNullOrWhiteSpace(input.FilterText))
             {
                 query = query.Where(x => x.Title.Contains(input.FilterText) ||
                                          x.Description.Contains(input.FilterText));
             }
 
-            // Si el usuario ha especificado un tipo de experiencia (positiva, neutral, negativa), aplicamos un filtro basado en la calificación (rating) de las experiencias.
             if (input.Type.HasValue)
             {
                 switch (input.Type.Value)
@@ -190,7 +180,7 @@ namespace PibesDelDestino.Experiences
                         break;
                 }
             }
-            // Finalmente, devolvemos el IQueryable con todos los filtros aplicados. Este IQueryable se ejecutará posteriormente para obtener los datos de la base de datos.
+
             return query;
         }
 
@@ -199,54 +189,68 @@ namespace PibesDelDestino.Experiences
         {
            
             var dtos = await base.MapToGetListOutputDtosAsync(entities);
-            var userIds = entities.Select(x => x.UserId).Distinct().ToArray();
-            // Obtenemos la lista de usuarios correspondientes a los UserIds de las experiencias, para luego mapear su información (nombre y foto) en los DTOs.
-            var users = await _userRepository.GetListAsync(x => userIds.Contains(x.Id));
-
-            foreach (var dto in dtos)
-            {
-                // Para cada DTO de experiencia, buscamos el usuario correspondiente en la lista de usuarios obtenida previamente, y si lo encontramos, mapeamos su nombre y foto en el DTO.
-                var user = users.FirstOrDefault(u => u.Id == dto.UserId);
-                if (user != null)
-                {
-                    dto.UserName = user.UserName;
-                    dto.UserProfilePicture = user.GetProperty<string>("ProfilePictureUrl");
-                }
-            }
-
-            return dtos;
+            return await EnrichDtosWithUserData(dtos);
         }
 
         //Este método se encarga de mapear una entidad de experiencia de viaje a un DTO, incluyendo la información del usuario (nombre y foto) para esa experiencia específica.
         protected override async Task<TravelExperienceDto> MapToGetOutputDtoAsync(TravelExperience entity)
         {
-            // Primero, mapeamos la entidad a un DTO utilizando el método base, que se encarga de mapear los campos básicos de la experiencia.
             var dto = await base.MapToGetOutputDtoAsync(entity);
-            var user = await _userRepository.FindAsync(entity.UserId);
-            if (user != null)
-            {
-                dto.UserName = user.UserName;
-                dto.UserProfilePicture = user.GetProperty<string>("ProfilePictureUrl");
-            }
-            return dto;
+            // Reutilizamos la lógica de lista para un solo elemento
+            var list = await EnrichDtosWithUserData(new List<TravelExperienceDto> { dto });
+            return list.First();
         }
 
-
-        // Este método se encarga de obtener la lista paginada de experiencias de viaje, aplicando los filtros y mapeando la información del usuario para cada experiencia. Se marca con [AllowAnonymous] para permitir el acceso sin autenticación.
-        [AllowAnonymous]
-        public override async Task<PagedResultDto<TravelExperienceDto>> GetListAsync(GetTravelExperiencesInput input)
+        private async Task<List<TravelExperienceDto>> EnrichDtosWithUserData(List<TravelExperienceDto> dtos)
         {
-            return await base.GetListAsync(input);
+            if (!dtos.Any()) return dtos;
+
+            var userIds = dtos.Select(x => x.UserId).Distinct().ToArray();
+
+            // Traemos todos los usuarios necesarios en una sola consulta (evita N+1)
+            var users = await _userRepository.GetListAsync(x => userIds.Contains(x.Id));
+
+            foreach (var dto in dtos)
+            {
+                var user = users.FirstOrDefault(u => u.Id == dto.UserId);
+                if (user != null)
+                {
+                    dto.UserName = user.UserName;
+                    // Usamos GetProperty de forma segura para data extra
+                    dto.UserProfilePicture = user.GetProperty<string>("ProfilePictureUrl");
+                }
+            }
+            return dtos;
         }
 
         // Este método se encarga de obtener las experiencias de viaje más recientes, ordenándolas por fecha de creación y limitando el número de resultados según el parámetro "count".
         // Se marca con [AllowAnonymous] para permitir el acceso sin autenticación, ya que esta información puede ser útil para mostrar en la página principal o en secciones destacadas de la aplicación.
         [AllowAnonymous]
         public async Task<List<TravelExperienceDto>> GetRecentExperiencesAsync(int count = 5)
-        { 
+        {
             var query = await Repository.GetQueryableAsync();
-            var recent = query.OrderByDescending(x => x.CreationTime).Take(count).ToList();
-            return await MapToGetListOutputDtosAsync(recent);
+
+            // Ejecutamos la query ordenada y paginada en base de datos
+            var recentEntities = await AsyncExecuter.ToListAsync(
+                query.OrderByDescending(x => x.CreationTime).Take(count)
+            );
+
+            return await MapToGetListOutputDtosAsync(recentEntities);
+        }
+
+        // Permitimos que cualquiera vea la lista de reseñas (sin estar logueado)
+        [AllowAnonymous]
+        public override async Task<PagedResultDto<TravelExperienceDto>> GetListAsync(GetTravelExperiencesInput input)
+        {
+            return await base.GetListAsync(input);
+        }
+
+        // Permitimos que cualquiera vea el detalle de una reseña específica
+        [AllowAnonymous]
+        public override async Task<TravelExperienceDto> GetAsync(Guid id)
+        {
+            return await base.GetAsync(id);
         }
     }
 }
+

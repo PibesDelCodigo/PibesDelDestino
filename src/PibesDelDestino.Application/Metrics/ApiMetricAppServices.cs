@@ -17,51 +17,65 @@ namespace PibesDelDestino.Metrics
             _searchHistoryRepo = searchHistoryRepo;
         }
 
-
-        // Sobrescribimos el método para crear la consulta filtrada. Si el usuario ha proporcionado un nombre de servicio, filtramos los registros
-        // para incluir solo aquellos cuyo nombre de servicio contenga el texto proporcionado.
         protected override async Task<IQueryable<ApiMetric>> CreateFilteredQueryAsync(GetApiMetricsInput input)
         {
             var query = await base.CreateFilteredQueryAsync(input);
 
             if (!string.IsNullOrEmpty(input.ServiceName))
             {
-                // Si el usuario ha proporcionado un nombre de servicio, filtramos los registros para incluir
-                // solo aquellos cuyo nombre de servicio contenga el texto proporcionado.
                 query = query.Where(x => x.ServiceName.Contains(input.ServiceName));
             }
 
-            query = query.OrderByDescending(x => x.CreationTime);
-
-            return query;
+            // Ordenamiento por defecto: Lo más nuevo primero
+            return query.OrderByDescending(x => x.CreationTime);
         }
 
         // Este método es el que se encargará de obtener las estadísticas para el dashboard.
         public async Task<DashboardDto> GetDashboardStatsAsync()
         {
-            // Datos Técnicos (API Metrics)
-            var apiLogs = await Repository.GetListAsync();
-            var recentLogs = apiLogs.OrderByDescending(x => x.CreationTime).Take(100).ToList();
+            // No traemos la lista, solo pedimos el número total.
+            var totalCalls = await Repository.CountAsync();
 
-            // Datos de Negocio (Search History)
-            var searchLogs = await _searchHistoryRepo.GetListAsync();
+            // Usamos GetQueryable para armar la consulta SQL antes de ejecutarla.
+            var query = await Repository.GetQueryableAsync();
 
-            // Calculamos el Top 5
-            var top5 = searchLogs
-                .GroupBy(x => x.Term)
-                .Select(g => new { Term = g.Key, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .Take(5)
-                .ToDictionary(k => k.Term, v => v.Count);
+            // Traemos solo los últimos 100 registros a memoria.
+            var recentLogs = await AsyncExecuter.ToListAsync(
+                query.OrderByDescending(x => x.CreationTime).Take(100)
+            );
 
-            // Empaquetamos todo
+            // Calculamos estadísticas sobre esa muestra pequeña de 100 ítems
+            double successRate = 0;
+            double avgTime = 0;
+
+            if (recentLogs.Any())
+            {
+                successRate = (double)recentLogs.Count(x => x.IsSuccess) / recentLogs.Count * 100;
+                avgTime = recentLogs.Average(x => x.ResponseTimeMs);
+            }
+
+            // Usamos LINQ to SQL para agrupar y contar en el servidor de BD.
+            var historyQuery = await _searchHistoryRepo.GetQueryableAsync();
+
+            var top5List = await AsyncExecuter.ToListAsync(
+                historyQuery
+                    .GroupBy(x => x.Term)
+                    .Select(g => new { Term = g.Key, Count = g.Count() })
+                    .OrderByDescending(x => x.Count)
+                    .Take(5)
+            );
+
+            // Convertimos el resultado anónimo a un Diccionario
+            var topSearches = top5List.ToDictionary(k => k.Term, v => v.Count);
+
             return new DashboardDto
             {
-                TotalApiCalls = apiLogs.Count,
-                SuccessRate = recentLogs.Any() ? (double)recentLogs.Count(x => x.IsSuccess) / recentLogs.Count * 100 : 0,
-                AvgResponseTime = recentLogs.Any() ? recentLogs.Average(x => x.ResponseTimeMs) : 0,
-                TopSearches = top5
+                TotalApiCalls = (int)totalCalls,
+                SuccessRate = successRate,
+                AvgResponseTime = avgTime,
+                TopSearches = topSearches
             };
         }
     }
 }
+

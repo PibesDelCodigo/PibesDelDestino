@@ -60,24 +60,23 @@ namespace PibesDelDestino.Favorites
             );
         }
 
-        // Este metodo obtiene la lista completa de destinos favoritos del usuario actual.
         public async Task<List<DestinationDto>> GetMyFavoritesAsync()
         {
-            // Busco mis IDs de favoritos
-            var myFavorites = await _repository.GetListAsync(x => x.UserId == CurrentUser.Id);
+            // Obtenemos los IQueryable sin ejecutar la consulta aún.
+            var favoritesQuery = await _repository.GetQueryableAsync();
+            var destinationsQuery = await _destinationRepository.GetQueryableAsync();
 
-            // Si no tengo favoritos, devuelvo una lista vacía
-            if (!myFavorites.Any())
-            {
-                return new List<DestinationDto>();
-            }
+            // Construimos una consulta LINQ con JOIN.
+            // Esto le dice a SQL Server: "Juntá la tabla de Favoritos con la de Destinos
+            // donde coincidan los IDs, filtrá por MI usuario, y dame solo los datos del Destino".
+            var query = from fav in favoritesQuery
+                        join dest in destinationsQuery on fav.DestinationId equals dest.Id
+                        where fav.UserId == CurrentUser.Id
+                        select dest;
 
-            var destIds = myFavorites.Select(x => x.DestinationId).ToArray();
-
-            // Busco los objetos Destino completos usando esos IDs
-            var destinations = await _destinationRepository.GetListAsync(x => destIds.Contains(x.Id));
-
-            // Mapeo a DTO para devolver al frontend
+            // Ejecutamos la consulta.
+            // AsyncExecuter se encarga de traducir esto a SQL y traer la lista optimizada.
+            var destinations = await AsyncExecuter.ToListAsync(query);
             return ObjectMapper.Map<List<Destination>, List<DestinationDto>>(destinations);
         }
     }

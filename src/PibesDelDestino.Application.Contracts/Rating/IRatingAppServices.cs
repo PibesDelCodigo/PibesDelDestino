@@ -6,7 +6,8 @@ namespace PibesDelDestino.Ratings
 {
     public interface IRatingAppService : IApplicationService
     {
-        Task<RatingDto> CreateAsync(CreateRatingDto input);
+        Task<RatingDto> CreateOrUpdateAsync(CreateRatingDto input);
 
+        Task<RatingDto> GetMyRatingAsync(Guid destinationId);
     }
 }
