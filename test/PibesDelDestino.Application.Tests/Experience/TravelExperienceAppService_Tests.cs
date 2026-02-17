@@ -51,6 +51,10 @@ namespace PibesDelDestino.Experiences
             _emailSenderMock = Substitute.For<IEmailSender>();
             _loggerMock = Substitute.For<ILogger<NotificationManager>>();
 
+            // Mocks adicionales para el constructor de NotificationManager
+            var _emailSenderMock2 = Substitute.For<IEmailSender>();
+            var _loggerMock2 = Substitute.For<ILogger<NotificationManager>>();
+
             //CREAMOS EL NOTIFICATION MANAGER
             var notificationManager = new NotificationManager(
                 _notificationRepoMock,
@@ -58,7 +62,9 @@ namespace PibesDelDestino.Experiences
                 _destinationRepoMock,
                 _identityUserRepoMock,
                 _emailSenderMock,
-                _loggerMock
+                _loggerMock,
+                _emailSenderMock2,
+                _loggerMock2
             );
 
             //Instanciamos el Proxy del Servicio con la nueva estructura

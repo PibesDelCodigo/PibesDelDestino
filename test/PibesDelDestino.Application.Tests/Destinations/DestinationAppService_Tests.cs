@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Guids;
-using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Emailing;
 using Volo.Abp.Identity;
 using Microsoft.Extensions.Logging;

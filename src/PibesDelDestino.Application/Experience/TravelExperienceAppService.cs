@@ -150,12 +150,19 @@ namespace PibesDelDestino.Experiences
             // Obtenemos el IQueryable base de la entidad, que nos permite construir la consulta con los filtros necesarios.
             var query = await base.CreateFilteredQueryAsync(input);
 
+
+            // Si el usuario está logueado y NO es Admin, forzamos a que solo vea SUS registros.
+            if (CurrentUser.Id.HasValue && !CurrentUser.IsInRole("admin"))
+            {
+                query = query.Where(x => x.UserId == CurrentUser.Id);
+            }
+
             if (input.DestinationId.HasValue)
             {
                 query = query.Where(x => x.DestinationId == input.DestinationId);
             }
 
-            if (input.UserId.HasValue)
+            if (input.UserId.HasValue && CurrentUser.IsInRole("admin"))
             {
                 query = query.Where(x => x.UserId == input.UserId);
             }
