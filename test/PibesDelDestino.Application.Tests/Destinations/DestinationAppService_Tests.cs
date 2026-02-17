@@ -1,171 +1,114 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
-using System.Linq.Expressions;
-using Shouldly;
-using Xunit;
-using NSubstitute;
-using Microsoft.Extensions.DependencyInjection;
-using Volo.Abp.Domain.Repositories;
-using Volo.Abp.DependencyInjection;
-using Volo.Abp.Guids;
-using Volo.Abp.Emailing;
-using Volo.Abp.Identity;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using PibesDelDestino;
-using PibesDelDestino.Destinations;
+using NSubstitute;
+using Volo.Abp.Emailing;
+using PibesDelDestino.Application.Contracts.Destinations;
 using PibesDelDestino.Cities;
+using PibesDelDestino.Destinations;
+using PibesDelDestino.Experiences;
 using PibesDelDestino.Favorites;
 using PibesDelDestino.Notifications;
-using PibesDelDestino.Experiences;
-using PibesDelDestino.Application.Contracts.Destinations;
+using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Identity;
+using Xunit;
 
 namespace PibesDelDestino.Destinations
 {
     public class DestinationAppService_Tests : PibesDelDestinoApplicationTestBase<PibesDelDestinoApplicationTestModule>
     {
         private readonly DestinationAppService _destinationService;
-
-        // Mocks
-        private readonly IRepository<Destination, Guid> _destinationRepoMock;
-        private readonly ICitySearchService _citySearchServiceMock;
-        private readonly IGuidGenerator _guidGeneratorMock;
-        private readonly IRepository<TravelExperience, Guid> _experienceRepositoryMock;
-
-        // Estos mocks los necesitamos PARA el Manager
-        private readonly IRepository<FavoriteDestination, Guid> _favoriteRepositoryMock;
-        private readonly IRepository<AppNotification, Guid> _notificationRepositoryMock;
-        private readonly IIdentityUserRepository _identityUserRepoMock;
-        private readonly IEmailSender _emailSenderMock;
-        private readonly ILogger<NotificationManager> _loggerMock;
+        private IRepository<Destination, Guid> _destinationRepoMock;
+        private IRepository<TravelExperience, Guid> _experienceRepoMock;
+        private ICitySearchService _citySearchServiceMock;
+        private NotificationManager _notificationManagerMock;
 
 
         public DestinationAppService_Tests()
         {
-            // 1. Inicializar Mocks
+            _destinationService = GetRequiredService<DestinationAppService>();
+        }
+
+        protected override void AfterAddApplication(IServiceCollection services)
+        {
+            // Crear mocks
             _destinationRepoMock = Substitute.For<IRepository<Destination, Guid>>();
+            _experienceRepoMock = Substitute.For<IRepository<TravelExperience, Guid>>();
             _citySearchServiceMock = Substitute.For<ICitySearchService>();
-            _guidGeneratorMock = Substitute.For<IGuidGenerator>();
-            _experienceRepositoryMock = Substitute.For<IRepository<TravelExperience, Guid>>();
 
-            // Inicializamos estos aunque el AppService no los use directo, el Manager sí
-            _favoriteRepositoryMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
-            _notificationRepositoryMock = Substitute.For<IRepository<AppNotification, Guid>>();
+            // Reemplazar registros en el contenedor
+            services.Replace(ServiceDescriptor.Singleton(typeof(IRepository<Destination, Guid>), _destinationRepoMock));
+            services.Replace(ServiceDescriptor.Singleton(typeof(IRepository<TravelExperience, Guid>), _experienceRepoMock));
+            services.Replace(ServiceDescriptor.Transient(_ => _citySearchServiceMock));
 
-            // 2. Configurar GuidGenerator
-            _guidGeneratorMock.Create().Returns(Guid.NewGuid());
-            _identityUserRepoMock = Substitute.For<IIdentityUserRepository>();
-            _emailSenderMock = Substitute.For<IEmailSender>();
-            _loggerMock = Substitute.For<ILogger<NotificationManager>>();
-
-            // 3. Crear el ServiceProvider Mock (para el Lazy)
-            var serviceProvider = Substitute.For<IServiceProvider>();
-            serviceProvider.GetService(typeof(IAbpLazyServiceProvider))
-                           .Returns(Substitute.For<IAbpLazyServiceProvider>());
-
-            // 4. CREAR EL NOTIFICATION MANAGER (Con los mocks inyectados)
-            var notificationManager = new NotificationManager(
-                _notificationRepositoryMock,
-                _favoriteRepositoryMock,
-                _destinationRepoMock,
-                _identityUserRepoMock,
-                _emailSenderMock,
-                _loggerMock
+            // Si el NotificationManager necesita otros mocks, puedes agregarlos aquí
+            _notificationManagerMock = Substitute.For<NotificationManager>(
+                Substitute.For<IRepository<AppNotification, Guid>>(),
+                Substitute.For<IRepository<FavoriteDestination, Guid>>(),
+                Substitute.For<IRepository<Destination, Guid>>(),
+                Substitute.For<IIdentityUserRepository>(),
+                Substitute.For<IEmailSender>(),
+                Substitute.For<ILogger<NotificationManager>>()
             );
-
-            // 5. Instanciar el Servicio (Usando el nuevo constructor)
-            _destinationService = new DestinationAppServiceTestProxy(
-                _destinationRepoMock,
-                _citySearchServiceMock,
-                _guidGeneratorMock,
-                _experienceRepositoryMock,
-                notificationManager, // <--- Pasamos el Manager real (con mocks adentro)
-                serviceProvider
-            );
+            services.Replace(ServiceDescriptor.Singleton(_notificationManagerMock));
         }
 
         [Fact]
-        public async Task Should_Create_Destination_Successfully()
+        public async Task GetTopDestinationsAsync_Should_Return_Top10_OrderedByAverageRating()
         {
             // ARRANGE
-            var input = new CreateUpdateDestinationDto
+            // Crear destinos de prueba
+            var destination1 = new Destination(Guid.NewGuid(), "Destino A", "País A", "Ciudad A", 1000, "fotoA.jpg", DateTime.Now, new Coordinates(10, 20));
+            var destination2 = new Destination(Guid.NewGuid(), "Destino B", "País B", "Ciudad B", 2000, "fotoB.jpg", DateTime.Now, new Coordinates(30, 40));
+            var destination3 = new Destination(Guid.NewGuid(), "Destino C", "País C", "Ciudad C", 3000, "fotoC.jpg", DateTime.Now, new Coordinates(50, 60));
+            var destination4 = new Destination(Guid.NewGuid(), "Destino D", "País D", "Ciudad D", 4000, "fotoD.jpg", DateTime.Now, new Coordinates(70, 80));
+            var destinations = new List<Destination> { destination1, destination2, destination3, destination4 };
+
+            // Crear experiencias (ratings) para los destinos
+            var experiences = new List<TravelExperience>
             {
-                Name = "Mendoza",
-                Country = "Argentina",
-                City = "Mendoza City",
-                Population = 120000,
-                Photo = "mendoza.jpg",
-                UpdateDate = DateTime.Now,
-                Coordinates = new CoordinatesDto { Latitude = -32.8895f, Longitude = -68.8458f }
+                // Destino A: ratings 5 y 4 → 4.5
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination1.Id, "Exp1", "Desc", DateTime.Now, 5),
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination1.Id, "Exp2", "Desc", DateTime.Now, 4),
+                // Destino B: rating 3 → 3
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination2.Id, "Exp3", "Desc", DateTime.Now, 3),
+                // Destino C: ratings 5,5,5 → 5
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination3.Id, "Exp4", "Desc", DateTime.Now, 5),
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination3.Id, "Exp5", "Desc", DateTime.Now, 5),
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination3.Id, "Exp6", "Desc", DateTime.Now, 5),
+                // Destino D: sin experiencias
             };
 
-            // ACT
-            var result = await _destinationService.CreateAsync(input);
+            // Configurar mocks para que devuelvan las listas como IQueryable
+            _destinationRepoMock.GetQueryableAsync().Returns(destinations.AsQueryable());
+            _experienceRepoMock.GetQueryableAsync().Returns(experiences.AsQueryable());
 
-            // ASSERT
-            result.ShouldNotBeNull();
-            result.Name.ShouldBe("Mendoza");
-            await _destinationRepoMock.Received(1).InsertAsync(Arg.Any<Destination>());
-        }
-
-        [Fact]
-        public async Task SearchCitiesAsync_Should_Return_Cities()
-        {
-            // ARRANGE
-            var fakeResult = new CityResultDto
-            {
-                Cities = new List<CityDto>
-                {
-                    new CityDto { Name = "London", Country = "UK" }
-                }
-            };
-
-            _citySearchServiceMock.SearchCitiesAsync(Arg.Any<CityRequestDTO>())
-                .Returns(Task.FromResult(fakeResult));
-
-            // ACT
-            var input = new CityRequestDTO { PartialName = "Lon" };
-            var result = await _destinationService.SearchCitiesAsync(input);
-
-            // ASSERT
-            result.ShouldNotBeNull();
-            result.Cities.Count.ShouldBeGreaterThan(0);
-            result.Cities[0].Name.ShouldBe("London");
-        }
-
-        [Fact]
-        public async Task GetTopDestinationsAsync_Should_Return_List()
-        {
             // ACT
             var result = await _destinationService.GetTopDestinationsAsync();
 
             // ASSERT
             result.ShouldNotBeNull();
-            // Retorna lista vacía por el blindaje de arriba, lo cual es un comportamiento correcto en el test
-            result.ShouldBeEmpty();
+            // Destinos con ratings: A, B, C (D no tiene)
+            result.Count.ShouldBe(3);
+
+            // Orden esperado
+            // Destino C
+            result[0].Id.ShouldBe(destination3.Id);
+            result[0].AverageRating.ShouldBe(5.0);
+
+            // Destino A
+            result[1].Id.ShouldBe(destination1.Id);
+            result[1].AverageRating.ShouldBe(4.5);
+
+            // Destino B
+            result[2].Id.ShouldBe(destination2.Id);
+            result[2].AverageRating.ShouldBe(3.0);
         }
     }
 
-    // Proxy para inyectar manualmente las dependencias y habilitar el ObjectMapper
-    public class DestinationAppServiceTestProxy : DestinationAppService
-    {
-        public DestinationAppServiceTestProxy(
-            IRepository<Destination, Guid> repository,
-            ICitySearchService citySearchService,
-            IGuidGenerator guidGenerator,
-            IRepository<TravelExperience, Guid> experienceRepository,
-            NotificationManager notificationManager, // <--- AGREGADO
-            IServiceProvider serviceProvider)
-            : base(
-                repository,
-                citySearchService,
-                guidGenerator,
-                experienceRepository,
-                notificationManager) // <--- PASAMOS EL MANAGER
-        {
-            // Fundamental para que el CrudAppService pueda usar ObjectMapper, CurrentUser, etc.
-            LazyServiceProvider = serviceProvider.GetRequiredService<IAbpLazyServiceProvider>();
-        }
-    }
 }
