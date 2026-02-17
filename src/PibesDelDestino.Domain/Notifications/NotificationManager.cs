@@ -28,16 +28,13 @@ namespace PibesDelDestino.Notifications
             IRepository<Destination, Guid> destinationRepository,
             IIdentityUserRepository userRepository,
             IEmailSender emailSender,
-            ILogger<NotificationManager> logger,
-            IEmailSender _emailsenderMock,
-            ILogger<NotificationManager> _logger)
+            ILogger<NotificationManager> logger)
         {
             _notificationRepository = notificationRepository;
             _favoriteRepository = favoriteRepository;
             _destinationRepository = destinationRepository;
             _userRepository = userRepository;
             _emailSender = emailSender;
-            this._logger = _logger;
             _logger = logger;
         }
 

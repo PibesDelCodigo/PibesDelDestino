@@ -62,9 +62,7 @@ namespace PibesDelDestino.Experiences
                 _destinationRepoMock,
                 _identityUserRepoMock,
                 _emailSenderMock,
-                _loggerMock,
-                _emailSenderMock2,
-                _loggerMock2
+                _loggerMock
             );
 
             //Instanciamos el Proxy del Servicio con la nueva estructura

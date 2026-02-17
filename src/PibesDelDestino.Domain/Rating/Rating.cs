@@ -12,7 +12,7 @@ namespace PibesDelDestino.Ratings
         public string Comment { get; private set; }
         public Guid UserId { get; set; }
 
-        private Rating() { /* Requerido por EF Core */ }
+        private Rating() { } // EF Core
 
         public Rating(Guid id, Guid destinationId, Guid userId, int score, string comment)
             : base(id)

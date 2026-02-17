@@ -11,7 +11,7 @@ namespace PibesDelDestino.Metrics
         public int ResponseTimeMs { get; set; } 
         public string ErrorMessage { get; set; } 
 
-        protected ApiMetric() { }
+        protected ApiMetric() { } // EF Core
 
         public ApiMetric(Guid id, string serviceName, string endpoint, bool isSuccess, int responseTimeMs, string errorMessage = null)
             : base(id)

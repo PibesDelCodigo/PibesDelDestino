@@ -15,6 +15,8 @@ namespace PibesDelDestino.Experiences
         public DateTime Date { get; private set; }
         public int Rating { get; private set; }
 
+        private TravelExperience() { } // EF Core
+
         public TravelExperience(Guid id, Guid userId, Guid destinationId, string title, string description, DateTime date, int rating)
             : base(id)
         {

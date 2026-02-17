@@ -71,9 +71,7 @@ namespace PibesDelDestino.Destinations
                 _destinationRepoMock,
                 _identityUserRepoMock,
                 _emailSenderMock,
-                _loggerMock,
-                _emailSenderMock, // <-- Segundo IEmailSender requerido por el constructor
-                _loggerMock       // <-- Segundo ILogger<NotificationManager> requerido por el constructor
+                _loggerMock
             );
 
             // 5. Instanciar el Servicio (Usando el nuevo constructor)
