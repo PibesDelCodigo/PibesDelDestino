@@ -9,15 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="EntityFrameworkCore\Applications\**" />
-    <Compile Remove="EntityFrameworkCore\Domains\**" />
-    <EmbeddedResource Remove="EntityFrameworkCore\Applications\**" />
-    <EmbeddedResource Remove="EntityFrameworkCore\Domains\**" />
-    <None Remove="EntityFrameworkCore\Applications\**" />
-    <None Remove="EntityFrameworkCore\Domains\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\src\PibesDelDestino.EntityFrameworkCore\PibesDelDestino.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\PibesDelDestino.Application.Tests\PibesDelDestino.Application.Tests.csproj" />
   </ItemGroup>
