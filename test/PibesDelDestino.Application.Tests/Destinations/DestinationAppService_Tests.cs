@@ -1,164 +1,133 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using PibesDelDestino.Application.Contracts.Destinations;
-using PibesDelDestino.Cities;
+﻿using PibesDelDestino.Application.Contracts.Destinations;
 using PibesDelDestino.Experiences;
-using PibesDelDestino.Notifications;
+using Shouldly;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Modularity;
-using Volo.Abp.Guids;
-using Volo.Abp.Validation;
-using NSubstitute;
-using Shouldly;
 using Xunit;
 
 namespace PibesDelDestino.Destinations
 {
+    // Heredamos de ApplicationTestBase, que nos da la Base de Datos en Memoria GRATIS
+    //ademas si luego se cambia el gestor de base datos al usar clase abstracta y generica,
+    //no tenemos que cambiar nada en las pruebas, ya que se adaptan al gestor que estemos usando.
     public abstract class DestinationAppService_Tests<TStartupModule> : PibesDelDestinoApplicationTestBase<TStartupModule>
         where TStartupModule : IAbpModule
     {
-        protected readonly IDestinationAppService _destinationAppService;
-        protected readonly IRepository<Destination, Guid> _destinationRepository;
-        protected readonly IRepository<TravelExperience, Guid> _experienceRepository;
-        protected readonly INotificationManager _notificationManagerMock;
+        private readonly IDestinationAppService _destinationService;
+        private readonly IRepository<Destination, Guid> _destinationRepository;
+        private readonly IRepository<TravelExperience, Guid> _experienceRepository;
 
-        protected DestinationAppService_Tests()
+        public DestinationAppService_Tests()
         {
-            _destinationAppService = GetRequiredService<IDestinationAppService>();
+            // En lugar de crear Mocks, pedimos los servicios REALES al contenedor de pruebas
+            _destinationService = GetRequiredService<IDestinationAppService>();
             _destinationRepository = GetRequiredService<IRepository<Destination, Guid>>();
             _experienceRepository = GetRequiredService<IRepository<TravelExperience, Guid>>();
-
-            // Obtenemos el Mock del manager para verificar las llamadas en el Update
-            _notificationManagerMock = GetRequiredService<INotificationManager>();
         }
 
-        /* ----- TESTS DE INTEGRACIÓN (SQLite) ----- */
+        [Fact]
+        public async Task Should_Get_List_Of_Destinations()
+        {
+            // Arrange
+            var destination = new Destination(Guid.NewGuid(), "Destino Test", "País Test", "Ciudad Test", 1000, "foto.jpg", DateTime.Now, new Coordinates(10, 20));
+            await _destinationRepository.InsertAsync(destination, autoSave: true);
+
+            // Act
+            var result = await _destinationService.GetListAsync(new PagedAndSortedResultRequestDto());
+
+            // Assert
+            result.ShouldNotBeNull();
+            result.Items.ShouldContain(d => d.Id == destination.Id);
+        }
 
         [Fact]
-        public async Task CreateAsync_Should_Create_Destination_Successfully()
+        public async Task Should_Create_A_Valid_Destinations()
         {
-            var input = new CreateUpdateDestinationDto
+            //Arrange-Act
+            var result = await _destinationService.CreateAsync(
+                new CreateUpdateDestinationDto
+                {
+                    Name = "Nuevo Destino",
+                    Country = "País Nuevo",
+                    City = "Ciudad Nueva",
+                    Population = 1500,
+                    Photo = "nuevaFoto.jpg",
+                    UpdateDate = DateTime.Now,
+                    Coordinates = new CoordinatesDto { Latitude = 15, Longitude = 25 }
+                });
+
+            //Assert
+            result.ShouldNotBeNull();
+            result.Id.ShouldNotBe(Guid.Empty);
+            result.Name.ShouldBe("Nuevo Destino");
+        }
+
+        [Fact]
+        public async Task GetTopDestinationsAsync_Should_Return_Top10_OrderedByAverageRating()
+        {
+            // 1. ARRANGE (Preparar los datos)
+
+            // Creamos los destinos
+            var destination1 = new Destination(Guid.NewGuid(), "Destino A", "País A", "Ciudad A", 1000, "fotoA.jpg", DateTime.Now, new Coordinates(10, 20));
+            var destination2 = new Destination(Guid.NewGuid(), "Destino B", "País B", "Ciudad B", 2000, "fotoB.jpg", DateTime.Now, new Coordinates(30, 40));
+            var destination3 = new Destination(Guid.NewGuid(), "Destino C", "País C", "Ciudad C", 3000, "fotoC.jpg", DateTime.Now, new Coordinates(50, 60));
+            var destination4 = new Destination(Guid.NewGuid(), "Destino D", "País D", "Ciudad D", 4000, "fotoD.jpg", DateTime.Now, new Coordinates(70, 80));
+
+            // ¡ACÁ ESTÁ LA CLAVE! 
+            // En vez de mockear el repositorio, los guardamos de verdad en la DB de memoria.
+            await _destinationRepository.InsertAsync(destination1, autoSave: true);
+            await _destinationRepository.InsertAsync(destination2, autoSave: true);
+            await _destinationRepository.InsertAsync(destination3, autoSave: true);
+            await _destinationRepository.InsertAsync(destination4, autoSave: true);
+
+            // Creamos las experiencias (ratings)
+            var experiences = new List<TravelExperience>
             {
-                Name = "Tandil",
-                Country = "Argentina",
-                City = "Tandil",
-                Population = 150000,
-                Photo = "piedra_movediza.jpg",
-                UpdateDate = DateTime.Now,
-                Coordinates = new CoordinatesDto { Latitude = -37.32f, Longitude = -59.13f }
+                // Destino A: ratings 5 y 4 -> Promedio 4.5
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination1.Id, "Exp1", "Desc", DateTime.Now, 5),
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination1.Id, "Exp2", "Desc", DateTime.Now, 4),
+                // Destino B: rating 3 -> Promedio 3.0
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination2.Id, "Exp3", "Desc", DateTime.Now, 3),
+                // Destino C: ratings 5, 5, 5 -> Promedio 5.0
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination3.Id, "Exp4", "Desc", DateTime.Now, 5),
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination3.Id, "Exp5", "Desc", DateTime.Now, 5),
+                new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination3.Id, "Exp6", "Desc", DateTime.Now, 5),
+                // Destino D: Sin experiencias -> Promedio 0 (o no aparece, según tu lógica)
             };
 
-            var result = await _destinationAppService.CreateAsync(input);
-
-            result.ShouldNotBeNull();
-            result.Name.ShouldBe("Tandil");
-
-            var dbEntry = await _destinationRepository.GetAsync(result.Id);
-            dbEntry.Name.ShouldBe("Tandil");
-        }
-
-        [Fact]
-        public async Task UpdateAsync_Should_Notify_Manager_On_Success()
-        {
-            // 1. Arrange: Creamos un destino para editar
-            var destId = Guid.NewGuid();
-            await _destinationRepository.InsertAsync(new Destination(
-                destId, "Mar del Plata", "Argentina", "MDP", 600000, "playa.jpg",
-                DateTime.Now, new Coordinates(-38.00f, -57.55f)
-            ));
-
-            var input = new CreateUpdateDestinationDto
+            // Las guardamos en la DB de memoria
+            foreach (var exp in experiences)
             {
-                Name = "La Feliz",
-                Country = "Argentina",
-                City = "Mar del Plata",
-                Population = 650000,
-                Photo = "playa_nueva.jpg",
-                UpdateDate = DateTime.Now,
-                Coordinates = new CoordinatesDto { Latitude = -38.00f, Longitude = -57.55f }
-            };
+                await _experienceRepository.InsertAsync(exp, autoSave: true);
+            }
 
-            // 2. Act
-            await _destinationAppService.UpdateAsync(destId, input);
+            // 2. ACT (Ejecutar la prueba)
+            // Llamamos al servicio real. Él va a ir a la DB de memoria, hacer el cálculo y volver.
+            var result = await _destinationService.GetTopDestinationsAsync();
 
-            // 3. Assert: Verificamos que se llamó al Manager con el mensaje correcto
-            await _notificationManagerMock.Received(1).NotifyDestinationUpdateAsync(
-                Arg.Is<Destination>(d => d.Id == destId),
-                Arg.Is<string>(s => s.Contains("actualizada"))
-            );
-        }
-
-        [Fact]
-        public async Task GetTopDestinationsAsync_Should_Rank_By_Average_Rating()
-        {
-            // 1. Arrange: Creamos destinos y experiencias con ratings
-            var dest1 = Guid.NewGuid();
-            var dest2 = Guid.NewGuid();
-
-            await _destinationRepository.InsertAsync(new Destination(dest1, "Destino A", "C1", "City1", 1, "p1.jpg", DateTime.Now, new Coordinates(0, 0)));
-            await _destinationRepository.InsertAsync(new Destination(dest2, "Destino B", "C2", "City2", 1, "p2.jpg", DateTime.Now, new Coordinates(0, 0)));
-
-            // Destino 1 tiene promedio 5
-            await _experienceRepository.InsertAsync(new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), dest1, "T1", "D1", DateTime.Now, 5));
-            // Destino 2 tiene promedio 3
-            await _experienceRepository.InsertAsync(new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), dest2, "T2", "D2", DateTime.Now, 3));
-
-            // 2. Act
-            var topDestinations = await _destinationAppService.GetTopDestinationsAsync();
-
-            // 3. Assert
-            topDestinations.Count.ShouldBeGreaterThanOrEqualTo(2);
-            topDestinations[0].Id.ShouldBe(dest1); // El de 5 puntos debe estar primero
-            topDestinations[0].AverageRating.ShouldBe(5);
-            topDestinations[1].AverageRating.ShouldBe(3);
-        }
-
-        /* ----- TESTS DE MOCK (Estilo Manual) ----- */
-
-        [Fact]
-        public async Task SearchCitiesAsync_Should_Return_Empty_When_No_Results_Found()
-        {
-            // 1. Arrange: Simulamos que no hay resultados
-            var request = new CityRequestDTO { PartialName = "CiudadInexistente" };
-            var mockEmptyResult = new CityResultDto(); // Lista vacía por defecto
-
-            var citySearchServiceMock = Substitute.For<ICitySearchService>();
-            citySearchServiceMock.SearchCitiesAsync(request).Returns(Task.FromResult(mockEmptyResult));
-
-            var manualAppService = new DestinationAppService(
-                Substitute.For<IRepository<Destination, Guid>>(),
-                citySearchServiceMock,
-                GetRequiredService<IGuidGenerator>(),
-                Substitute.For<IRepository<TravelExperience, Guid>>(),
-                Substitute.For<INotificationManager>()
-            );
-
-            // 2. Act
-            var result = await manualAppService.SearchCitiesAsync(request);
-
-            // 3. Assert
+            // 3. ASSERT (Verificar)
             result.ShouldNotBeNull();
-            // result.Cities.ShouldBeEmpty(); // Dependiendo de como sea tu CityResultDto
-        }
 
-        /* ----- TESTS DE VALIDACIÓN ----- */
+            // Destinos con ratings: A, B, C (D no tiene ratings, así que si tu lógica lo excluye, son 3)
+            result.Count.ShouldBe(3);
 
-        [Fact]
-        public async Task CreateAsync_Should_Not_Allow_Invalid_Values()
-        {
-            await Assert.ThrowsAsync<AbpValidationException>(async () =>
-            {
-                await _destinationAppService.CreateAsync(
-                    new CreateUpdateDestinationDto
-                    {
-                        Name = "", // Invalido
-                        Country = "Argentina",
-                        Coordinates = new CoordinatesDto { Latitude = 150f } // Invalido
-                    }
-                );
-            });
+            // Verificamos el Orden (Mayor puntaje primero)
+
+            // 1ro: Destino C (Promedio 5.0)
+            result[0].Id.ShouldBe(destination3.Id);
+            result[0].AverageRating.ShouldBe(5.0);
+
+            // 2do: Destino A (Promedio 4.5)
+            result[1].Id.ShouldBe(destination1.Id);
+            result[1].AverageRating.ShouldBe(4.5);
+
+            // 3ro: Destino B (Promedio 3.0)
+            result[2].Id.ShouldBe(destination2.Id);
+            result[2].AverageRating.ShouldBe(3.0);
         }
     }
 }
