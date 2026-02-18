@@ -13,7 +13,7 @@ using PibesDelDestino.Favorites;
 
 namespace PibesDelDestino.Notifications
 {
-    public class NotificationManager : DomainService
+    public class NotificationManager : DomainService, INotificationManager
     {
         private readonly IRepository<AppNotification, Guid> _notificationRepository;
         private readonly IRepository<FavoriteDestination, Guid> _favoriteRepository;

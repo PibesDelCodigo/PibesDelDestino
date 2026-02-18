@@ -1,5 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
+using NSubstitute; 
+using PibesDelDestino.Notifications; 
+using PibesDelDestino.Cities; 
 
 namespace PibesDelDestino;
 
@@ -11,7 +14,8 @@ public class PibesDelDestinoApplicationTestModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        // Agrega esta línea para registrar el HttpClientFactory en el entorno de pruebas
         context.Services.AddHttpClient();
+        context.Services.AddSingleton(Substitute.For<INotificationManager>());
+        context.Services.AddSingleton(Substitute.For<ICitySearchService>());
     }
 }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <Import Project="..\..\common.props" />
 
@@ -9,6 +9,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="EntityFrameworkCore\Applications\**" />
+    <Compile Remove="EntityFrameworkCore\Domains\**" />
+    <EmbeddedResource Remove="EntityFrameworkCore\Applications\**" />
+    <EmbeddedResource Remove="EntityFrameworkCore\Domains\**" />
+    <None Remove="EntityFrameworkCore\Applications\**" />
+    <None Remove="EntityFrameworkCore\Domains\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\PibesDelDestino.EntityFrameworkCore\PibesDelDestino.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\PibesDelDestino.Application.Tests\PibesDelDestino.Application.Tests.csproj" />
   </ItemGroup>
@@ -17,11 +26,6 @@
     <PackageReference Include="Volo.Abp.EntityFrameworkCore.Sqlite" Version="9.3.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageReference Include="Volo.Abp.MailKit" Version="9.3.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="EntityFrameworkCore\Applications\" />
-    <Folder Include="EntityFrameworkCore\Domains\" />
   </ItemGroup>
 
 </Project>

@@ -23,7 +23,7 @@ namespace PibesDelDestino.Destinations
         // Inyectamos los servicios necesarios
         private readonly ICitySearchService _citySearchService;
         private readonly IRepository<TravelExperience, Guid> _experienceRepository;
-        private readonly NotificationManager _notificationManager;
+        private readonly INotificationManager _notificationManager;
 
         // Constructor para inyectar dependencias
         public DestinationAppService(
@@ -31,7 +31,7 @@ namespace PibesDelDestino.Destinations
             ICitySearchService citySearchService,
             IGuidGenerator guidGenerator,
             IRepository<TravelExperience, Guid> experienceRepository,
-            NotificationManager notificationManager)
+            INotificationManager notificationManager)
             : base(repository)
         {
             // Asignamos los servicios inyectados a campos privados para su uso posterior
