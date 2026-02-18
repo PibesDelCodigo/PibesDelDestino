@@ -1,68 +1,76 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
+﻿using NSubstitute;
 using Shouldly;
-using Xunit;
-using PibesDelDestino;
+using System;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using Volo.Abp.Domain.Repositories;
-using NSubstitute;
-using PibesDelDestino.Translation;
+using Volo.Abp.Modularity;
+using Xunit;
+using System.Linq;
 using PibesDelDestino.Metrics;
-using Volo.Abp.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace PibesDelDestino.Translation
 {
-    public class TranslationAppService_Tests : PibesDelDestinoApplicationTestBase<PibesDelDestinoApplicationTestModule>
+    public abstract class TranslationAppService_Tests<TStartupModule> : PibesDelDestinoApplicationTestBase<TStartupModule>
+        where TStartupModule : IAbpModule
     {
-        private readonly ITranslationAppService _translationAppService;
-        private readonly IRepository<ApiMetric, Guid> _metricRepositoryMock;
+        protected readonly ITranslationAppService _translationService;
+        protected readonly IRepository<ApiMetric, Guid> _metricRepository;
 
-        public TranslationAppService_Tests()
+        protected TranslationAppService_Tests()
         {
-            //Mock del repositorio de métricas
-            _metricRepositoryMock = Substitute.For<IRepository<ApiMetric, Guid>>();
-
-            //Obtenemos el IHttpClientFactory real (para que la traducción funcione de verdad)
-            var httpClientFactory = GetRequiredService<IHttpClientFactory>();
-
-            //Instanciamos usando el Proxy público
-            _translationAppService = new TranslationAppServiceTestProxy(
-                httpClientFactory,
-                _metricRepositoryMock,
-                ServiceProvider
-            );
+            _translationService = GetRequiredService<ITranslationAppService>();
+            _metricRepository = GetRequiredService<IRepository<ApiMetric, Guid>>();
         }
 
         [Fact]
-        public async Task Should_Translate_Text_Successfully()
+        public async Task TranslateAsync_Should_Return_Translated_Text_And_Log_Metric()
         {
-            var input = new TranslateDto
-            {
-                TextToTranslate = "Hello",
-                TargetLanguage = "es"
-            };
+            // Act
+            var input = new TranslateDto { TextToTranslate = "Hola", TargetLanguage = "en" };
+            var result = await _translationService.TranslateAsync(input);
 
-            var result = await _translationAppService.TranslateAsync(input);
-
+            // Assert
             result.ShouldNotBeNull();
             result.TranslatedText.ShouldNotBeNullOrEmpty();
 
-            // Verificamos que se intentó insertar una métrica en el repositorio
-            await _metricRepositoryMock.Received(1).InsertAsync(Arg.Any<ApiMetric>());
+            // Verificamos métricas en la DB (Test de integración)
+            var metrics = await _metricRepository.GetListAsync();
+            metrics.ShouldContain(x => x.ServiceName == "MyMemoryTranslationApi" && x.IsSuccess);
         }
-    }
 
-
-    public class TranslationAppServiceTestProxy : TranslationAppService
-    {
-        public TranslationAppServiceTestProxy(
-            IHttpClientFactory httpClientFactory,
-            IRepository<ApiMetric, Guid> metricRepository,
-            IServiceProvider serviceProvider)
-            : base(httpClientFactory, metricRepository)
+        [Fact]
+        public async Task TranslateAsync_Should_Handle_Network_Error_With_NSubstitute()
         {
-            LazyServiceProvider = serviceProvider.GetRequiredService<IAbpLazyServiceProvider>();
+            // Arrange
+            // Creamos el sustituto para el factory
+            var mockHttpClientFactory = Substitute.For<IHttpClientFactory>();
+
+            // Programamos que al pedir un cliente, este lance una excepción de red
+            mockHttpClientFactory.CreateClient(Arg.Any<string>())
+                .Returns(x => throw new HttpRequestException("Network failure"));
+
+            var mockMetricRepo = Substitute.For<IRepository<ApiMetric, Guid>>();
+
+            // Construimos el servicio manualmente para inyectar los Mocks
+            var service = new TranslationAppService(
+                mockHttpClientFactory,
+                mockMetricRepo
+            );
+
+            // Act & Assert
+            // Como tu código re-lanza la excepción en el catch, esperamos el throw
+            await Should.ThrowAsync<HttpRequestException>(async () =>
+                await service.TranslateAsync(new TranslateDto { TextToTranslate = "Prueba" })
+            );
+
+            // Verificación con NSubstitute: ¿Se recibió el intento de guardar la métrica de error?
+            await mockMetricRepo.Received(1).InsertAsync(
+                Arg.Is<ApiMetric>(m => m.IsSuccess == false),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>()
+            );
         }
     }
 }

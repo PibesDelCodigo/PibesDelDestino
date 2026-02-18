@@ -33,6 +33,9 @@ public class PibesDelDestinoEntityFrameworkCoreTestModule : AbpModule
             options.IsDynamicFeatureStoreEnabled = false;
         });
 
+        var configuration = context.Services.GetConfiguration();
+        configuration["TicketMaster:ApiKey"] = "dBMiJml4RDcw9Y3KfHsuj04xCbLTSdjo";
+
         Configure<PermissionManagementOptions>(options =>
         {
             options.SaveStaticPermissionsToDatabase = false;

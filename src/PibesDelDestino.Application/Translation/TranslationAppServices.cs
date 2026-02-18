@@ -27,9 +27,8 @@ namespace PibesDelDestino.Translation
         public async Task<TranslationResultDto> TranslateAsync(TranslateDto input)
         {
             var stopwatch = Stopwatch.StartNew();
-            var isSuccess = false;
+            var isSuccess = false; // Empieza en falso
             string errorMessage = null;
-            string translatedText = null;
 
             try
             {
@@ -37,38 +36,55 @@ namespace PibesDelDestino.Translation
                 var url = $"https://api.mymemory.translated.net/get?q={Uri.EscapeDataString(input.TextToTranslate)}&langpair=es|{input.TargetLanguage}";
 
                 var response = await client.GetAsync(url);
-                isSuccess = response.IsSuccessStatusCode;
 
-                if (isSuccess)
+                if (response.IsSuccessStatusCode)
                 {
                     var jsonString = await response.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(jsonString);
 
-                    translatedText = doc.RootElement
-                        .GetProperty("responseData")
-                        .GetProperty("translatedText")
-                        .GetString();
+                    // 1. REVISAR EL STATUS INTERNO DE LA API
+                    // MyMemory a veces manda un 200 OK pero el "responseStatus" interno es un error
+                    var responseStatus = doc.RootElement.GetProperty("responseStatus");
+                    int apiStatusCode = responseStatus.ValueKind == JsonValueKind.Number
+                        ? responseStatus.GetInt32()
+                        : int.Parse(responseStatus.GetString() ?? "0");
 
-                    return new TranslationResultDto { TranslatedText = translatedText };
+                    if (apiStatusCode == 200)
+                    {
+                        var translatedText = doc.RootElement
+                            .GetProperty("responseData")
+                            .GetProperty("translatedText")
+                            .GetString();
+
+                        isSuccess = true; // SÓLO ACÁ ES ÉXITO REAL
+                        return new TranslationResultDto { TranslatedText = translatedText };
+                    }
+                    else
+                    {
+                        // Capturamos el error real de la API (como el de ZZ-ZZ)
+                        errorMessage = doc.RootElement.GetProperty("responseDetails").GetString();
+                    }
                 }
                 else
                 {
                     errorMessage = $"Error HTTP: {response.StatusCode}";
-                    Logger.LogWarning($"⚠️ MyMemory API falló: {errorMessage}");
-                    return new TranslationResultDto { TranslatedText = "Error en la traducción" };
                 }
+
+                // Si llegamos acá, falló la API o el HTTP
+                Logger.LogWarning($"⚠️ MyMemory API falló: {errorMessage}");
+                return new TranslationResultDto { TranslatedText = "Error en la traducción" };
             }
             catch (Exception ex)
             {
                 isSuccess = false;
                 errorMessage = ex.Message;
                 Logger.LogError(ex, $"❌ Excepción en TranslationService: {ex.Message}");
-                throw; // Re-lanzamos para que el llamador sepa que algo falló gravemente
+                throw;
             }
             finally
             {
                 stopwatch.Stop();
-                // Registro de métrica sin bloquear el resultado principal
+                // Ahora la métrica reflejará la realidad gracias al isSuccess = true de arriba
                 await SafeLogMetricAsync(isSuccess, stopwatch.ElapsedMilliseconds, errorMessage);
             }
         }
