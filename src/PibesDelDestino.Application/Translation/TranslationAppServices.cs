@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using PibesDelDestino.Metrics;
+using System;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using PibesDelDestino.Metrics;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -22,64 +24,72 @@ namespace PibesDelDestino.Translation
             _metricRepository = metricRepository;
         }
 
-        // Este método se encarga de traducir un texto utilizando la API de MyMemory.
-        // Mide el tiempo de respuesta, maneja errores y registra métricas.
         public async Task<TranslationResultDto> TranslateAsync(TranslateDto input)
         {
             var stopwatch = Stopwatch.StartNew();
             var isSuccess = false;
-            var errorMessage = "";
+            string errorMessage = null;
+            string translatedText = null;
 
-            //Aca se hace la llamada a la API de MyMemory para traducir el texto.
             try
             {
                 var client = _httpClientFactory.CreateClient();
                 var url = $"https://api.mymemory.translated.net/get?q={Uri.EscapeDataString(input.TextToTranslate)}&langpair=es|{input.TargetLanguage}";
 
                 var response = await client.GetAsync(url);
+                isSuccess = response.IsSuccessStatusCode;
 
-                if (response.IsSuccessStatusCode)
+                if (isSuccess)
                 {
-
-                    // Se lee la respuesta JSON y se extrae el texto traducido.
                     var jsonString = await response.Content.ReadAsStringAsync();
-
                     using var doc = JsonDocument.Parse(jsonString);
-                    var translatedText = doc.RootElement
-                                            .GetProperty("responseData")
-                                            .GetProperty("translatedText")
-                                            .GetString();
 
-                    isSuccess = true;
-                    stopwatch.Stop();
+                    translatedText = doc.RootElement
+                        .GetProperty("responseData")
+                        .GetProperty("translatedText")
+                        .GetString();
 
                     return new TranslationResultDto { TranslatedText = translatedText };
                 }
                 else
                 {
-                    isSuccess = false;
                     errorMessage = $"Error HTTP: {response.StatusCode}";
-                    throw new Exception(errorMessage);
+                    Logger.LogWarning($"⚠️ MyMemory API falló: {errorMessage}");
+                    return new TranslationResultDto { TranslatedText = "Error en la traducción" };
                 }
             }
             catch (Exception ex)
             {
                 isSuccess = false;
                 errorMessage = ex.Message;
-                stopwatch.Stop();
-                throw;
+                Logger.LogError(ex, $"❌ Excepción en TranslationService: {ex.Message}");
+                throw; // Re-lanzamos para que el llamador sepa que algo falló gravemente
             }
             finally
             {
+                stopwatch.Stop();
+                // Registro de métrica sin bloquear el resultado principal
+                await SafeLogMetricAsync(isSuccess, stopwatch.ElapsedMilliseconds, errorMessage);
+            }
+        }
 
+        private async Task SafeLogMetricAsync(bool isSuccess, long elapsedMs, string error)
+        {
+            try
+            {
                 await _metricRepository.InsertAsync(new ApiMetric(
                     GuidGenerator.Create(),
                     serviceName: "MyMemoryTranslationApi",
                     endpoint: "/get",
                     isSuccess: isSuccess,
-                    responseTimeMs: (int)stopwatch.ElapsedMilliseconds,
-                    errorMessage: isSuccess ? string.Empty : errorMessage
+                    responseTimeMs: (int)elapsedMs,
+                    errorMessage: error ?? string.Empty
                 ));
+            }
+            catch (Exception ex)
+            {
+                // Si falla la métrica, solo lo logueamos, no rompemos la traducción
+                Logger.LogError(ex, "❌ No se pudo guardar la métrica de traducción.");
             }
         }
     }

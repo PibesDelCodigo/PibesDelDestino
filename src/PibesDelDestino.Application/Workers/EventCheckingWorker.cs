@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using PibesDelDestino.Destinations;
 using PibesDelDestino.Favorites;
 using PibesDelDestino.Notifications;
@@ -20,62 +19,65 @@ namespace PibesDelDestino.Workers
     {
         private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        // Inyectamos el IServiceScopeFactory para poder resolver servicios dentro del DoWorkAsync.
         public EventCheckingWorker(
             AbpAsyncTimer timer,
             IServiceScopeFactory serviceScopeFactory)
             : base(timer, serviceScopeFactory)
         {
             _serviceScopeFactory = serviceScopeFactory;
-            Timer.Period = 86400000;
+            // 24 horas en milisegundos
+            // Timer.Period = 86400000;
+            Timer.Period = 30000;
         }
 
-        // Sobrescribimos el método DoWorkAsync para implementar la lógica de búsqueda de eventos y notificación a los usuarios.
         protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
         {
-            Logger.LogInformation($"🕵️‍♂️ WORKER: Iniciando busqueda de eventos a las {DateTime.Now}...");
+            Logger.LogInformation($"🕵️‍♂️ WORKER: Iniciando búsqueda de eventos a las {DateTime.Now}...");
 
             using (var scope = _serviceScopeFactory.CreateScope())
             {
-                // Iniciamos una Unidad de Trabajo para asegurar que todas las operaciones de base de datos sean atómicas.
-                //Esto significa que si algo falla en el proceso, no se guardará nada en la base de datos, evitando datos inconsistentes.
                 var unitOfWorkManager = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>();
 
+                // Usamos una UoW para que las consultas a repositorios funcionen correctamente
                 using (var uow = unitOfWorkManager.Begin())
                 {
                     try
                     {
-                        // 1. Resolución de servicios (Repositorios, Servicios, etc.)
                         var destinationRepo = scope.ServiceProvider.GetRequiredService<IRepository<Destination, Guid>>();
                         var favoriteRepo = scope.ServiceProvider.GetRequiredService<IRepository<FavoriteDestination, Guid>>();
                         var ticketMasterService = scope.ServiceProvider.GetRequiredService<ITicketMasterService>();
                         var notificationManager = scope.ServiceProvider.GetRequiredService<NotificationManager>();
 
-                        // Lógica de búsqueda
-                        var favoriteQuery = await favoriteRepo.GetQueryableAsync();
-                        var activeDestinationIds = favoriteQuery.Select(f => f.DestinationId).Distinct().ToList();
+                        // 1. Obtener solo destinos que REALMENTE tienen seguidores
+                        var activeDestinationIds = (await favoriteRepo.GetQueryableAsync())
+                            .Select(f => f.DestinationId)
+                            .Distinct()
+                            .ToList();
 
                         if (!activeDestinationIds.Any())
                         {
-                            Logger.LogDebug("WORKER: Nadie tiene favoritos activos.");
+                            Logger.LogInformation("WORKER: No hay favoritos activos para procesar.");
                             return;
                         }
-                            
-                        // Búsqueda de eventos para cada destino activo (Solo aquellos que tienen seguidores)
+
                         var destinationsToCheck = await destinationRepo.GetListAsync(d => activeDestinationIds.Contains(d.Id));
 
                         foreach (var destination in destinationsToCheck)
                         {
                             try
                             {
+                                // 2. Respetar la API externa: Pequeña pausa de 200ms para evitar bloqueos por Rate Limit
+                                await Task.Delay(200);
+
                                 var events = await ticketMasterService.SearchEventsAsync(destination.City);
 
-                                if (events.Any())
+                                if (events != null && events.Any())
                                 {
-                                    Logger.LogInformation($"WORKER: Encontrados {events.Count} eventos en {destination.City}. Delegando al Manager");
+                                    Logger.LogInformation($"WORKER: {events.Count} eventos nuevos en {destination.City}.");
 
                                     foreach (var evt in events)
                                     {
+                                        // Aquí podrías añadir un check: if (!AlreadyNotified(evt.Id))
                                         await notificationManager.NotifyEventInCityAsync(
                                             destination.City,
                                             evt.Name,
@@ -86,15 +88,17 @@ namespace PibesDelDestino.Workers
                             }
                             catch (Exception ex)
                             {
-                                Logger.LogError($"❌ WORKER: Error buscando en {destination.City}: {ex.Message}");
+                                Logger.LogWarning($"⚠️ WORKER: Fallo puntual en ciudad {destination.City}: {ex.Message}");
+                                // Continuamos con la siguiente ciudad, no matamos todo el proceso
                             }
                         }
-                        // Si todo salió bien, completamos la Unidad de Trabajo para guardar los cambios en la base de datos.
+
                         await uow.CompleteAsync();
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError($"🔥 WORKER CRITICAL: {ex.Message}");
+                        Logger.LogCritical($"🔥 WORKER FATAL ERROR: {ex.Message}");
+                        // En caso de error crítico, no hacemos CompleteAsync para que ruede atrás (Rollback)
                     }
                 }
             }

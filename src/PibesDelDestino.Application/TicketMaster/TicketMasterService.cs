@@ -5,46 +5,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using PibesDelDestino.Metrics;
+using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Guids;
-using System.Diagnostics;
 
 namespace PibesDelDestino.TicketMaster
 {
-    public class TicketMasterService : ITicketMasterService
-    { 
+    public class TicketMasterService : ApplicationService, ITicketMasterService
+    {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
-        private readonly ILogger<TicketMasterService> _logger;
         private readonly IRepository<SearchHistory, Guid> _searchHistoryRepo;
-        private readonly IGuidGenerator _guidGenerator;
         private readonly IRepository<ApiMetric, Guid> _apiMetricRepo;
 
         public TicketMasterService(
             IHttpClientFactory httpClientFactory,
             IConfiguration configuration,
-            ILogger<TicketMasterService> logger, IRepository<SearchHistory,
-            Guid> searchHistoryRepo,
-            IGuidGenerator guidGenerator, IRepository<ApiMetric, Guid> apiMetricRepo)
+            IRepository<SearchHistory, Guid> searchHistoryRepo,
+            IRepository<ApiMetric, Guid> apiMetricRepo)
         {
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
-            _logger = logger;
             _searchHistoryRepo = searchHistoryRepo;
-            _guidGenerator = guidGenerator;
             _apiMetricRepo = apiMetricRepo;
         }
 
-        // Este método se encarga de buscar eventos en TicketMaster para una ciudad específica.
         public async Task<List<EventoDTO>> SearchEventsAsync(string cityName)
         {
+           
             var apiKey = _configuration["TicketMaster:ApiKey"];
-
             if (string.IsNullOrEmpty(apiKey))
             {
-                _logger.LogError("❌ La API Key de TicketMaster no está configurada.");
+                Logger.LogError("❌ La API Key de TicketMaster no está configurada.");
                 return new List<EventoDTO>();
             }
 
@@ -54,84 +48,88 @@ namespace PibesDelDestino.TicketMaster
             var stopwatch = Stopwatch.StartNew();
             var isSuccess = false;
             string errorMessage = null;
+            List<EventoDTO> resultList = new List<EventoDTO>();
 
-            // Intentamos hacer la solicitud a TicketMaster y procesar la respuesta.
             try
             {
+                //Llamada a la API Externa
                 var response = await client.GetAsync(url);
                 isSuccess = response.IsSuccessStatusCode;
 
                 if (!isSuccess)
                 {
-                    // Si la respuesta no es exitosa, registramos el error y devolvemos una lista vacía.
-                    errorMessage = $"Error {response.StatusCode}";
-                    _logger.LogWarning($"⚠️ TicketMaster respondió con error: {response.StatusCode}");
-                    return new List<EventoDTO>();
+                    errorMessage = $"Error HTTP {response.StatusCode}";
+                    Logger.LogWarning($"⚠️ TicketMaster respondió con error: {response.StatusCode}");
+                    return resultList;
                 }
 
-                // Si la respuesta es exitosa, intentamos deserializar el contenido.
+                // Deserialización y Mapeo
                 var root = await response.Content.ReadFromJsonAsync<TicketMasterRoot>();
 
-                if (root?.Embedded?.Events == null)
+                if (root?.Embedded?.Events != null)
                 {
-                    await SaveSearchHistoryAsync(cityName, 0);
-                    return new List<EventoDTO>();
+                    resultList = root.Embedded.Events.Select(e => new EventoDTO
+                    {
+                        Name = e.Name,
+                        Url = e.Url,
+                        // Null-conditional operators para evitar crash si faltan datos
+                        Date = e.Dates?.Start?.LocalDate ?? "Fecha no disponible",
+                        ImageUrl = e.Images?.FirstOrDefault()?.Url
+                    }).ToList();
                 }
 
-                // Mapeamos los eventos obtenidos a una lista de EventoDTO,
-                // asegurándonos de manejar posibles valores nulos.
-                var cleanList = root.Embedded.Events.Select(e => new EventoDTO
-                {
-                    Name = e.Name,
-                    Url = e.Url,
-                    Date = e.Dates?.Start?.LocalDate ?? "Fecha no disponible",
-                    ImageUrl = e.Images?.FirstOrDefault()?.Url
-                }).ToList();
+                //Guardar Historial (Solo si fue exitoso)
+                await SaveSearchHistoryAsync(cityName, resultList.Count);
 
-                await SaveSearchHistoryAsync(cityName, cleanList.Count);
-
-                return cleanList;
-
+                return resultList;
             }
             catch (Exception ex)
             {
                 isSuccess = false;
                 errorMessage = ex.Message;
-                _logger.LogError($"❌ Error conectando a TicketMaster: {ex.Message}");
+                Logger.LogError(ex, $"❌ Excepción conectando a TicketMaster: {ex.Message}");
                 return new List<EventoDTO>();
             }
-
-            //Al finalizar la operación, guardamos una métrica con el resultado de la llamada a la API,
-            //incluyendo el tiempo de respuesta y cualquier error ocurrido.
             finally
             {
+                //Guardar Métricas
                 stopwatch.Stop();
-                var metric = new ApiMetric(
-                    _guidGenerator.Create(),           
-                    "TicketMasterApi",                 
-                    "/discovery/v2/events",            
-                    isSuccess,                         
-                    (int)stopwatch.ElapsedMilliseconds,
-                    errorMessage ?? ""                  
-                );
-
-                await _apiMetricRepo.InsertAsync(metric, autoSave: true);
-
-                _logger.LogInformation($"📊 Métrica guardada: TicketMasterApi ({stopwatch.ElapsedMilliseconds}ms)");
-            }    
+                await SafeLogMetricAsync(isSuccess, stopwatch.ElapsedMilliseconds, errorMessage);
+            }
         }
 
-        // Este método privado se encarga de guardar el término de búsqueda y
-        // la cantidad de resultados obtenidos en el historial de búsquedas.
+        // Método auxiliar para guardar historial 
         private async Task SaveSearchHistoryAsync(string term, int count)
         {
-            if (!string.IsNullOrWhiteSpace(term))
+            if (string.IsNullOrWhiteSpace(term)) return;
+
+            var history = new SearchHistory(
+                GuidGenerator.Create(),
+                term.Trim().ToLower(),
+                count
+            );
+
+            await _searchHistoryRepo.InsertAsync(history);
+        }
+
+        // Método auxiliar para guardar métricas sin romper el flujo principal
+        private async Task SafeLogMetricAsync(bool isSuccess, long elapsedMs, string error)
+        {
+            try
             {
-                await _searchHistoryRepo.InsertAsync(new SearchHistory(
-                    _guidGenerator.Create(),
-                    term.Trim().ToLower(), 
-                    count
-                ), autoSave: true);
+                var metric = new ApiMetric(
+                    GuidGenerator.Create(),
+                    "TicketMasterApi",
+                    "/discovery/v2/events",
+                    isSuccess,
+                    (int)elapsedMs,
+                    error ?? ""
+                );
+                await _apiMetricRepo.InsertAsync(metric);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "❌ Error al intentar guardar la métrica de API.");
             }
         }
     }
