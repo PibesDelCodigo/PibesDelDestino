@@ -1,114 +1,129 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
-using NSubstitute;
-using Volo.Abp.Emailing;
-using PibesDelDestino.Application.Contracts.Destinations;
-using PibesDelDestino.Cities;
-using PibesDelDestino.Destinations;
+﻿using PibesDelDestino.Application.Contracts.Destinations;
 using PibesDelDestino.Experiences;
-using PibesDelDestino.Favorites;
-using PibesDelDestino.Notifications;
 using Shouldly;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Identity;
 using Xunit;
 
 namespace PibesDelDestino.Destinations
 {
+    // Heredamos de ApplicationTestBase, que nos da la Base de Datos en Memoria GRATIS
     public class DestinationAppService_Tests : PibesDelDestinoApplicationTestBase<PibesDelDestinoApplicationTestModule>
     {
-        private readonly DestinationAppService _destinationService;
-        private IRepository<Destination, Guid> _destinationRepoMock;
-        private IRepository<TravelExperience, Guid> _experienceRepoMock;
-        private ICitySearchService _citySearchServiceMock;
-        private NotificationManager _notificationManagerMock;
-
+        private readonly IDestinationAppService _destinationService;
+        private readonly IRepository<Destination, Guid> _destinationRepository;
+        private readonly IRepository<TravelExperience, Guid> _experienceRepository;
 
         public DestinationAppService_Tests()
         {
-            _destinationService = GetRequiredService<DestinationAppService>();
+            // En lugar de crear Mocks, pedimos los servicios REALES al contenedor de pruebas
+            _destinationService = GetRequiredService<IDestinationAppService>();
+            _destinationRepository = GetRequiredService<IRepository<Destination, Guid>>();
+            _experienceRepository = GetRequiredService<IRepository<TravelExperience, Guid>>();
         }
 
-        protected override void AfterAddApplication(IServiceCollection services)
+        [Fact]
+        public async Task Should_Get_List_Of_Destinations()
         {
-            // Crear mocks
-            _destinationRepoMock = Substitute.For<IRepository<Destination, Guid>>();
-            _experienceRepoMock = Substitute.For<IRepository<TravelExperience, Guid>>();
-            _citySearchServiceMock = Substitute.For<ICitySearchService>();
+            // Arrange
+            var destination = new Destination(Guid.NewGuid(), "Destino Test", "País Test", "Ciudad Test", 1000, "foto.jpg", DateTime.Now, new Coordinates(10, 20));
+            await _destinationRepository.InsertAsync(destination, autoSave: true);
 
-            // Reemplazar registros en el contenedor
-            services.Replace(ServiceDescriptor.Singleton(typeof(IRepository<Destination, Guid>), _destinationRepoMock));
-            services.Replace(ServiceDescriptor.Singleton(typeof(IRepository<TravelExperience, Guid>), _experienceRepoMock));
-            services.Replace(ServiceDescriptor.Transient(_ => _citySearchServiceMock));
+            // Act
+            var result = await _destinationService.GetListAsync(new PagedAndSortedResultRequestDto());
 
-            // Si el NotificationManager necesita otros mocks, puedes agregarlos aquí
-            _notificationManagerMock = Substitute.For<NotificationManager>(
-                Substitute.For<IRepository<AppNotification, Guid>>(),
-                Substitute.For<IRepository<FavoriteDestination, Guid>>(),
-                Substitute.For<IRepository<Destination, Guid>>(),
-                Substitute.For<IIdentityUserRepository>(),
-                Substitute.For<IEmailSender>(),
-                Substitute.For<ILogger<NotificationManager>>()
-            );
-            services.Replace(ServiceDescriptor.Singleton(_notificationManagerMock));
+            // Assert
+            result.ShouldNotBeNull();
+            result.Items.ShouldContain(d => d.Id == destination.Id);
+        }
+
+        [Fact]
+        public async Task Should_Create_A_Valid_Destinations()
+        {
+            //Arrange-Act
+            var result = await _destinationService.CreateAsync(
+                new CreateUpdateDestinationDto
+            {
+                Name = "Nuevo Destino",
+                Country = "País Nuevo",
+                City = "Ciudad Nueva",
+                Population = 1500,
+                Photo = "nuevaFoto.jpg",
+                UpdateDate = DateTime.Now,
+                Coordinates = new CoordinatesDto { Latitude = 15, Longitude = 25 }
+                });
+
+            //Assert
+            result.ShouldNotBeNull();
+            result.Id.ShouldNotBe(Guid.Empty);
+            result.Name.ShouldBe("Nuevo Destino");
         }
 
         [Fact]
         public async Task GetTopDestinationsAsync_Should_Return_Top10_OrderedByAverageRating()
         {
-            // ARRANGE
-            // Crear destinos de prueba
+            // 1. ARRANGE (Preparar los datos)
+
+            // Creamos los destinos
             var destination1 = new Destination(Guid.NewGuid(), "Destino A", "País A", "Ciudad A", 1000, "fotoA.jpg", DateTime.Now, new Coordinates(10, 20));
             var destination2 = new Destination(Guid.NewGuid(), "Destino B", "País B", "Ciudad B", 2000, "fotoB.jpg", DateTime.Now, new Coordinates(30, 40));
             var destination3 = new Destination(Guid.NewGuid(), "Destino C", "País C", "Ciudad C", 3000, "fotoC.jpg", DateTime.Now, new Coordinates(50, 60));
             var destination4 = new Destination(Guid.NewGuid(), "Destino D", "País D", "Ciudad D", 4000, "fotoD.jpg", DateTime.Now, new Coordinates(70, 80));
-            var destinations = new List<Destination> { destination1, destination2, destination3, destination4 };
 
-            // Crear experiencias (ratings) para los destinos
+            // ¡ACÁ ESTÁ LA CLAVE! 
+            // En vez de mockear el repositorio, los guardamos de verdad en la DB de memoria.
+            await _destinationRepository.InsertAsync(destination1, autoSave: true);
+            await _destinationRepository.InsertAsync(destination2, autoSave: true);
+            await _destinationRepository.InsertAsync(destination3, autoSave: true);
+            await _destinationRepository.InsertAsync(destination4, autoSave: true);
+
+            // Creamos las experiencias (ratings)
             var experiences = new List<TravelExperience>
             {
-                // Destino A: ratings 5 y 4 → 4.5
+                // Destino A: ratings 5 y 4 -> Promedio 4.5
                 new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination1.Id, "Exp1", "Desc", DateTime.Now, 5),
                 new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination1.Id, "Exp2", "Desc", DateTime.Now, 4),
-                // Destino B: rating 3 → 3
+                // Destino B: rating 3 -> Promedio 3.0
                 new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination2.Id, "Exp3", "Desc", DateTime.Now, 3),
-                // Destino C: ratings 5,5,5 → 5
+                // Destino C: ratings 5, 5, 5 -> Promedio 5.0
                 new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination3.Id, "Exp4", "Desc", DateTime.Now, 5),
                 new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination3.Id, "Exp5", "Desc", DateTime.Now, 5),
                 new TravelExperience(Guid.NewGuid(), Guid.NewGuid(), destination3.Id, "Exp6", "Desc", DateTime.Now, 5),
-                // Destino D: sin experiencias
+                // Destino D: Sin experiencias -> Promedio 0 (o no aparece, según tu lógica)
             };
 
-            // Configurar mocks para que devuelvan las listas como IQueryable
-            _destinationRepoMock.GetQueryableAsync().Returns(destinations.AsQueryable());
-            _experienceRepoMock.GetQueryableAsync().Returns(experiences.AsQueryable());
+            // Las guardamos en la DB de memoria
+            foreach (var exp in experiences)
+            {
+                await _experienceRepository.InsertAsync(exp, autoSave: true);
+            }
 
-            // ACT
+            // 2. ACT (Ejecutar la prueba)
+            // Llamamos al servicio real. Él va a ir a la DB de memoria, hacer el cálculo y volver.
             var result = await _destinationService.GetTopDestinationsAsync();
 
-            // ASSERT
+            // 3. ASSERT (Verificar)
             result.ShouldNotBeNull();
-            // Destinos con ratings: A, B, C (D no tiene)
+
+            // Destinos con ratings: A, B, C (D no tiene ratings, así que si tu lógica lo excluye, son 3)
             result.Count.ShouldBe(3);
 
-            // Orden esperado
-            // Destino C
+            // Verificamos el Orden (Mayor puntaje primero)
+
+            // 1ro: Destino C (Promedio 5.0)
             result[0].Id.ShouldBe(destination3.Id);
             result[0].AverageRating.ShouldBe(5.0);
 
-            // Destino A
+            // 2do: Destino A (Promedio 4.5)
             result[1].Id.ShouldBe(destination1.Id);
             result[1].AverageRating.ShouldBe(4.5);
 
-            // Destino B
+            // 3ro: Destino B (Promedio 3.0)
             result[2].Id.ShouldBe(destination2.Id);
             result[2].AverageRating.ShouldBe(3.0);
         }
     }
-
 }
