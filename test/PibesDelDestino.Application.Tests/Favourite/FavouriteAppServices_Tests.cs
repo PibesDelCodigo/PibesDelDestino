@@ -32,7 +32,6 @@ namespace PibesDelDestino.Favorites
         {
             // 1. Arrange: Creamos un destino de prueba
             var dest = await CreateDestinationAsync("Bali");
-
             var input = new CreateFavoriteDto { DestinationId = dest.Id };
 
             // 2. Act: Llamamos a Toggle (Como no existe, debería AGREGARLO)
@@ -41,9 +40,12 @@ namespace PibesDelDestino.Favorites
             // 3. Assert
             result.ShouldBeTrue(); // True indica que "Ahora es favorito"
 
-            // Verificamos que se haya guardado en la base de datos
-            var favEnDb = await _favoriteRepository.FirstOrDefaultAsync(x => x.DestinationId == dest.Id);
-            favEnDb.ShouldNotBeNull();
+            // 🔴 LA SOLUCIÓN ESTÁ ACÁ: Envolvemos la consulta en un Unit Of Work nuevo
+            await WithUnitOfWorkAsync(async () =>
+            {
+                var favEnDb = await _favoriteRepository.FirstOrDefaultAsync(x => x.DestinationId == dest.Id);
+                favEnDb.ShouldNotBeNull();
+            });
         }
 
         [Fact]
@@ -62,9 +64,12 @@ namespace PibesDelDestino.Favorites
             // 3. Assert
             result.ShouldBeFalse(); // False indica que "Ya NO es favorito"
 
-            // Verificamos que se haya borrado de la base de datos
-            var favEnDb = await _favoriteRepository.FirstOrDefaultAsync(x => x.DestinationId == dest.Id);
-            favEnDb.ShouldBeNull();
+            // 🔴 LA SOLUCIÓN ESTÁ ACÁ TAMBIÉN
+            await WithUnitOfWorkAsync(async () =>
+            {
+                var favEnDb = await _favoriteRepository.FirstOrDefaultAsync(x => x.DestinationId == dest.Id);
+                favEnDb.ShouldBeNull();
+            });
         }
 
         [Fact]

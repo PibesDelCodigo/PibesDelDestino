@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PibesDelDestino.EntityFrameworkCore;
+using Xunit;
 
-namespace PibesDelDestino.EntityFrameworkCore.Aplicattion.GeoDb
+namespace PibesDelDestino.GeoDb
 {
-    internal class EfCoreGeoDbAppService
+    // Esta es la clase que va a ejecutar xUnit usando la base de datos real
+    public class EfCoreGeoDbCitySearchService_Tests : GeoDbCitySearchService_Tests<PibesDelDestinoEntityFrameworkCoreTestModule>
     {
     }
 }

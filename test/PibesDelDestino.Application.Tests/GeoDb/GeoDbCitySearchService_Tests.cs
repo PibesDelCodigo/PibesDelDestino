@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using PibesDelDestino.Cities; // <--- ACÁ ESTÁN TUS DTOs
-using PibesDelDestino.Metrics; // Asumiendo que SearchHistory está acá
+using PibesDelDestino.Cities;
+using PibesDelDestino.Metrics;
 using Shouldly;
 using System;
 using System.Net;
@@ -12,39 +12,36 @@ using System.Threading;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
+using Volo.Abp.Modularity;
 using Xunit;
 
 namespace PibesDelDestino.GeoDb
 {
-    public class GeoDbCitySearchService_Tests
+    // AHORA ES ABSTRACTA Y HEREDA DE ABP
+    public abstract class GeoDbCitySearchService_Tests<TStartupModule> : PibesDelDestinoApplicationTestBase<TStartupModule>
+        where TStartupModule : IAbpModule
     {
-        // 1. Declaramos los Mocks
-        private readonly IHttpClientFactory _httpClientFactoryMock;
-        private readonly IConfiguration _configurationMock;
-        private readonly IRepository<SearchHistory, Guid> _searchHistoryRepoMock;
-        private readonly IGuidGenerator _guidGeneratorMock;
-        private readonly ILogger<GeoDbCitySearchService> _loggerMock;
+        // Traemos las herramientas REALES de la base de datos de pruebas
+        private readonly IRepository<SearchHistory, Guid> _searchHistoryRepo;
+        private readonly IGuidGenerator _guidGenerator;
+        private readonly ILogger<GeoDbCitySearchService> _logger;
 
-        public GeoDbCitySearchService_Tests()
+        protected GeoDbCitySearchService_Tests()
         {
-            // Inicializamos los actores falsos
-            _httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
-            _configurationMock = Substitute.For<IConfiguration>();
-            _searchHistoryRepoMock = Substitute.For<IRepository<SearchHistory, Guid>>();
-            _guidGeneratorMock = Substitute.For<IGuidGenerator>();
-            _loggerMock = Substitute.For<ILogger<GeoDbCitySearchService>>();
-
-            // Configuración básica fake
-            _configurationMock["GeoDb:ApiKey"].Returns("clave-falsa-123");
-            _guidGeneratorMock.Create().Returns(Guid.NewGuid());
+            // El framework nos da las instancias reales conectadas a la DB en memoria
+            _searchHistoryRepo = GetRequiredService<IRepository<SearchHistory, Guid>>();
+            _guidGenerator = GetRequiredService<IGuidGenerator>();
+            _logger = GetRequiredService<ILogger<GeoDbCitySearchService>>();
         }
 
         [Fact]
         public async Task SearchCitiesAsync_Should_Return_Cities_When_Api_Responds_Ok()
         {
-            // 1. Arrange
-            // Preparamos el JSON falso que devolvería la API
-            // Nota: Usamos propiedad "data" minúscula porque así suele venir en JSON APIs
+            // 1. Arrange: MOCKEAMOS EL HTTP Y LA CONFIGURACIÓN
+            var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+            var configurationMock = Substitute.For<IConfiguration>();
+            configurationMock["GeoDb:ApiKey"].Returns("clave-falsa-123");
+
             var fakeJson = JsonSerializer.Serialize(new
             {
                 data = new[]
@@ -53,20 +50,18 @@ namespace PibesDelDestino.GeoDb
                 }
             });
 
-            // Creamos el cliente HTTP mentiroso
             var mockClient = CreateMockHttpClient(HttpStatusCode.OK, fakeJson);
-            _httpClientFactoryMock.CreateClient(Arg.Any<string>()).Returns(mockClient);
+            httpClientFactoryMock.CreateClient(Arg.Any<string>()).Returns(mockClient);
 
-            // Instanciamos el servicio con los Mocks EXACTOS de tu constructor
+            // CREAMOS EL SERVICIO HÍBRIDO: Api y config falsas + Base de Datos real
             var service = new GeoDbCitySearchService(
-                _httpClientFactoryMock,
-                _configurationMock,
-                _searchHistoryRepoMock,
-                _guidGeneratorMock,
-                _loggerMock
+                httpClientFactoryMock,
+                configurationMock,
+                _searchHistoryRepo,
+                _guidGenerator,
+                _logger
             );
 
-            // Usamos el DTO correcto: CityRequestDTO (con mayúsculas al final, como en tu código)
             var request = new CityRequestDTO { PartialName = "Cor" };
 
             // 2. Act
@@ -78,50 +73,56 @@ namespace PibesDelDestino.GeoDb
             result.Cities[0].Name.ShouldBe("Córdoba");
             result.Cities[0].Country.ShouldBe("Argentina");
 
-            // Verificamos que intentó guardar en el historial
-            await _searchHistoryRepoMock.Received(1).InsertAsync(Arg.Any<SearchHistory>());
+            // 🔴 EL CAMBIO MAGISTRAL: Ahora verificamos si se guardó en la DB Real
+            await WithUnitOfWorkAsync(async () =>
+            {
+                var historial = await _searchHistoryRepo.GetListAsync();
+                historial.Count.ShouldBeGreaterThan(0); // Si es mayor a 0, ¡guardó el historial!
+            });
         }
 
         [Fact]
         public async Task SearchCitiesAsync_Should_Return_Empty_When_Api_Fails()
         {
-            // 1. Arrange: Simulamos error 500
+            // 1. Arrange
+            var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+            var configurationMock = Substitute.For<IConfiguration>();
+
             var mockClient = CreateMockHttpClient(HttpStatusCode.InternalServerError, "Error en GeoDb");
-            _httpClientFactoryMock.CreateClient(Arg.Any<string>()).Returns(mockClient);
+            httpClientFactoryMock.CreateClient(Arg.Any<string>()).Returns(mockClient);
 
             var service = new GeoDbCitySearchService(
-                _httpClientFactoryMock, _configurationMock, _searchHistoryRepoMock, _guidGeneratorMock, _loggerMock);
+                httpClientFactoryMock, configurationMock, _searchHistoryRepo, _guidGenerator, _logger);
 
             // 2. Act
             var result = await service.SearchCitiesAsync(new CityRequestDTO { PartialName = "Error" });
 
             // 3. Assert
-            result.Cities.ShouldBeEmpty(); // Tu código devuelve lista vacía si falla
+            result.Cities.ShouldBeEmpty();
         }
 
         [Fact]
         public async Task SearchCitiesAsync_Should_Handle_Exception_Gracefully()
         {
-            // 1. Arrange: Simulamos caída de red (Excepción)
+            // 1. Arrange
+            var httpClientFactoryMock = Substitute.For<IHttpClientFactory>();
+            var configurationMock = Substitute.For<IConfiguration>();
+
             var failingHandler = new FailingHttpMessageHandler();
             var failingClient = new HttpClient(failingHandler);
-            _httpClientFactoryMock.CreateClient(Arg.Any<string>()).Returns(failingClient);
+            httpClientFactoryMock.CreateClient(Arg.Any<string>()).Returns(failingClient);
 
             var service = new GeoDbCitySearchService(
-                _httpClientFactoryMock, _configurationMock, _searchHistoryRepoMock, _guidGeneratorMock, _loggerMock);
+                httpClientFactoryMock, configurationMock, _searchHistoryRepo, _guidGenerator, _logger);
 
             // 2. Act
             var result = await service.SearchCitiesAsync(new CityRequestDTO { PartialName = "Boom" });
 
             // 3. Assert
-            result.Cities.ShouldBeEmpty(); // El try-catch captura y devuelve vacío
-
-            // Verificamos que se haya logueado el error
-            // (NSubstitute chequea llamadas a extension methods de forma especial, pero esto es opcional)
+            result.Cities.ShouldBeEmpty();
         }
 
-        // --- HELPERS (Magia Negra para Mockear HTTP) ---
-
+        // --- HELPERS PARA HTTP ---
         private HttpClient CreateMockHttpClient(HttpStatusCode statusCode, string jsonContent)
         {
             var handler = new MockHttpMessageHandler(new HttpResponseMessage
