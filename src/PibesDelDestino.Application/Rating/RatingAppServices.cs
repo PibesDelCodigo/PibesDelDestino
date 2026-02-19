@@ -22,45 +22,47 @@ namespace PibesDelDestino.Ratings
             _userRepository = userRepository;
         }
 
-        // =================================================================================
-        // CREAR O ACTUALIZAR (UPSERT)
-        // =================================================================================
-        public async Task<RatingDto> CreateOrUpdateAsync(CreateRatingDto input)
+        public async Task<RatingDto> CreateAsync(CreateRatingDto input)
         {
-            // 1. Buscamos si ya existe una calificación de ESTE usuario para ESTE destino
+            // 1. EL ESCUDO: Verificamos duplicados
             var existingRating = await _ratingRepository.FindAsync(x =>
                 x.DestinationId == input.DestinationId &&
                 x.UserId == CurrentUser.Id
             );
 
-            Rating ratingToReturn;
-
             if (existingRating != null)
             {
-                // CASO A: El usuario ya votó, quiere cambiar su opinión.
-                // Usamos el método DDD 'Update' que creamos en la Entidad.
-                existingRating.Update(input.Score, input.Comment);
-
-                await _ratingRepository.UpdateAsync(existingRating);
-                ratingToReturn = existingRating;
+                throw new Volo.Abp.UserFriendlyException("Ya hiciste una reseña para este destino.");
             }
-            else
+
+            // 2. CREACIÓN PURA
+            var newRating = new Rating(
+                GuidGenerator.Create(),
+                input.DestinationId,
+                CurrentUser.Id.Value,
+                input.Score,
+                input.Comment
+            );
+
+            await _ratingRepository.InsertAsync(newRating);
+
+            return await MapToDtoWithUserInfo(newRating);
+        }
+
+        // EL MÉTODO PARA LOS 3 PUNTITOS
+        public async Task<RatingDto> UpdateAsync(Guid id, CreateRatingDto input)
+        {
+            var rating = await _ratingRepository.GetAsync(id);
+
+            if (rating.UserId != CurrentUser.Id)
             {
-                // CASO B: Es la primera vez que vota.
-                var newRating = new Rating(
-                    GuidGenerator.Create(),
-                    input.DestinationId,
-                    CurrentUser.Id.Value,
-                    input.Score,
-                    input.Comment
-                );
-
-                await _ratingRepository.InsertAsync(newRating);
-                ratingToReturn = newRating;
+                throw new Volo.Abp.UserFriendlyException("No podés editar esto.");
             }
 
-            // Devolvemos el DTO enriquecido con nombre y foto
-            return await MapToDtoWithUserInfo(ratingToReturn);
+            rating.Update(input.Score, input.Comment);
+            await _ratingRepository.UpdateAsync(rating);
+
+            return await MapToDtoWithUserInfo(rating);
         }
 
         // =================================================================================

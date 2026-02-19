@@ -26,8 +26,8 @@ namespace PibesDelDestino.Workers
         {
             _serviceScopeFactory = serviceScopeFactory;
             // 24 horas en milisegundos
-            // Timer.Period = 86400000;
-            Timer.Period = 30000;
+            Timer.Period = 86400000;
+            //Timer.Period = 30000;
         }
 
         protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)

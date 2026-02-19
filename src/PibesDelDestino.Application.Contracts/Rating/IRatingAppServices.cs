@@ -1,13 +1,11 @@
-﻿using System;
+﻿using PibesDelDestino.Ratings;
+using System;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Services;
 
-namespace PibesDelDestino.Ratings
+public interface IRatingAppService : IApplicationService
 {
-    public interface IRatingAppService : IApplicationService
-    {
-        Task<RatingDto> CreateOrUpdateAsync(CreateRatingDto input);
-
-        Task<RatingDto> GetMyRatingAsync(Guid destinationId);
-    }
+    Task<RatingDto> CreateAsync(CreateRatingDto input);
+    Task<RatingDto> UpdateAsync(Guid id, CreateRatingDto input);
+    Task<RatingDto> GetMyRatingAsync(Guid destinationId);
 }

@@ -23,6 +23,10 @@ namespace PibesDelDestino.Ratings
             _currentUser = GetRequiredService<ICurrentUser>();
         }
 
+        // =================================================================================
+        // TESTS DE CREACIÓN
+        // =================================================================================
+
         [Fact]
         public async Task CreateOrUpdateAsync_Should_Create_New_If_Not_Exists()
         {
@@ -31,7 +35,7 @@ namespace PibesDelDestino.Ratings
             var input = new CreateRatingDto { DestinationId = destId, Score = 5, Comment = "Nuevo" };
 
             // Act
-            var result = await _ratingAppService.CreateOrUpdateAsync(input);
+            var result = await _ratingAppService.CreateAsync(input);
 
             // Assert
             result.ShouldNotBeNull();
@@ -43,26 +47,68 @@ namespace PibesDelDestino.Ratings
         }
 
         [Fact]
-        public async Task CreateOrUpdateAsync_Should_Update_If_Already_Exists()
+        public async Task CreateOrUpdateAsync_Should_Fail_If_Already_Exists()
         {
             // Arrange
             var destId = Guid.NewGuid();
             var myId = _currentUser.Id.Value;
 
-            // Insertamos uno previo
+            // Insertamos una reseña previa directamente para activar el escudo
             await _ratingRepository.InsertAsync(new Rating(Guid.NewGuid(), destId, myId, 1, "Malo"), autoSave: true);
 
-            var input = new CreateRatingDto { DestinationId = destId, Score = 5, Comment = "Mejorado" };
+            var input = new CreateRatingDto { DestinationId = destId, Score = 5, Comment = "Intento duplicado" };
+
+            // Act & Assert
+            // Verificamos que ahora el método arroja la excepción UserFriendlyException
+            var exception = await Should.ThrowAsync<Volo.Abp.UserFriendlyException>(async () =>
+            {
+                await _ratingAppService.CreateAsync(input);
+            });
+
+            exception.Message.ShouldBe("Ya hiciste una reseña para este destino.");
+        }
+
+        // =================================================================================
+        // TESTS DE ACTUALIZACIÓN (Los tres puntitos)
+        // =================================================================================
+
+        [Fact]
+        public async Task UpdateAsync_Should_Update_Existing_Rating()
+        {
+            // Arrange
+            var destId = Guid.NewGuid();
+            var myId = _currentUser.Id.Value;
+            var ratingId = Guid.NewGuid();
+
+            // 1. Insertamos una reseña inicial directamente en la base de datos
+            var originalRating = new Rating(ratingId, destId, myId, 2, "Original");
+            await _ratingRepository.InsertAsync(originalRating, autoSave: true);
+
+            // 2. Preparamos los datos de edición
+            var updateInput = new CreateRatingDto
+            {
+                DestinationId = destId,
+                Score = 5,
+                Comment = "Comentario Editado"
+            };
 
             // Act
-            await _ratingAppService.CreateOrUpdateAsync(input);
+            var result = await _ratingAppService.UpdateAsync(ratingId, updateInput);
 
             // Assert
-            var inDb = await _ratingRepository.GetListAsync(x => x.DestinationId == destId && x.UserId == myId);
-            inDb.Count.ShouldBe(1); // No debe haber duplicados
-            inDb[0].Score.ShouldBe(5);
-            inDb[0].Comment.ShouldBe("Mejorado");
+            result.ShouldNotBeNull();
+            result.Score.ShouldBe(5);
+            result.Comment.ShouldBe("Comentario Editado");
+
+            // Verificamos que en la DB realmente se haya actualizado
+            var inDb = await _ratingRepository.GetAsync(ratingId);
+            inDb.Score.ShouldBe(5);
+            inDb.Comment.ShouldBe("Comentario Editado");
         }
+
+        // =================================================================================
+        // TESTS DE CONSULTA
+        // =================================================================================
 
         [Fact]
         public async Task GetMyRatingAsync_Should_Return_Null_If_No_Rating()

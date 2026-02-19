@@ -24,7 +24,7 @@ export class ExperienceModalComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private experienceService: TravelExperienceService,
+    private experienceService: TravelExperienceService, // Asegurate que este proxy esté actualizado
     private activeModal: NgbActiveModal,
     private toaster: ToasterService
   ) {}
@@ -34,6 +34,7 @@ export class ExperienceModalComponent implements OnInit {
 
     if (this.selectedExperience) {
       this.form.patchValue({
+        destinationId: this.destinationId,
         title: this.selectedExperience.title,
         description: this.selectedExperience.description,
         rating: this.selectedExperience.rating,
@@ -53,7 +54,7 @@ export class ExperienceModalComponent implements OnInit {
   }
 
   setRating(star: number) {
-    this.form.patchValue({ rating: star });
+    this.form.get('rating').setValue(star); // Forma más limpia de setear valor
   }
 
   save() {
@@ -62,34 +63,40 @@ export class ExperienceModalComponent implements OnInit {
     this.isSaving = true;
     const formData = this.form.value;
 
+    // MAPEANDO AL DTO DE C#
+    const payload = {
+      ...formData,
+      score: formData.rating,       // Mapea a 'Score' en C#
+      comment: formData.description  // Mapea a 'Comment' en C#
+    };
+
     if (this.selectedExperience) {
-      
-      this.experienceService.update(this.selectedExperience.id, formData).subscribe({
+      // MODO EDICIÓN: Llama a UpdateAsync en el back
+      this.experienceService.update(this.selectedExperience.id, payload).subscribe({
         next: () => {
-          this.toaster.success('¡Experiencia actualizada con éxito!', 'Guardado');
+          this.toaster.success('¡Reseña actualizada con éxito!', 'Guardado');
           this.activeModal.close(true);
         },
         error: (err) => {
           this.isSaving = false;
-          this.toaster.error('Error al actualizar la reseña.', 'Error');
-          console.error(err);
+          const serverMessage = err.error?.error?.message || 'Error al actualizar la reseña.';
+          this.toaster.error(serverMessage, 'Error');
         }
       });
-
     } else {
-
-      this.experienceService.create(formData).subscribe({
+      // MODO CREACIÓN: Ahora llama a CreateAsync en el back
+      // Nota: Si usaste 'abp generate-proxy', el método se llamará 'create'
+      this.experienceService.create(payload).subscribe({
         next: () => {
           this.toaster.success('¡Gracias por compartir tu experiencia!', 'Éxito');
           this.activeModal.close(true);
         },
         error: (err) => {
           this.isSaving = false;
-          this.toaster.error('Ocurrió un error al guardar.', 'Error');
-          console.error(err);
+          const serverMessage = err.error?.error?.message || 'Ocurrió un error al guardar.';
+          this.toaster.error(serverMessage, 'Error');
         }
       });
-      
     }
   }
 

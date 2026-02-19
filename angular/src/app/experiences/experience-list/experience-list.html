@@ -6,22 +6,27 @@
       <span class="badge bg-light text-dark rounded-pill border ms-3 px-3">{{ experiences.length }}</span>
     </div>
 
-    <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2 animate-bounce" 
+    <button *ngIf="!hasAlreadyReviewed" 
+            class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2 animate-bounce" 
             (click)="createExperience()">
       <i class="fas fa-pen-nib"></i> 
       <span>Escribir mi Reseña</span>
     </button>
+
+    <div *ngIf="hasAlreadyReviewed" class="text-success fw-bold small bg-light px-3 py-2 rounded-pill border">
+      <i class="fas fa-check-circle me-1"></i> Ya compartiste tu opinión sobre este destino
+    </div>
   </div>
 
   <div class="filter-bar d-flex gap-3 mb-4 p-3 bg-white rounded-3 shadow-sm border">
       <div class="input-group search-box flex-grow-1">
         <span class="input-group-text bg-transparent border-end-0"><i class="fas fa-search text-muted"></i></span>
-        <input type="text" class="form-control border-start-0 ps-0 bg-transparent" placeholder="Buscar palabras clave..." 
+        <input type="text" class="form-control border-start-0 ps-0 bg-transparent" placeholder="Buscar comentarios..." 
                [(ngModel)]="searchText" (keyup.enter)="loadExperiences()">
       </div>
       
       <select class="form-select w-auto border-0 bg-light fw-bold text-secondary" [(ngModel)]="filterType" (change)="loadExperiences()">
-        <option [ngValue]="null">Todas las calificaciones</option>
+        <option [ngValue]="null">Todas las notas</option>
         <option [ngValue]="5">⭐⭐⭐⭐⭐ Excelentes</option>
         <option [ngValue]="0">👍 Positivas</option>
         <option [ngValue]="2">👎 Negativas</option>
@@ -30,14 +35,14 @@
 
   <div *ngIf="isLoading" class="text-center py-5">
     <div class="spinner-grow text-primary" role="status"></div>
-    <p class="mt-2 text-muted small">Cargando opiniones...</p>
+    <p class="mt-2 text-muted small">Buscando experiencias...</p>
   </div>
 
   <div *ngIf="!isLoading && experiences.length === 0" class="text-center py-5 bg-light rounded-3 border-dashed">
     <div class="mb-3 text-muted opacity-50"><i class="far fa-comment-dots fa-4x"></i></div>
-    <h5 class="fw-bold text-dark">Aún no hay opiniones</h5>
-    <p class="text-muted">Sé el primero en contar tu experiencia sobre este destino.</p>
-    <button class="btn btn-outline-primary btn-sm rounded-pill mt-2" (click)="createExperience()">Escribir ahora</button>
+    <h5 class="fw-bold text-dark">Nadie ha comentado todavía</h5>
+    <p class="text-muted">¡Animate y sé el primero en contar qué te pareció!</p>
+    <button *ngIf="!hasAlreadyReviewed" class="btn btn-outline-primary btn-sm rounded-pill mt-2" (click)="createExperience()">Escribir ahora</button>
   </div>
 
   <div class="reviews-grid" *ngIf="!isLoading && experiences.length > 0">
@@ -50,24 +55,26 @@
               {{ (exp.userName || 'A').charAt(0).toUpperCase() }}
             </div>
             <div class="ms-3">
-              <h6 class="fw-bold mb-0 text-dark">{{ exp.userName || 'Viajero Anónimo' }}</h6>
+              <h6 class="fw-bold mb-0 text-dark">{{ exp.userName || 'Viajero de Pibes del Destino' }}</h6>
               <small class="text-muted">{{ exp.date | date:'mediumDate' }}</small>
             </div>
           </div>
 
-          <div *ngIf="exp.userId === currentUserId" class="dropdown">
-            <button class="btn btn-light btn-sm rounded-circle" type="button" data-bs-toggle="dropdown">
-              <i class="fas fa-ellipsis-v text-muted"></i>
+          <div *ngIf="exp.userId === currentUserId">
+            <button 
+              class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm transition-transform" 
+              (click)="editExperience(exp)" 
+              title="Editar mi reseña">
+              <i class="fas fa-pencil-alt"></i>
+              <span class="small fw-bold">Editar</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-              <li><button class="dropdown-item" (click)="editExperience(exp)"><i class="fas fa-pencil-alt text-primary me-2"></i>Editar</button></li>
-              <li><button class="dropdown-item text-danger" (click)="delete(exp)"><i class="fas fa-trash-alt me-2"></i>Eliminar</button></li>
-            </ul>
           </div>
         </div>
 
         <div class="review-rating mb-2">
-          <i *ngFor="let s of [1,2,3,4,5]" [class]="s <= exp.rating ? 'fas fa-star text-warning' : 'far fa-star text-muted star-placeholder'"></i>
+          <i *ngFor="let s of [1,2,3,4,5]" 
+             [class]="s <= exp.rating ? 'fas fa-star text-warning' : 'far fa-star text-muted star-placeholder'">
+          </i>
         </div>
 
         <h5 class="fw-bold text-dark mb-2">{{ exp.title }}</h5>
@@ -77,15 +84,16 @@
           <button *ngIf="!translatedTexts[exp.id]" class="btn-translate"
                   (click)="translate(exp.id, exp.description)" [disabled]="isTranslating[exp.id]">
             <i class="fas fa-globe-americas me-1"></i>
-            <span *ngIf="!isTranslating[exp.id]">Traducir reseña</span>
+            <span *ngIf="!isTranslating[exp.id]">Ver traducción (EN)</span>
             <span *ngIf="isTranslating[exp.id]">Traduciendo...</span>
           </button>
-          <div *ngIf="translatedTexts[exp.id]" class="translated-box animate-fade-in">
+          
+          <div *ngIf="translatedTexts[exp.id]" class="translated-box animate-fade-in p-3 bg-light rounded-3 border-start border-primary border-4">
             <div class="d-flex align-items-center mb-1">
               <i class="fas fa-language text-primary me-2"></i>
-              <small class="fw-bold text-primary">Traducido del Español</small>
+              <small class="fw-bold text-primary">English Translation</small>
             </div>
-            <p class="mb-0 text-dark">{{ translatedTexts[exp.id] }}</p>
+            <p class="mb-0 text-dark fst-italic">{{ translatedTexts[exp.id] }}</p>
           </div>
         </div>
 

@@ -3,7 +3,7 @@
   <div class="modal-header border-0 p-0 mb-4 position-relative justify-content-center">
     <div class="text-center">
       <h4 class="modal-title fw-bold" style="color: #18427D;">
-        Calificar Experiencia
+        {{ selectedExperience ? 'Editar Experiencia' : 'Calificar Experiencia' }}
       </h4>
       <p class="text-muted mb-0 small" *ngIf="destinationName">
         en <span class="fw-bold text-dark">{{ destinationName }}</span>
@@ -46,7 +46,7 @@
         <textarea class="form-control bg-light border-0 rounded-3" 
                   formControlName="description" 
                   rows="5" 
-                  placeholder="Contanos los detalles: qué visitaste, qué comiste, qué te sorprendió..."
+                  placeholder="Contanos los detalles..."
                   style="resize: none; padding: 15px;"></textarea>
       </div>
 
@@ -59,15 +59,15 @@
                 (click)="save()" 
                 [disabled]="form.invalid || isSaving">
           <span *ngIf="!isSaving">
-            <i class="fa fa-paper-plane me-2"></i> Publicar
+            <i class="fa me-2" [ngClass]="selectedExperience ? 'fa-save' : 'fa-paper-plane'"></i> 
+            {{ selectedExperience ? 'Guardar Cambios' : 'Publicar' }}
           </span>
           <span *ngIf="isSaving">
-            <i class="fas fa-spinner fa-spin"></i> Guardando...
+            <i class="fas fa-spinner fa-spin me-2"></i> {{ selectedExperience ? 'Actualizando...' : 'Guardando...' }}
           </span>
         </button>
       </div>
 
     </form>
   </div>
-  
-  </div>
+</div>
