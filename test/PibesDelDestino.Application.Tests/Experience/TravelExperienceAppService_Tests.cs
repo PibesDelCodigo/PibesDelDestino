@@ -1,123 +1,122 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading;
+﻿using PibesDelDestino.Destinations;
 using Shouldly;
-using Xunit;
-using PibesDelDestino;
+using System;
+using System.Threading.Tasks;
+using Volo.Abp;
+using Volo.Abp.Authorization;
 using Volo.Abp.Domain.Repositories;
-using NSubstitute;
-using Volo.Abp.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection;
-using PibesDelDestino.Experiences;
-using PibesDelDestino.Favorites;
-using PibesDelDestino.Notifications;
-using Volo.Abp.Identity;
-using Volo.Abp.Users;
-using PibesDelDestino.Destinations;
-using Volo.Abp.Emailing;
-using Microsoft.Extensions.Logging;
-using Volo.Abp.Logging;
+using Volo.Abp.Modularity;
+using Xunit;
 
 namespace PibesDelDestino.Experiences
 {
-    public class TravelExperienceAppService_Tests : PibesDelDestinoApplicationTestBase<PibesDelDestinoApplicationTestModule>
+    // Clase Abstracta con la lógica de pruebas
+    public abstract class TravelExperienceAppService_Tests<TStartupModule> : PibesDelDestinoApplicationTestBase<TStartupModule>
+        where TStartupModule : IAbpModule
     {
         private readonly ITravelExperienceAppService _experienceService;
+        private readonly IRepository<TravelExperience, Guid> _experienceRepository;
+        private readonly IRepository<Destination, Guid> _destinationRepository;
 
-        // Mocks de los repositorios
-        private readonly IRepository<TravelExperience, Guid> _experienceRepoMock;
-        private readonly IRepository<IdentityUser, Guid> _userRepoMock;
-
-        // Mocks para el Manager
-        private readonly IRepository<FavoriteDestination, Guid> _favoriteRepoMock;
-        private readonly IRepository<AppNotification, Guid> _notificationRepoMock;
-        private readonly IRepository<Destination, Guid> _destinationRepoMock; // El Manager lo necesita
-        private readonly IIdentityUserRepository _identityUserRepoMock;
-        private readonly IEmailSender _emailSenderMock;
-        private readonly ILogger<NotificationManager> _loggerMock;
-
-        public TravelExperienceAppService_Tests()
+        protected TravelExperienceAppService_Tests()
         {
-            //Inicialización de los Mocks
-            _experienceRepoMock = Substitute.For<IRepository<TravelExperience, Guid>>();
-            _userRepoMock = Substitute.For<IRepository<IdentityUser, Guid>>();
-            _favoriteRepoMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
-            _notificationRepoMock = Substitute.For<IRepository<AppNotification, Guid>>();
-            _destinationRepoMock = Substitute.For<IRepository<Destination, Guid>>();
-            _identityUserRepoMock = Substitute.For<IIdentityUserRepository>();
-            _emailSenderMock = Substitute.For<IEmailSender>();
-            _loggerMock = Substitute.For<ILogger<NotificationManager>>();
-
-            // Mocks adicionales para el constructor de NotificationManager
-            var _emailSenderMock2 = Substitute.For<IEmailSender>();
-            var _loggerMock2 = Substitute.For<ILogger<NotificationManager>>();
-
-            //CREAMOS EL NOTIFICATION MANAGER
-            var notificationManager = new NotificationManager(
-                _notificationRepoMock,
-                _favoriteRepoMock,
-                _destinationRepoMock,
-                _identityUserRepoMock,
-                _emailSenderMock,
-                _loggerMock,
-                _emailSenderMock2,
-                _loggerMock2
-            );
-
-            //Instanciamos el Proxy del Servicio con la nueva estructura
-            _experienceService = new TravelExperienceAppServiceTestProxy(
-                _experienceRepoMock,
-                _userRepoMock,
-                notificationManager,
-                GetRequiredService<IServiceProvider>()
-            );
+            _experienceService = GetRequiredService<ITravelExperienceAppService>();
+            _experienceRepository = GetRequiredService<IRepository<TravelExperience, Guid>>();
+            _destinationRepository = GetRequiredService<IRepository<Destination, Guid>>();
         }
 
         [Fact]
-        public async Task Should_Create_And_Filter_Experiences()
+        public async Task CreateAsync_Should_Create_Valid_Experience()
         {
-            var destinationId = Guid.NewGuid();
-            var emptyExperiences = new List<TravelExperience>();
-            var emptyFavorites = new List<FavoriteDestination>(); 
-            var emptyUsers = new List<IdentityUser>();
-            _experienceRepoMock.GetQueryableAsync().Returns(Task.FromResult(emptyExperiences.AsQueryable()));
-
-            // Configuración para el Manager (evitar nulls)
-            _favoriteRepoMock.GetListAsync(Arg.Any<Expression<Func<FavoriteDestination, bool>>>())
-                .Returns(Task.FromResult(emptyFavorites));
+            // 1. Arrange: Necesitamos un destino real
+            var dest = new Destination(Guid.NewGuid(), "Roma", "Italia", "Roma", 5000, "img", DateTime.Now, new Coordinates(0, 0));
+            await _destinationRepository.InsertAsync(dest, autoSave: true);
 
             var input = new CreateUpdateTravelExperienceDto
             {
-                DestinationId = destinationId,
-                Title = "Viaje de prueba",
-                Description = "Descripción de la experiencia",
+                DestinationId = dest.Id,
+                Title = "Viaje soñado",
+                Description = "Increíble todo",
                 Rating = 5,
                 Date = DateTime.Now
             };
 
+            // 2. Act
             var result = await _experienceService.CreateAsync(input);
 
+            // 3. Assert
             result.ShouldNotBeNull();
-            result.Title.ShouldBe("Viaje de prueba");
+            result.Id.ShouldNotBe(Guid.Empty);
+            result.Title.ShouldBe("Viaje soñado");
 
-            // Verificamos que se llamó al Insert del repositorio principal
-            await _experienceRepoMock.Received(1).InsertAsync(Arg.Any<TravelExperience>());
-            await _favoriteRepoMock.Received().GetListAsync(Arg.Any<Expression<Func<FavoriteDestination, bool>>>());
+            // Verificamos en la base de datos
+            var dbEntity = await _experienceRepository.GetAsync(result.Id);
+            dbEntity.Rating.ShouldBe(5);
         }
-    }
-    public class TravelExperienceAppServiceTestProxy : TravelExperienceAppService
-    {
-        public TravelExperienceAppServiceTestProxy(
-            IRepository<TravelExperience, Guid> repository,
-            IRepository<IdentityUser, Guid> userRepository,
-            NotificationManager notificationManager,
-            IServiceProvider serviceProvider)
-            : base(repository, userRepository, notificationManager)
+
+        [Fact]
+        public async Task UpdateAsync_Should_Update_If_Owner()
         {
-            LazyServiceProvider = serviceProvider.GetRequiredService<Volo.Abp.DependencyInjection.IAbpLazyServiceProvider>();
+            // 1. Arrange
+            var dest = new Destination(Guid.NewGuid(), "Paris", "Francia", "Paris", 5000, "img", DateTime.Now, new Coordinates(0, 0));
+            await _destinationRepository.InsertAsync(dest, autoSave: true);
+
+            // Creamos una experiencia inicial (Simulando que la creé YO)
+            // Nota: En los tests, CurrentUser.Id suele ser null o un valor fijo si no se configura.
+            // Para que esto funcione sin login complejo, asumimos que al insertar directo
+            // el CreatorId se setea (o lo forzamos si es necesario, pero probemos así primero).
+
+            var inputCreate = new CreateUpdateTravelExperienceDto
+            {
+                DestinationId = dest.Id,
+                Title = "Original",
+                Description = "Desc",
+                Rating = 3,
+                Date = DateTime.Now
+            };
+            var createdDto = await _experienceService.CreateAsync(inputCreate);
+
+            // 2. Act: Modificamos
+            var updateInput = new CreateUpdateTravelExperienceDto
+            {
+                DestinationId = dest.Id,
+                Title = "Editado",
+                Description = "Nueva descripción",
+                Rating = 4,
+                Date = DateTime.Now
+            };
+
+            var result = await _experienceService.UpdateAsync(createdDto.Id, updateInput);
+
+            // 3. Assert
+            result.Title.ShouldBe("Editado");
+            result.Rating.ShouldBe(4);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_Should_Fail_If_Not_Owner()
+        {
+            // 1. Arrange
+            var dest = new Destination(Guid.NewGuid(), "Madrid", "España", "Madrid", 5000, "img", DateTime.Now, new Coordinates(0, 0));
+            await _destinationRepository.InsertAsync(dest, autoSave: true);
+
+            // Insertamos una experiencia "a mano" forzando un Usuario DIFERENTE
+            var otherUserId = Guid.NewGuid();
+            var exp = new TravelExperience(Guid.NewGuid(), otherUserId, dest.Id, "Ajeno", "No tocar", DateTime.Now, 3);
+
+            await _experienceRepository.InsertAsync(exp, autoSave: true);
+
+            // 2. Act & Assert
+            // Intentamos borrarla con el usuario actual (que no es otherUserId)
+            await Assert.ThrowsAsync<AbpAuthorizationException>(async () =>
+            {
+                await _experienceService.DeleteAsync(exp.Id);
+            });
         }
     }
 }
+//✔️ Llama al repositorio: CreateAsync guarda en la DB real.
+
+//✔️ Valida reglas: Si intentás borrar algo ajeno, falla (AbpAuthorizationException).
+
+//✔️ Transforma DTOs: Verificamos que lo que vuelve (result) tenga los datos correctos.

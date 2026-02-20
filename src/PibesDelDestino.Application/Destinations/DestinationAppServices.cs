@@ -22,9 +22,8 @@ namespace PibesDelDestino.Destinations
     {
         // Inyectamos los servicios necesarios
         private readonly ICitySearchService _citySearchService;
-        private readonly IGuidGenerator _guidGenerator;
         private readonly IRepository<TravelExperience, Guid> _experienceRepository;
-        private readonly NotificationManager _notificationManager;
+        private readonly INotificationManager _notificationManager;
 
         // Constructor para inyectar dependencias
         public DestinationAppService(
@@ -32,12 +31,11 @@ namespace PibesDelDestino.Destinations
             ICitySearchService citySearchService,
             IGuidGenerator guidGenerator,
             IRepository<TravelExperience, Guid> experienceRepository,
-            NotificationManager notificationManager)
+            INotificationManager notificationManager)
             : base(repository)
         {
             // Asignamos los servicios inyectados a campos privados para su uso posterior
             _citySearchService = citySearchService;
-            _guidGenerator = guidGenerator;
             _experienceRepository = experienceRepository;
             _notificationManager = notificationManager;
         }
@@ -47,11 +45,12 @@ namespace PibesDelDestino.Destinations
         protected override async Task<List<DestinationDto>> MapToGetListOutputDtosAsync(List<Destination> entities)
         {
             var dtos = await base.MapToGetListOutputDtosAsync(entities);
-            var destinationIds = entities.Select(x => x.Id).ToList();
 
+            if (!entities.Any()) return dtos; // Si no hay destinos, devolvemos la lista vacía de DTOs
+           
+            var destinationIds = entities.Select(x => x.Id).ToList();
             // Para evitar hacer una consulta por cada destino, obtenemos todas las experiencias relacionadas con los destinos en una sola consulta
             var query = await _experienceRepository.GetQueryableAsync();
-
             // Obtenemos todas las calificaciones de experiencias para los destinos que estamos mapeando
             var allRatings = query
                 .Where(x => destinationIds.Contains(x.DestinationId))
@@ -67,15 +66,7 @@ namespace PibesDelDestino.Destinations
                     .Select(x => x.Rating)
                     .ToList();
 
-                // Si hay calificaciones para ese destino, calculamos el promedio; de lo contrario, asignamos 0
-                if (specificRatings.Any())
-                {
-                    dto.AverageRating = specificRatings.Average();
-                }
-                else
-                {
-                    dto.AverageRating = 0;
-                }
+                dto.AverageRating = specificRatings.Any() ? specificRatings.Average() : 0;
             }
 
             return dtos;
@@ -106,7 +97,7 @@ namespace PibesDelDestino.Destinations
         public override async Task<DestinationDto> CreateAsync(CreateUpdateDestinationDto input)
         {
             var destination = new Destination(
-                _guidGenerator.Create(),
+                GuidGenerator.Create(),
                 input.Name,
                 input.Country,
                 input.City,
@@ -119,23 +110,9 @@ namespace PibesDelDestino.Destinations
             // Insertamos el nuevo destino en el repositorio
             await Repository.InsertAsync(destination);
 
-            return new DestinationDto
-            {
-                Id = destination.Id,
-                Name = destination.Name,
-                Country = destination.Country,
-                City = destination.City,
-                Population = destination.Population,
-                Photo = destination.Photo,
-                UpdateDate = destination.UpdateDate,
-                Coordinates = new CoordinatesDto
-                {
-                    Latitude = destination.Coordinates.Latitude,
-                    Longitude = destination.Coordinates.Longitude
-                },
-                //Como es un destino nuevo, el rating promedio es 0
-                AverageRating = 0
-            };
+            var dto = ObjectMapper.Map<Destination, DestinationDto>(destination);
+            dto.AverageRating = 0;
+            return dto;
         }
 
         // Sobrescribimos el método de actualización para manejar la lógica personalizada al actualizar un destino
@@ -143,7 +120,7 @@ namespace PibesDelDestino.Destinations
         public override async Task<DestinationDto> UpdateAsync(Guid id, CreateUpdateDestinationDto input)
         {
             //Actualizamos el destino
-            var updatedDestinationDto = await base.UpdateAsync(id, input);
+            var updatedDto = await base.UpdateAsync(id, input);
 
             //Recuperamos la entidad para pasarla al Manager
             var destinationEntity = await Repository.GetAsync(id);
@@ -155,7 +132,7 @@ namespace PibesDelDestino.Destinations
             );
 
             //Devolvemos el DTO actualizado
-            return updatedDestinationDto;
+            return updatedDto;
         }
 
         //Agregamos un nuevo método para buscar ciudades utilizando el servicio de búsqueda de ciudades, y lo marcamos con [AllowAnonymous] para permitir el acceso sin autenticación
@@ -189,21 +166,11 @@ namespace PibesDelDestino.Destinations
             var topList = await AsyncExecuter.ToListAsync(query.Take(10));
 
             // Mapeamos cada destino a su DTO correspondiente, incluyendo el rating promedio calculado
-            return topList.Select(item => new DestinationDto
+            return topList.Select(item =>
             {
-                Id = item.Destination.Id,
-                Name = item.Destination.Name,
-                Country = item.Destination.Country,
-                City = item.Destination.City,
-                Population = item.Destination.Population,
-                Photo = item.Destination.Photo,
-                UpdateDate = item.Destination.UpdateDate,
-                Coordinates = new CoordinatesDto
-                {
-                    Latitude = item.Destination.Coordinates.Latitude,
-                    Longitude = item.Destination.Coordinates.Longitude
-                },
-                AverageRating = item.AverageRating
+             var dto =  ObjectMapper.Map<Destination, DestinationDto>(item.Destination);
+                dto.AverageRating = item.AverageRating;
+                return dto;
             }).ToList();
         }
     }

@@ -1,80 +1,116 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
-using System.Linq.Expressions;
-using Shouldly;
-using Xunit;
-using PibesDelDestino;
-using Volo.Abp.Domain.Repositories;
-using NSubstitute;
-using Volo.Abp.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection;
-using PibesDelDestino.Favorites;
+﻿using PibesDelDestino.Application.Contracts.Destinations; // Necesario para DestinationDto
 using PibesDelDestino.Destinations;
-using Volo.Abp.Users;
+using Shouldly;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Modularity;
 using Volo.Abp.Guids;
+using Xunit;
 
 namespace PibesDelDestino.Favorites
 {
-    public class FavoriteAppService_Tests : PibesDelDestinoApplicationTestBase<PibesDelDestinoApplicationTestModule>
+    public abstract class FavoriteAppService_Tests<TStartupModule> : PibesDelDestinoApplicationTestBase<TStartupModule>
+        where TStartupModule : IAbpModule
     {
-        private readonly IFavoriteAppService _favoriteAppService;
-        private readonly IRepository<FavoriteDestination, Guid> _favoriteRepositoryMock;
-        private readonly IRepository<Destination, Guid> _destinationRepositoryMock;
+        private readonly IFavoriteAppService _favoriteService;
+        private readonly IRepository<FavoriteDestination, Guid> _favoriteRepository;
+        private readonly IRepository<Destination, Guid> _destinationRepository;
+        private readonly IGuidGenerator _guidGenerator;
 
-        public FavoriteAppService_Tests()
+        protected FavoriteAppService_Tests()
         {
-            _favoriteRepositoryMock = Substitute.For<IRepository<FavoriteDestination, Guid>>();
-            _destinationRepositoryMock = Substitute.For<IRepository<Destination, Guid>>();
-
-            _favoriteAppService = new FavoriteAppServiceTestProxy(
-                _favoriteRepositoryMock,
-                _destinationRepositoryMock,
-                GetRequiredService<IServiceProvider>()
-            );
+            _favoriteService = GetRequiredService<IFavoriteAppService>();
+            _favoriteRepository = GetRequiredService<IRepository<FavoriteDestination, Guid>>();
+            _destinationRepository = GetRequiredService<IRepository<Destination, Guid>>();
+            _guidGenerator = GetRequiredService<IGuidGenerator>();
         }
 
         [Fact]
-        public async Task Should_Toggle_Favorite_Status()
+        public async Task ToggleAsync_Should_Add_Favorite_When_Not_Exists()
         {
-            var destinationId = Guid.NewGuid();
-            var userId = Guid.NewGuid();
-            var currentUser = GetRequiredService<ICurrentUser>();
+            // 1. Arrange: Creamos un destino de prueba
+            var dest = await CreateDestinationAsync("Bali");
+            var input = new CreateFavoriteDto { DestinationId = dest.Id };
 
-            var destination = new Destination(
-                destinationId,
-                "Tokyo",
-                "Japan",
-                "Tokyo City",
-                14000000,
-                "photo.jpg",
-                DateTime.Now,
-                new Coordinates(35.6762f, 139.6503f)
-            );
+            // 2. Act: Llamamos a Toggle (Como no existe, debería AGREGARLO)
+            var result = await _favoriteService.ToggleAsync(input);
 
-            //Simulamos que no existe en favoritos aun
-            _favoriteRepositoryMock.FindAsync(Arg.Any<Expression<Func<FavoriteDestination, bool>>>())
-                .Returns(Task.FromResult<FavoriteDestination>(null));
+            // 3. Assert
+            result.ShouldBeTrue(); // True indica que "Ahora es favorito"
 
-            var input = new CreateFavoriteDto { DestinationId = destinationId };
-            await _favoriteAppService.ToggleAsync(input);
-
-            // Verificamos que al no existir, se llamó al Insert
-            await _favoriteRepositoryMock.Received(1).InsertAsync(Arg.Any<FavoriteDestination>());
+            // 🔴 LA SOLUCIÓN ESTÁ ACÁ: Envolvemos la consulta en un Unit Of Work nuevo
+            await WithUnitOfWorkAsync(async () =>
+            {
+                var favEnDb = await _favoriteRepository.FirstOrDefaultAsync(x => x.DestinationId == dest.Id);
+                favEnDb.ShouldNotBeNull();
+            });
         }
-    }
 
-    public class FavoriteAppServiceTestProxy : FavoriteAppService
-    {
-        public FavoriteAppServiceTestProxy(
-            IRepository<FavoriteDestination, Guid> repository,
-            IRepository<Destination, Guid> destinationRepository,
-            IServiceProvider serviceProvider)
-            : base(repository, destinationRepository)
+        [Fact]
+        public async Task ToggleAsync_Should_Remove_Favorite_When_Already_Exists()
         {
-            LazyServiceProvider = serviceProvider.GetRequiredService<IAbpLazyServiceProvider>();
-            var currentUser = serviceProvider.GetRequiredService<ICurrentUser>();
+            // 1. Arrange: Creamos destino y lo forzamos como favorito
+            var dest = await CreateDestinationAsync("Cancún");
+            var input = new CreateFavoriteDto { DestinationId = dest.Id };
+
+            // Primer Toggle: Lo agrega
+            await _favoriteService.ToggleAsync(input);
+
+            // 2. Act: Segundo Toggle: Lo debería SACAR
+            var result = await _favoriteService.ToggleAsync(input);
+
+            // 3. Assert
+            result.ShouldBeFalse(); // False indica que "Ya NO es favorito"
+
+            // 🔴 LA SOLUCIÓN ESTÁ ACÁ TAMBIÉN
+            await WithUnitOfWorkAsync(async () =>
+            {
+                var favEnDb = await _favoriteRepository.FirstOrDefaultAsync(x => x.DestinationId == dest.Id);
+                favEnDb.ShouldBeNull();
+            });
+        }
+
+        [Fact]
+        public async Task GetMyFavoritesAsync_Should_Return_List()
+        {
+            // 1. Arrange
+            var dest1 = await CreateDestinationAsync("Destino A");
+            var dest2 = await CreateDestinationAsync("Destino B");
+
+            // Agregamos solo el Destino A a mis favoritos usando el servicio
+            await _favoriteService.ToggleAsync(new CreateFavoriteDto { DestinationId = dest1.Id });
+
+            // 2. Act
+            var lista = await _favoriteService.GetMyFavoritesAsync();
+
+            // 3. Assert
+            lista.ShouldNotBeNull();
+            lista.Count.ShouldBeGreaterThanOrEqualTo(1);
+
+            // Verificamos que la lista contenga el destino que agregamos
+            lista.ShouldContain(d => d.Id == dest1.Id);
+
+            // Verificamos que NO contenga el que no agregamos (si la base estaba limpia)
+            // (Nota: Si la base está sucia por otros tests, solo nos importa que esté el nuestro)
+            lista.Any(d => d.Id == dest1.Id).ShouldBeTrue();
+        }
+
+        // --- Helper para crear destinos rápido ---
+        private async Task<Destination> CreateDestinationAsync(string name)
+        {
+            var dest = new Destination(
+                _guidGenerator.Create(),
+                name,
+                "PaisTest",
+                "CiudadTest",
+                1000,
+                "img.jpg",
+                DateTime.Now,
+                new Coordinates(0, 0)
+            );
+            return await _destinationRepository.InsertAsync(dest, autoSave: true);
         }
     }
 }

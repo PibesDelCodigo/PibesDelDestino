@@ -3,52 +3,105 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Guids;
-using Volo.Abp.ObjectMapping;
-using Volo.Abp.Users;
+using Volo.Abp.Identity;
+using Volo.Abp.Data;
 
 namespace PibesDelDestino.Ratings
 {
-    // Este servicio se encarga de manejar las operaciones relacionadas con las calificaciones
-    // de los destinos por parte de los usuarios.
     [Authorize]
     public class RatingAppService : ApplicationService, IRatingAppService
     {
         private readonly IRepository<Rating, Guid> _ratingRepository;
-        private readonly IGuidGenerator _guidGenerator;
-
-        // El IObjectMapper se utiliza para mapear entre las entidades de dominio y los DTOs,
-        // lo que facilita la conversión de datos entre diferentes capas de la aplicación.
-
-        private readonly IObjectMapper _objectMapper;
-        private readonly ICurrentUser _currentUser; 
+        private readonly IRepository<IdentityUser, Guid> _userRepository;
 
         public RatingAppService(
             IRepository<Rating, Guid> ratingRepository,
-            IGuidGenerator guidGenerator,
-            IObjectMapper objectMapper,
-            ICurrentUser currentUser) 
+            IRepository<IdentityUser, Guid> userRepository)
         {
             _ratingRepository = ratingRepository;
-            _guidGenerator = guidGenerator;
-            _objectMapper = objectMapper;
-            _currentUser = currentUser;
+            _userRepository = userRepository;
         }
 
-        // Este método se encarga de crear una nueva calificación para un destino específico. 
         public async Task<RatingDto> CreateAsync(CreateRatingDto input)
         {
-            var rating = new Rating(
-                _guidGenerator.Create(),
+            // 1. EL ESCUDO: Verificamos duplicados
+            var existingRating = await _ratingRepository.FindAsync(x =>
+                x.DestinationId == input.DestinationId &&
+                x.UserId == CurrentUser.Id
+            );
+
+            if (existingRating != null)
+            {
+                throw new Volo.Abp.UserFriendlyException("Ya hiciste una reseña para este destino.");
+            }
+
+            // 2. CREACIÓN PURA
+            var newRating = new Rating(
+                GuidGenerator.Create(),
                 input.DestinationId,
-                _currentUser.GetId(),
+                CurrentUser.Id.Value,
                 input.Score,
                 input.Comment
             );
 
-            await _ratingRepository.InsertAsync(rating);
+            await _ratingRepository.InsertAsync(newRating);
 
-            return _objectMapper.Map<Rating, RatingDto>(rating);
+            return await MapToDtoWithUserInfo(newRating);
+        }
+
+        // EL MÉTODO PARA LOS 3 PUNTITOS
+        public async Task<RatingDto> UpdateAsync(Guid id, CreateRatingDto input)
+        {
+            var rating = await _ratingRepository.GetAsync(id);
+
+            if (rating.UserId != CurrentUser.Id)
+            {
+                throw new Volo.Abp.UserFriendlyException("No podés editar esto.");
+            }
+
+            rating.Update(input.Score, input.Comment);
+            await _ratingRepository.UpdateAsync(rating);
+
+            return await MapToDtoWithUserInfo(rating);
+        }
+
+        // =================================================================================
+        // OBTENER MI CALIFICACIÓN (Para mostrar mis estrellas en la UI)
+        // =================================================================================
+        public async Task<RatingDto> GetMyRatingAsync(Guid destinationId)
+        {
+            var myRating = await _ratingRepository.FindAsync(x =>
+                x.DestinationId == destinationId &&
+                x.UserId == CurrentUser.Id
+            );
+
+            if (myRating == null)
+            {
+                return null; // El usuario aún no ha votado este lugar
+            }
+
+            return await MapToDtoWithUserInfo(myRating);
+        }
+
+        // =================================================================================
+        // MÉTODO PRIVADO (Helper para llenar datos de usuario)
+        // =================================================================================
+        private async Task<RatingDto> MapToDtoWithUserInfo(Rating rating)
+        {
+            // Mapeo base (Entidad -> DTO)
+            var dto = ObjectMapper.Map<Rating, RatingDto>(rating);
+
+            // Buscamos al usuario autor de la reseña
+            var user = await _userRepository.FindAsync(rating.UserId);
+
+            if (user != null)
+            {
+                dto.UserName = user.UserName;
+                // Obtenemos la foto (propiedad extra en ABP)
+                dto.UserProfilePicture = user.GetProperty<string>("ProfilePictureUrl");
+            }
+
+            return dto;
         }
     }
 }

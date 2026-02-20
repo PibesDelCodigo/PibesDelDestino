@@ -12,7 +12,7 @@ namespace PibesDelDestino.Notifications
 
         public string Type { get; set; } 
 
-        private AppNotification() { }
+        private AppNotification() { } // EF Core
 
         public AppNotification(Guid id, Guid userId, string title, string message, string type)
             : base(id)

@@ -1,54 +1,48 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using System;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Services;
-using Volo.Abp.Data;
 using Volo.Abp.Identity;
-using Volo.Abp.Users;
+using Volo.Abp.Data;
 
 namespace PibesDelDestino.Settings
 {
-    public class UserPreferencesDto
-    {
-        public bool ReceiveNotifications { get; set; }
-        public int NotificationType { get; set; }
-    }
-
     [Authorize]
-    public class SettingsAppService : ApplicationService
+    public class SettingsAppService : ApplicationService, ISettingsAppService
     {
         private readonly IdentityUserManager _userManager;
+
+        private const string KeyReceive = "ReceiveNotifications";
+        // Cambiamos la constante para ser más claros (opcional, pero recomendado)
+        private const string KeyChannel = "PreferredChannel";
 
         public SettingsAppService(IdentityUserManager userManager)
         {
             _userManager = userManager;
         }
+
         public async Task<UserPreferencesDto> GetPreferencesAsync()
         {
             var user = await _userManager.GetByIdAsync(CurrentUser.Id.Value);
 
+            // Leemos como int y casteamos a nuestro nuevo Enum
+            var channelValue = user.GetProperty<int?>(KeyChannel) ?? (int)NotificationChannel.All;
+
             return new UserPreferencesDto
             {
-                // Si es null, asumimos True (Activado)
-                ReceiveNotifications = user.GetProperty<bool?>("ReceiveNotifications") ?? true,
-
-                // Si es null, asumimos 2 (Ambos) por defecto
-                NotificationType = user.GetProperty<int?>("NotificationType") ?? 2
+                ReceiveNotifications = user.GetProperty<bool?>(KeyReceive) ?? true,
+                PreferredChannel = (NotificationChannel)channelValue
             };
         }
 
-        // Este metodo guarda las preferencias del usuario
         public async Task UpdatePreferencesAsync(UserPreferencesDto input)
         {
             var user = await _userManager.GetByIdAsync(CurrentUser.Id.Value);
 
-            // Guardamos el ON/OFF
-            user.SetProperty("ReceiveNotifications", input.ReceiveNotifications);
+            user.SetProperty(KeyReceive, input.ReceiveNotifications);
 
-            // Guardamos el TIPO (0, 1 o 2)
-            user.SetProperty("NotificationType", input.NotificationType);
+            // Guardamos el canal preferido
+            user.SetProperty(KeyChannel, (int)input.PreferredChannel);
 
-            // Guardamos en Base de Datos (Esto es seguro, no borra el UserName)
             await _userManager.UpdateAsync(user);
         }
     }

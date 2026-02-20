@@ -12,7 +12,7 @@ namespace PibesDelDestino.Metrics
         public string Term { get; set; }      
         public int ResultCount { get; set; } 
 
-        protected SearchHistory() { }
+        protected SearchHistory() { } // EF Core
 
         public SearchHistory(Guid id, string term, int resultCount) : base(id)
         {

@@ -17,7 +17,7 @@ using Volo.Abp.Users;
 namespace PibesDelDestino.EntityFrameworkCore;
 
 [DependsOn(
-    typeof(PibesDelDestinoApplicationTestModule),
+    typeof(PibesDelDestinoApplicationTestModule), // 👈 Depende de Aplicación (Estilo compañeros)
     typeof(PibesDelDestinoEntityFrameworkCoreModule),
     typeof(AbpEntityFrameworkCoreSqliteModule)
 )]
@@ -32,15 +32,19 @@ public class PibesDelDestinoEntityFrameworkCoreTestModule : AbpModule
             options.SaveStaticFeaturesToDatabase = false;
             options.IsDynamicFeatureStoreEnabled = false;
         });
+
+        var configuration = context.Services.GetConfiguration();
+        configuration["TicketMaster:ApiKey"] = "dBMiJml4RDcw9Y3KfHsuj04xCbLTSdjo";
+
         Configure<PermissionManagementOptions>(options =>
         {
             options.SaveStaticPermissionsToDatabase = false;
             options.IsDynamicPermissionStoreEnabled = false;
         });
+
         context.Services.AddAlwaysDisableUnitOfWorkTransaction();
 
         ConfigureInMemorySqlite(context.Services);
-
     }
 
     private void ConfigureInMemorySqlite(IServiceCollection services)
@@ -70,6 +74,7 @@ public class PibesDelDestinoEntityFrameworkCoreTestModule : AbpModule
             .UseSqlite(connection)
             .Options;
 
+        // Se usa NullCurrentUser para que no pida un usuario autenticado al crear las tablas
         using (var context = new PibesDelDestinoDbContext(options, new NullCurrentUser()))
         {
             context.GetService<IRelationalDatabaseCreator>().CreateTables();
@@ -79,6 +84,7 @@ public class PibesDelDestinoEntityFrameworkCoreTestModule : AbpModule
     }
 }
 
+// Clase auxiliar para los tests
 public class NullCurrentUser : ICurrentUser
 {
     public bool IsAuthenticated => false;
@@ -90,10 +96,10 @@ public class NullCurrentUser : ICurrentUser
     public bool EmailVerified => false;
     public string? PhoneNumber => null;
     public bool PhoneNumberVerified => false;
-    public string?[] Roles => new string[0];
+    public string?[] Roles => Array.Empty<string>();
     public Claim? FindClaim(string claimType) => null;
-    public Claim[] FindClaims(string claimType) => new Claim[0];
-    public Claim[] GetAllClaims() => new Claim[0];
+    public Claim[] FindClaims(string claimType) => Array.Empty<Claim>();
+    public Claim[] GetAllClaims() => Array.Empty<Claim>();
     public bool IsInRole(string roleName) => false;
     public Guid? TenantId => null;
 }
