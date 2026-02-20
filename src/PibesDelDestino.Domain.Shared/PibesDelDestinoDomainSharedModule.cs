@@ -77,8 +77,5 @@ public class PibesDelDestinoDomainSharedModule : AbpModule
         {
             options.MapCodeNamespace("PibesDelDestino", typeof(PibesDelDestinoResource));
         });
-
-        // ¡LISTO! Borramos el bloque ObjectExtensionManager que rompía los tests.
-        // Ahora esa lógica se maneja de forma segura en el Configurator.
     }
 }
