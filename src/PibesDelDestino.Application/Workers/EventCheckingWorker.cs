@@ -45,7 +45,7 @@ namespace PibesDelDestino.Workers
                     {
                         var destinationRepo = scope.ServiceProvider.GetRequiredService<IRepository<Destination, Guid>>();
                         var favoriteRepo = scope.ServiceProvider.GetRequiredService<IRepository<FavoriteDestination, Guid>>();
-                        var ticketMasterService = scope.ServiceProvider.GetRequiredService<ITicketMasterService>();
+                        var ticketMasterService = scope.ServiceProvider.GetRequiredService<IEventSearchService>();
                         var notificationManager = scope.ServiceProvider.GetRequiredService<NotificationManager>();
 
                         // 1. Obtener solo destinos que REALMENTE tienen seguidores
