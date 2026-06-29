@@ -1,15 +1,17 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using PibesDelDestino.Destinations;
+using PibesDelDestino.Favorites;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
-using Volo.Abp.Identity;
 using Volo.Abp.Emailing;
-using Volo.Abp.Data;
-using Microsoft.Extensions.Logging;
-using PibesDelDestino.Destinations;
-using PibesDelDestino.Favorites;
+using Volo.Abp.Identity;
+using Volo.Abp.Uow;
+using static Volo.Abp.Identity.Settings.IdentitySettingNames;
 
 namespace PibesDelDestino.Notifications
 {
@@ -20,6 +22,7 @@ namespace PibesDelDestino.Notifications
         private readonly IRepository<Destination, Guid> _destinationRepository;
         private readonly IIdentityUserRepository _userRepository;
         private readonly IEmailSender _emailSender;
+        private readonly IUnitOfWorkManager _unitOfWorkManager;
         private readonly ILogger<NotificationManager> _logger;
 
         public NotificationManager(
@@ -28,6 +31,7 @@ namespace PibesDelDestino.Notifications
             IRepository<Destination, Guid> destinationRepository,
             IIdentityUserRepository userRepository,
             IEmailSender emailSender,
+            IUnitOfWorkManager unitOfWorkManager,
             ILogger<NotificationManager> logger)
         {
             _notificationRepository = notificationRepository;
@@ -35,6 +39,7 @@ namespace PibesDelDestino.Notifications
             _destinationRepository = destinationRepository;
             _userRepository = userRepository;
             _emailSender = emailSender;
+            _unitOfWorkManager = unitOfWorkManager;
             _logger = logger;
         }
 
@@ -100,32 +105,30 @@ namespace PibesDelDestino.Notifications
                 if (user == null) return;
 
                 bool notificationsEnabled = user.GetProperty<bool?>("ReceiveNotifications") ?? true;
+                if (!notificationsEnabled) return;
 
-                if (!notificationsEnabled)
-                {
-                    _logger.LogInformation($"🔕 Notificaciones desactivadas para el usuario {user.UserName}.");
-                    return;
-                }
-
-                // Chequeamos CANAL (0=Pantalla, 1=Email, 2=Ambos)
+                // 1. Definimos las variables UNA SOLA VEZ aquí arriba
                 int channelPref = user.GetProperty<int?>("NotificationType") ?? 2;
-
                 bool sendScreen = channelPref == 0 || channelPref == 2;
-                bool sendEmail = channelPref == 1 || channelPref == 2;
+                bool sendEmail = channelPref == 1 || channelPref == 2; // <--- AQUÍ LA DECLARAMOS
 
-                //PANTALLA
-                if (sendScreen)
+                // 2. Transacción independiente para persistencia
+                using (var uow = _unitOfWorkManager.Begin(requiresNew: true)) // Usamos _ (instancia)
                 {
-                    await _notificationRepository.InsertAsync(new AppNotification(
-                        GuidGenerator.Create(),
-                        userId,
-                        title,
-                        plainMessage,
-                        notificationTypeEnum.ToString()
-                    ));
+                    if (sendScreen)
+                    {
+                        await _notificationRepository.InsertAsync(new AppNotification(
+                            GuidGenerator.Create(),
+                            userId,
+                            title,
+                            plainMessage,
+                            notificationTypeEnum.ToString()
+                        ));
+                    }
+                    await uow.CompleteAsync();
                 }
 
-                //EMAIL
+                // 3. Email (No hace falta redeclarar bool, solo la usamos)
                 if (sendEmail && !string.IsNullOrWhiteSpace(user.Email))
                 {
                     await _emailSender.SendAsync(
@@ -133,12 +136,11 @@ namespace PibesDelDestino.Notifications
                         title,
                         $"<h3>{title}</h3><p>{htmlMessage}</p>"
                     );
-                    _logger.LogInformation($"📧 Email enviado a {user.Email}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"🔥 Error enviando notificación al usuario {userId}: {ex.Message}");
+                _logger.LogError($"🔥 Error: {ex.Message}");
             }
         }
     }
